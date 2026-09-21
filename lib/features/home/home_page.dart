@@ -732,9 +732,18 @@ class _PostRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
-    final title = '${post['title'] ?? ''}'.trim();
-    final topic = '${post['topic'] ?? post['topicName'] ?? ''}'.trim();
-    final comments = post['commentCount'] ?? post['comments'] ?? 0;
+    // discussion_posts KHÔNG có cột tiêu đề (xem V47__discussion_forum.sql):
+    // chỉ có `content`. Bản trước đọc post['title'] nên mọi bài đều rơi vào
+    // nhánh dự phòng và hiện ra chữ "Bài viết". Dòng đầu của content chính là
+    // thứ người đăng viết như tiêu đề, nên lấy đúng dòng đó.
+    final content = '${post['content'] ?? ''}'.trim();
+    final headline = content.split('\n').first.trim();
+    final topic = '${post['topicName'] ?? ''}'.trim();
+
+    // `comments` trong payload là DANH SÁCH bình luận xem trước, không phải số
+    // đếm — số đếm nằm ở `commentsCount`. Đọc nhầm thì điều kiện `is num` luôn
+    // sai và con số không bao giờ hiện.
+    final comments = post['commentsCount'];
 
     return GestureDetector(
       onTap: onTap,
@@ -748,7 +757,7 @@ class _PostRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title.isEmpty ? 'Bài viết' : title,
+                  Text(headline.isEmpty ? 'Bài viết' : headline,
                       style: NpType.body.copyWith(
                         color: c.ink,
                         fontWeight: FontWeight.w600,

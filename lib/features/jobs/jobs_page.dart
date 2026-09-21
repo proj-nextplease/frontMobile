@@ -5,6 +5,7 @@ import '../../core/config.dart';
 import '../../core/theme.dart';
 import 'opportunities_repository.dart';
 import 'opportunity.dart';
+import 'opportunity_filter.dart';
 import 'opportunity_card.dart';
 import 'opportunity_detail_page.dart';
 import 'seen_store.dart';
@@ -36,6 +37,7 @@ class _JobsPageState extends State<JobsPage> {
   String? _error;
   bool _loading = true;
   OrgTab _tab = OrgTab.all;
+  OppFilter _filter = const OppFilter();
 
   @override
   void initState() {
@@ -87,11 +89,29 @@ class _JobsPageState extends State<JobsPage> {
 
   bool _showPrompt(int count) => widget.isGuest && count > _kPromptAt;
 
-  List<Opportunity> get _filtered => switch (_tab) {
+  /// Danh sách sau hàng tab đơn vị, TRƯỚC bộ lọc chi tiết.
+  ///
+  /// Tách hai bước là có chủ ý: các lựa chọn trong tấm lọc phải dựng từ danh
+  /// sách này, không phải từ `_items`. Dựng từ `_items` thì đang ở tab CLB mà
+  /// tấm lọc vẫn bày ra những loại cơ hội chỉ doanh nghiệp mới có, bấm vào là
+  /// ra rỗng.
+  List<Opportunity> get _byOrg => switch (_tab) {
         OrgTab.all => _items,
         OrgTab.business => _items.where((e) => !e.isClub).toList(),
         OrgTab.club => _items.where((e) => e.isClub).toList(),
       };
+
+  List<Opportunity> get _filtered =>
+      _byOrg.where(_filter.matches).toList();
+
+  Future<void> _openFilter() async {
+    final next = await showOppFilterSheet(
+      context,
+      source: _byOrg,
+      current: _filter,
+    );
+    if (next != null && mounted) setState(() => _filter = next);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -156,9 +176,20 @@ class _JobsPageState extends State<JobsPage> {
           ),
           onChanged: (t) => setState(() => _tab = t),
         ),
+        _FilterBar(
+          filter: _filter,
+          hits: list.length,
+          total: _byOrg.length,
+          onOpen: _openFilter,
+          onClear: () => setState(() => _filter = const OppFilter()),
+        ),
         Expanded(
           child: list.isEmpty
-              ? const _EmptyView()
+              ? (_filter.isEmpty
+                  ? const _EmptyView()
+                  : _NoMatchView(
+                      onClear: () =>
+                          setState(() => _filter = const OppFilter())))
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(
                       Np.gutter, Np.s2, Np.gutter, Np.navInset),
@@ -338,6 +369,123 @@ class _ErrorView extends StatelessWidget {
           child: AcidButton(label: 'Thử lại', onTap: onRetry, expand: false),
         ),
       ],
+    );
+  }
+}
+
+/// Hàng nút lọc. Một nút duy nhất, cộng một lối thoát khi đang có bộ lọc bật.
+///
+/// Con số "x/y tin" nằm ở đây chứ không phải trong tấm lọc, vì đây mới là lúc
+/// người dùng nhìn vào danh sách và cần biết mình đang không thấy hết.
+class _FilterBar extends StatelessWidget {
+  const _FilterBar({
+    required this.filter,
+    required this.hits,
+    required this.total,
+    required this.onOpen,
+    required this.onClear,
+  });
+
+  final OppFilter filter;
+  final int hits;
+  final int total;
+  final VoidCallback onOpen;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final on = !filter.isEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(Np.gutter, 0, Np.gutter, Np.s3),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: onOpen,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: Np.s4, vertical: Np.s2 + 2),
+              decoration: BoxDecoration(
+                color: on ? c.acid.withValues(alpha: 0.16) : c.surface,
+                borderRadius: BorderRadius.circular(Np.rPill),
+                border: Border.all(
+                    color: on ? c.acid.withValues(alpha: 0.55) : c.line),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  NpIco(NpIcon.search,
+                      size: 15, color: on ? c.acidText : c.muted),
+                  const SizedBox(width: Np.s2),
+                  Text(
+                    on ? 'Lọc · ${filter.activeCount}' : 'Lọc',
+                    style: NpType.meta.copyWith(
+                      fontSize: 13.5,
+                      color: on ? c.acidText : c.ink,
+                      fontWeight: on ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: Np.s3),
+          if (on)
+            Expanded(
+              child: Text('$hits / $total tin',
+                  style: NpType.meta.copyWith(fontSize: 12.5, color: c.muted)),
+            )
+          else
+            const Spacer(),
+          if (on)
+            GestureDetector(
+              onTap: onClear,
+              behavior: HitTestBehavior.opaque,
+              child: Text('Xoá lọc',
+                  style: NpType.meta.copyWith(
+                    fontSize: 13,
+                    color: c.danger,
+                    fontWeight: FontWeight.w600,
+                  )),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Rỗng vì bộ lọc, không phải vì hết tin. Hai câu khác nhau và một lối ra —
+/// dùng chung `_EmptyView` ở đây sẽ nói với người dùng rằng sàn không có việc,
+/// trong khi thật ra họ vừa chọn quá tay.
+class _NoMatchView extends StatelessWidget {
+  const _NoMatchView({required this.onClear});
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: Np.s10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            NpIco(NpIcon.search, size: 26, color: c.faint),
+            const SizedBox(height: Np.s4),
+            Text('Không có tin nào khớp bộ lọc',
+                style: NpType.title.copyWith(fontSize: 17, color: c.ink),
+                textAlign: TextAlign.center),
+            const SizedBox(height: Np.s2),
+            Text('Thử bỏ bớt một vài lựa chọn.',
+                style: NpType.meta.copyWith(color: c.muted),
+                textAlign: TextAlign.center),
+            const SizedBox(height: Np.s5),
+            AcidButton(label: 'Xoá bộ lọc', onTap: onClear, expand: false),
+          ],
+        ),
+      ),
     );
   }
 }
