@@ -48,8 +48,8 @@ class SaveButton extends StatelessWidget {
             child: AnimatedScale(
               scale: busy ? 0.85 : 1,
               duration: const Duration(milliseconds: 120),
-              child: Icon(
-                saved ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+              child: NpIco(
+                saved ? NpIcon.heartFill : NpIcon.heart,
                 size: size,
                 color: saved ? c.acidText : c.muted,
               ),

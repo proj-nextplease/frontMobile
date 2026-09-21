@@ -26,6 +26,8 @@ class NpColors extends ThemeExtension<NpColors> {
     required this.acidText,
     required this.onAcid,
     required this.danger,
+    required this.band,
+    required this.onBand,
   });
 
   final Color bg;
@@ -48,6 +50,14 @@ class NpColors extends ThemeExtension<NpColors> {
 
   final Color danger;
 
+  /// Dải màu đậm ở đầu trang chủ. Luôn TỐI HƠN nền ở chế độ sáng và SÁNG HƠN
+  /// nền ở chế độ tối — điều quan trọng là nó tách khỏi nền, không phải nó
+  /// tối hay sáng.
+  final Color band;
+
+  /// Chữ đặt trên dải đó.
+  final Color onBand;
+
   /// Chế độ tối. Xám TRUNG TÍNH, không ngả xanh — nền ngả xanh là mặc định của
   /// mọi bộ giao diện tối và nó làm màu nhấn ấm bị xỉn.
   static const dark = NpColors(
@@ -62,6 +72,8 @@ class NpColors extends ThemeExtension<NpColors> {
     acidText: Color(0xFFC8FF4D),
     onAcid: Color(0xFF0B0B0D),
     danger: Color(0xFFFF6B6B),
+    band: Color(0xFF1C1C22),
+    onBand: Color(0xFFFAFAFA),
   );
 
   /// Chế độ sáng. Nền trắng ngà rất nhẹ chứ không trắng tinh: trắng tinh cạnh
@@ -80,6 +92,8 @@ class NpColors extends ThemeExtension<NpColors> {
     acidText: Color(0xFF4E7A00),
     onAcid: Color(0xFF14141A),
     danger: Color(0xFFD92D20),
+    band: Color(0xFF14141A),
+    onBand: Color(0xFFFAFAFA),
   );
 
   static NpColors of(BuildContext context) =>
@@ -98,6 +112,8 @@ class NpColors extends ThemeExtension<NpColors> {
     Color? acidText,
     Color? onAcid,
     Color? danger,
+    Color? band,
+    Color? onBand,
   }) =>
       NpColors(
         bg: bg ?? this.bg,
@@ -111,6 +127,8 @@ class NpColors extends ThemeExtension<NpColors> {
         acidText: acidText ?? this.acidText,
         onAcid: onAcid ?? this.onAcid,
         danger: danger ?? this.danger,
+        band: band ?? this.band,
+        onBand: onBand ?? this.onBand,
       );
 
   @override
@@ -128,6 +146,8 @@ class NpColors extends ThemeExtension<NpColors> {
       acidText: Color.lerp(acidText, other.acidText, t)!,
       onAcid: Color.lerp(onAcid, other.onAcid, t)!,
       danger: Color.lerp(danger, other.danger, t)!,
+      band: Color.lerp(band, other.band, t)!,
+      onBand: Color.lerp(onBand, other.onBand, t)!,
     );
   }
 }

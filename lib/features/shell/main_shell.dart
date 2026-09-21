@@ -77,10 +77,10 @@ class _MainShellState extends State<MainShell> {
   /// hơn hẳn ba tab kia. Giữ nét viền và chỉ đổi màu thì thanh cân bằng hơn —
   /// đây chính là cách mẫu Upzi làm.
   static const _tabs = [
-    (icon: Icons.home_outlined, label: 'Trang chủ'),
-    (icon: Icons.work_outline_rounded, label: 'Cơ hội'),
-    (icon: Icons.forum_outlined, label: 'Thảo luận'),
-    (icon: Icons.person_outline_rounded, label: 'Hồ sơ'),
+    (icon: NpIcon.home, label: 'Trang chủ'),
+    (icon: NpIcon.jobs, label: 'Cơ hội'),
+    (icon: NpIcon.chat, label: 'Thảo luận'),
+    (icon: NpIcon.person, label: 'Hồ sơ'),
   ];
 
   /// Hành động của nút tròn, đổi theo tab đang đứng.
@@ -88,40 +88,25 @@ class _MainShellState extends State<MainShell> {
   /// Ba trong bốn hành động CHƯA có trong app (bộ lọc, viết bài, sửa hồ sơ) —
   /// chúng hiện thông báo nói thẳng là phải dùng website. Để nút im lặng
   /// không làm gì thì người dùng tưởng app hỏng.
+  /// Nút tròn dùng chung một biểu tượng cho mọi tab: kính lúp.
+  ///
+  /// Bản trước đổi icon theo tab (lọc / viết bài / sửa hồ sơ) nhưng ba trong
+  /// bốn hành động đó CHƯA tồn tại, nên nút chủ yếu đổi sang những thứ chưa
+  /// làm được — vừa khó đoán vừa vô ích. Giữ một nghĩa cố định cho tới khi
+  /// các luồng kia có thật.
   static const _actions = [
-    (icon: Icons.search_rounded, label: 'Tìm kiếm'),
-    (icon: Icons.tune_rounded, label: 'Bộ lọc'),
-    (icon: Icons.edit_outlined, label: 'Viết bài'),
-    (icon: Icons.manage_accounts_outlined, label: 'Sửa hồ sơ'),
+    (icon: NpIcon.search, label: 'Tìm kiếm'),
+    (icon: NpIcon.search, label: 'Tìm kiếm'),
+    (icon: NpIcon.search, label: 'Tìm kiếm'),
+    (icon: NpIcon.search, label: 'Tìm kiếm'),
   ];
 
   void _runAction() {
-    if (_index == 0 || _index == 1) {
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => SearchPage(
-            isGuest: widget.isGuest,
-            onSignIn: widget.onSignIn,
-          ),
-        ),
-      );
-      return;
-    }
-    final c = Np.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: c.surfaceHi,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.fromLTRB(
-            Np.gutter, 0, Np.gutter, Np.navInset),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Np.rSm),
-          side: BorderSide(color: c.line),
-        ),
-        content: Text(
-          '${_actions[_index].label} chưa có trong app. '
-          'Tạm thời làm trên website nhé.',
-          style: NpType.body.copyWith(fontSize: 14, color: c.ink),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SearchPage(
+          isGuest: widget.isGuest,
+          onSignIn: widget.onSignIn,
         ),
       ),
     );
@@ -206,8 +191,8 @@ class _BottomBar extends StatelessWidget {
   });
 
   final int index;
-  final List<({IconData icon, String label})> tabs;
-  final ({IconData icon, String label}) action;
+  final List<({NpIcon icon, String label})> tabs;
+  final ({NpIcon icon, String label}) action;
   final bool isGuest;
   final ValueChanged<int> onTap;
   final VoidCallback onAction;
@@ -305,19 +290,7 @@ class _BottomBar extends StatelessWidget {
               // Icon đổi theo tab. Hoạt hoạ xoay + mờ dần để người dùng THẤY
               // nó vừa đổi — nút đổi nghĩa mà đổi lặng lẽ là nguồn gốc của
               // việc bấm nhầm.
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 220),
-                transitionBuilder: (child, anim) => FadeTransition(
-                  opacity: anim,
-                  child: ScaleTransition(scale: anim, child: child),
-                ),
-                child: Icon(
-                  action.icon,
-                  key: ValueKey(action.icon),
-                  size: 25,
-                  color: c.ink,
-                ),
-              ),
+              child: NpIco(action.icon, size: 24, color: c.ink),
             ),
           ),
         ],
@@ -373,7 +346,7 @@ class _Item extends StatelessWidget {
     required this.isGuest,
   });
 
-  final ({IconData icon, String label}) tab;
+  final ({NpIcon icon, String label}) tab;
   final bool selected;
 
   /// Vị trí tab, dùng để biết tab nào mang chấm báo.
@@ -402,7 +375,7 @@ class _Item extends StatelessWidget {
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(Np.rSm + 2),
               ),
-              child: Icon(
+              child: NpIco(
                 tab.icon,
                 size: 22,
                 color: selected ? c.acidText : c.muted,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'design.dart';
 
 export 'design.dart';
+export 'np_icons.dart';
 export 'widgets.dart';
 
 /// Dựng ThemeData cho một chế độ. MaterialApp nhận cả hai rồi tự chọn theo
