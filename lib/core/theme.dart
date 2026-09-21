@@ -11,7 +11,7 @@ ThemeData buildNpTheme() {
   return ThemeData(
     useMaterial3: true,
     scaffoldBackgroundColor: Np.bg,
-    colorScheme: const ColorScheme.light(
+    colorScheme: const ColorScheme.dark(
       primary: Np.violet,
       onPrimary: Colors.white,
       secondary: Np.pink,

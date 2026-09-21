@@ -60,13 +60,13 @@ class _JobsPageState extends State<JobsPage> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // Nền sáng nên phải ép chữ thanh trạng thái sang tối. iOS đọc
+      // Nền tối nên chữ thanh trạng thái phải SÁNG. iOS đọc
       // statusBarBrightness (mô tả NỀN), Android đọc statusBarIconBrightness
       // (mô tả ICON) — hai trường ngược nghĩa nhau.
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.light,
-        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: Np.bg,
@@ -175,8 +175,9 @@ class _Tabs extends StatelessWidget {
                   // trắng. Không viền ở cả hai trạng thái.
                   gradient: active ? Np.brand : null,
                   color: active ? null : Np.surface,
+                  border: active ? null : Border.all(color: Np.line),
                   borderRadius: BorderRadius.circular(Np.rPill),
-                  boxShadow: active ? Np.brandShadow : Np.cardShadow,
+                  boxShadow: active ? Np.glow : null,
                 ),
                 child: Text(
                   '$label  $count',

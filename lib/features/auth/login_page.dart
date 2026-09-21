@@ -84,13 +84,13 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // Nền sáng nên phải ép chữ thanh trạng thái sang tối. iOS đọc
+      // Nền tối nên chữ thanh trạng thái phải SÁNG. iOS đọc
       // statusBarBrightness (mô tả NỀN), Android đọc statusBarIconBrightness
       // (mô tả ICON) — hai trường ngược nghĩa nhau.
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.light,
-        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: Np.bg,
@@ -277,8 +277,8 @@ class _TopGlow extends StatelessWidget {
             shape: BoxShape.circle,
             gradient: RadialGradient(
               colors: [
-                Np.violet.withValues(alpha: 0.20),
-                Np.pink.withValues(alpha: 0.06),
+                Np.violet.withValues(alpha: 0.38),
+                Np.pink.withValues(alpha: 0.12),
                 Np.pink.withValues(alpha: 0),
               ],
               stops: const [0, 0.55, 1],
@@ -343,23 +343,24 @@ class _Field extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 130),
       decoration: BoxDecoration(
-        color: Np.surface,
+        color: focused ? Np.surfaceHi : Np.surface,
         borderRadius: BorderRadius.circular(Np.rMd),
-        // Không viền khi nghỉ — chỉ bóng mềm. Viền chỉ xuất hiện lúc đang gõ,
-        // và là viền tím mảnh chứ không phải đường kẻ đen.
+        // Ô nghỉ: viền sáng mờ như mọi bề mặt khác. Ô đang gõ: viền tím kèm
+        // quầng sáng cùng tông — trên nền tối đây là cách duy nhất thể hiện
+        // tiêu điểm, vì bóng đen sẽ vô hình.
         border: Border.all(
-          color: focused ? Np.violet : Colors.transparent,
-          width: 1.6,
+          color: focused ? Np.violet : Np.line,
+          width: focused ? 1.6 : 1,
         ),
         boxShadow: focused
             ? [
                 BoxShadow(
-                  color: Np.violet.withValues(alpha: 0.14),
-                  blurRadius: 16,
+                  color: Np.violet.withValues(alpha: 0.28),
+                  blurRadius: 20,
                   offset: const Offset(0, 4),
                 ),
               ]
-            : Np.cardShadow,
+            : null,
       ),
       child: TextFormField(
         controller: controller,

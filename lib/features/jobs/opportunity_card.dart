@@ -173,7 +173,7 @@ class _Logo extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Np.bg,
+        color: Np.surfaceHi,
         borderRadius: BorderRadius.circular(Np.rSm + 2),
       ),
       child: ClipRRect(

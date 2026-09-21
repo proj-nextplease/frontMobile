@@ -47,7 +47,7 @@ class _GradientButtonState extends State<GradientButton> {
           decoration: BoxDecoration(
             gradient: Np.brand,
             borderRadius: BorderRadius.circular(Np.rLg),
-            boxShadow: widget.busy ? null : Np.brandShadow,
+            boxShadow: widget.busy ? null : Np.glow,
           ),
           child: widget.busy
               ? const SizedBox(

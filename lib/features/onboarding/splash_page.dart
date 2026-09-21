@@ -63,8 +63,8 @@ class _SplashPageState extends State<SplashPage>
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.light,    // iOS mô tả NỀN
-        statusBarIconBrightness: Brightness.dark, // Android mô tả ICON
+        statusBarBrightness: Brightness.dark,    // iOS mô tả NỀN
+        statusBarIconBrightness: Brightness.light, // Android mô tả ICON
       ),
       child: Scaffold(
         backgroundColor: Np.bg,
@@ -154,7 +154,7 @@ class _Orb extends StatelessWidget {
             shape: BoxShape.circle,
             gradient: RadialGradient(
               colors: [
-                color.withValues(alpha: 0.22 * t),
+                color.withValues(alpha: 0.40 * t),
                 color.withValues(alpha: 0),
               ],
             ),
