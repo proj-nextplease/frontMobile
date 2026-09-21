@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../core/api_client.dart';
+import '../profile/application_item.dart';
 import 'opportunity.dart';
 
 /// Những cơ hội người dùng ĐÃ nộp đơn.
@@ -19,6 +20,10 @@ class AppliedStore extends ChangeNotifier {
 
   final Set<String> _jobIds = {};
   final Set<String> _questIds = {};
+
+  /// Số đơn chưa có kết luận. Để ở đây chứ không ở màn Hồ sơ vì cùng một lệnh
+  /// gọi mạng đã lấy được — tính ở chỗ khác là gọi API lần hai cho cùng dữ liệu.
+  int openCount = 0;
   bool loaded = false;
 
   bool hasApplied(Opportunity o) =>
@@ -46,6 +51,12 @@ class AppliedStore extends ChangeNotifier {
     _questIds
       ..clear()
       ..addAll(_ids(res[1], 'questId'));
+
+    openCount = [...?res[0], ...?res[1]]
+        .whereType<Map<String, dynamic>>()
+        .where((m) =>
+            kOpenStatuses.contains('${m['status'] ?? ''}'.toUpperCase()))
+        .length;
     loaded = true;
     notifyListeners();
   }
@@ -61,6 +72,7 @@ class AppliedStore extends ChangeNotifier {
   void clear() {
     _jobIds.clear();
     _questIds.clear();
+    openCount = 0;
     loaded = false;
     notifyListeners();
   }

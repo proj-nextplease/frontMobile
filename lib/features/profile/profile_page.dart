@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
+import '../jobs/applied_store.dart';
 import '../jobs/saved_store.dart';
-import 'application_item.dart';
 import 'applications_page.dart';
 import 'me_store.dart';
+import 'notifications_page.dart';
+import 'notifications_store.dart';
 import 'portfolio_page.dart';
 import 'saved_list_page.dart';
 
@@ -45,14 +47,12 @@ class _ProfilePageState extends State<ProfilePage> {
   final _profile = MeStore.instance;
   Map<String, dynamic>? _me;
 
-  /// Số đơn chưa có kết luận. Nạp ở đây để con số nằm ngay trên hàng "Đơn đã
-  /// nộp" — người dùng biết có gì đáng mở trước khi bấm vào.
-  int _openApps = 0;
-
   @override
   void initState() {
     super.initState();
     _profile.addListener(_sync);
+    AppliedStore.instance.addListener(_sync);
+    NotificationsStore.instance.addListener(_sync);
     SavedStore.instance.addListener(_sync);
     if (!widget.isGuest) _loadMe();
   }
@@ -60,6 +60,8 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void dispose() {
     _profile.removeListener(_sync);
+    AppliedStore.instance.removeListener(_sync);
+    NotificationsStore.instance.removeListener(_sync);
     SavedStore.instance.removeListener(_sync);
     super.dispose();
   }
@@ -76,10 +78,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (old.isGuest && !widget.isGuest) _loadMe();
     if (!old.isGuest && widget.isGuest) {
       _profile.clear();
-      setState(() {
-        _me = null;
-        _openApps = 0;
-      });
+      setState(() => _me = null);
     }
   }
 
@@ -95,33 +94,10 @@ class _ProfilePageState extends State<ProfilePage> {
     }
 
     await _profile.hydrate();
-    await _countOpenApplications();
+    await NotificationsStore.instance.hydrate();
+    await AppliedStore.instance.hydrate();
   }
 
-  /// Đếm đơn chưa có kết luận, gộp cả đơn tin tuyển dụng và đơn quest.
-  Future<void> _countOpenApplications() async {
-    final res = await Future.wait([
-      _try('/me/applications'),
-      _try('/me/quest-applications'),
-    ]);
-    if (!mounted) return;
-    final n = res
-        .expand((l) => l ?? const [])
-        .whereType<Map<String, dynamic>>()
-        .where((m) =>
-            kOpenStatuses.contains('${m['status'] ?? ''}'.toUpperCase()))
-        .length;
-    setState(() => _openApps = n);
-  }
-
-  Future<List<dynamic>?> _try(String path) async {
-    try {
-      final d = await _api.get(path);
-      return d is List ? d : const [];
-    } on ApiException {
-      return null;
-    }
-  }
 
   void _push(Widget page) =>
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
@@ -149,6 +125,16 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: Np.s5),
 
             _NavRow(
+              icon: NpIcon.bolt,
+              label: 'Thông báo',
+              trailing: NotificationsStore.instance.unread > 0
+                  ? '${NotificationsStore.instance.unread} mới'
+                  : null,
+              highlight: NotificationsStore.instance.unread > 0,
+              onTap: () => _push(const NotificationsPage()),
+            ),
+            const SizedBox(height: Np.s2),
+            _NavRow(
               icon: NpIcon.heartFill,
               label: 'Tin đã lưu',
               trailing: '${SavedStore.instance.count}',
@@ -160,8 +146,10 @@ class _ProfilePageState extends State<ProfilePage> {
               label: 'Đơn đã nộp',
               // Chỉ hiện số khi CÓ đơn đang chờ. Một số 0 nằm cạnh nhãn chỉ
               // làm hàng này trông như đang báo lỗi.
-              trailing: _openApps > 0 ? '$_openApps đang chờ' : null,
-              highlight: _openApps > 0,
+              trailing: AppliedStore.instance.openCount > 0
+                  ? '${AppliedStore.instance.openCount} đang chờ'
+                  : null,
+              highlight: AppliedStore.instance.openCount > 0,
               onTap: () => _push(const ApplicationsPage()),
             ),
             const SizedBox(height: Np.s2),

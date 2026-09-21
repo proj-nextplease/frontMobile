@@ -8,7 +8,8 @@ import '../../core/theme.dart';
 import '../discussions/discussions_page.dart';
 import '../home/home_page.dart';
 import '../jobs/jobs_page.dart';
-import '../jobs/saved_store.dart';
+import '../jobs/applied_store.dart';
+import '../profile/notifications_store.dart';
 import '../jobs/search_page.dart';
 import '../jobs/seen_store.dart';
 import '../profile/gamification_store.dart';
@@ -58,6 +59,13 @@ class _MainShellState extends State<MainShell> {
   void _onTab(int i) {
     setState(() => _index = i);
     if (i == 1) SeenStore.instance.markSeen();
+    // IndexedStack giữ cả bốn tab sống, nên initState của tab Hồ sơ chỉ chạy
+    // đúng một lần. Không nạp lại ở đây thì vừa nộp đơn xong, quay sang tab
+    // Hồ sơ vẫn thấy "Đơn đã nộp" trống không.
+    if (i == 3 && !widget.isGuest) {
+      AppliedStore.instance.hydrate();
+      NotificationsStore.instance.hydrate();
+    }
   }
 
   /// Chỉ phản ứng với cú cuộn do NGƯỜI DÙNG kéo (UserScrollNotification).
@@ -424,10 +432,16 @@ class _Badge extends StatelessWidget {
       );
     }
     if (slot == 3) {
+      // Đếm THÔNG BÁO CHƯA ĐỌC, không phải số tin đã lưu.
+      //
+      // Huy hiệu trên thanh điều hướng có nghĩa "có việc cần bạn xem", còn số
+      // tin đã lưu là một con số tĩnh do chính người dùng tạo ra — nó không
+      // bao giờ tự về 0, nên cái chấm nằm đó mãi và người dùng học được cách
+      // phớt lờ nó. Khi đó thông báo thật đến cũng không ai để ý.
       return ListenableBuilder(
-        listenable: SavedStore.instance,
+        listenable: NotificationsStore.instance,
         builder: (context, _) =>
-            _dot(context, SavedStore.instance.count, showNumber: true),
+            _dot(context, NotificationsStore.instance.unread, showNumber: true),
       );
     }
     return const SizedBox.shrink();

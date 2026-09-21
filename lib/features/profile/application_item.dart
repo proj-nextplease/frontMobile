@@ -1,5 +1,8 @@
-import '../../core/theme.dart';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+
+import '../../core/theme.dart';
 
 /// Một đơn đã nộp — gộp chung đơn tin tuyển dụng và đơn quest.
 ///
@@ -18,6 +21,8 @@ class ApplicationItem {
     required this.isQuest,
     this.appliedAt,
     this.rejectReason,
+    this.coverNote,
+    this.history = const [],
   });
 
   final String id;
@@ -27,6 +32,20 @@ class ApplicationItem {
   final bool isQuest;
   final DateTime? appliedAt;
   final String? rejectReason;
+  final String? coverNote;
+
+  /// Các mốc trạng thái, cũ trước mới sau.
+  final List<StatusStep> history;
+
+  /// Rút đơn được khi nào. Danh sách trạng thái CẤM lấy từ
+  /// ApplicationService.withdrawApplication: WITHDRAWN, ACCEPTED, COMPLETED,
+  /// REJECTED. Kiểm ở đây để nút rút không hiện ra rồi mới báo lỗi 409 —
+  /// đúng cùng một lỗi trải nghiệm với rào ứng tuyển.
+  bool get canWithdraw => kOpenStatuses.contains(status);
+
+  String get withdrawPath => isQuest
+      ? '/me/quest-applications/$id/withdraw'
+      : '/me/applications/$id/withdraw';
 
   factory ApplicationItem.fromJob(Map<String, dynamic> m) => ApplicationItem(
         id: '${m['id']}',
@@ -36,6 +55,8 @@ class ApplicationItem {
         isQuest: false,
         appliedAt: _date(m['applied_at']),
         rejectReason: _str(m['reject_reason']),
+        coverNote: _str(m['cover_note']),
+        history: _history(m['statusHistory']),
       );
 
   factory ApplicationItem.fromQuest(Map<String, dynamic> m) => ApplicationItem(
@@ -46,6 +67,21 @@ class ApplicationItem {
         isQuest: true,
         appliedAt: _date(m['appliedAt']),
         rejectReason: _str(m['rejectReason']),
+        coverNote: _str(m['cover_note'] ?? m['coverNote']),
+        history: _history(m['statusHistory']),
+      );
+
+  /// Bản sao với trạng thái mới, kèm một mốc mới vào cuối dòng thời gian.
+  ApplicationItem withStatus(String next) => ApplicationItem(
+        id: id,
+        title: title,
+        companyName: companyName,
+        status: next,
+        isQuest: isQuest,
+        appliedAt: appliedAt,
+        rejectReason: rejectReason,
+        coverNote: coverNote,
+        history: [...history, StatusStep(status: next, at: DateTime.now())],
       );
 
   static String? _str(Object? v) {
@@ -55,6 +91,36 @@ class ApplicationItem {
 
   static DateTime? _date(Object? v) =>
       v == null ? null : DateTime.tryParse(v.toString())?.toLocal();
+
+  /// `statusHistory` về dưới dạng CHUỖI JSON, không phải mảng.
+  ///
+  /// Cả hai service đều ép kiểu `jsonb_agg(...)::text` trước khi trả, nên đọc
+  /// thẳng như một List sẽ luôn ra rỗng mà không ném lỗi — mốc trạng thái đơn
+  /// giản là không bao giờ hiện.
+  static List<StatusStep> _history(Object? v) {
+    if (v is! String || v.isEmpty) return const [];
+    try {
+      final raw = jsonDecode(v);
+      if (raw is! List) return const [];
+      return raw
+          .whereType<Map<String, dynamic>>()
+          .map((m) => StatusStep(
+                status: '${m['status'] ?? ''}'.toUpperCase(),
+                at: _date(m['at']),
+              ))
+          .where((e) => e.status.isNotEmpty)
+          .toList();
+    } on FormatException {
+      return const [];
+    }
+  }
+}
+
+/// Một mốc trong hành trình của đơn.
+class StatusStep {
+  const StatusStep({required this.status, this.at});
+  final String status;
+  final DateTime? at;
 }
 
 /// Các trạng thái CÒN ĐANG CHỜ, tức là chưa có kết luận.

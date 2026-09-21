@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../jobs/opportunity_labels.dart';
+import 'application_detail_page.dart';
 import 'application_item.dart';
 
 /// Danh sách đơn đã nộp.
@@ -115,7 +116,21 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
                             const SizedBox(height: Np.s4),
                           ],
                           for (final a in _items) ...[
-                            _Row(item: a),
+                            _Row(
+                              item: a,
+                              onTap: () async {
+                                await Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        ApplicationDetailPage(item: a),
+                                  ),
+                                );
+                                // Rút đơn xong thì trạng thái trong danh sách
+                                // phải đổi theo. Không nạp lại thì quay ra vẫn
+                                // thấy nhãn cũ.
+                                if (mounted) await _load();
+                              },
+                            ),
                             const SizedBox(height: Np.s2),
                           ],
                         ],
@@ -126,15 +141,19 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
 }
 
 class _Row extends StatelessWidget {
-  const _Row({required this.item});
+  const _Row({required this.item, required this.onTap});
   final ApplicationItem item;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
     final color = applicationStatusColor(item.status, c);
 
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
       padding: const EdgeInsets.all(Np.s4),
       decoration: Np.card(c, radius: Np.rMd),
       child: Column(
@@ -180,25 +199,12 @@ class _Row extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
 
-          // Lý do từ chối là thứ người dùng thật sự muốn đọc khi thấy nhãn đỏ.
-          // Giấu nó đi và chỉ hiện chữ "Từ chối" là cách chắc chắn làm người
-          // ta bực mà không học được gì.
-          if (item.status == 'REJECTED' &&
-              item.rejectReason != null &&
-              item.rejectReason!.isNotEmpty) ...[
-            const SizedBox(height: Np.s3),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(Np.s3),
-              decoration: BoxDecoration(
-                color: c.danger.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(Np.rSm),
-              ),
-              child: Text(item.rejectReason!,
-                  style: NpType.meta.copyWith(fontSize: 12.5, color: c.ink)),
-            ),
+
+            // Lý do từ chối KHÔNG in ở đây nữa: nó nằm trong màn chi tiết.
+            // Một lý do dài làm dòng cao gấp đôi các dòng khác, và danh sách
+            // mất nhịp ngay ở chỗ người dùng đang lướt nhanh.
           ],
-        ],
+        ),
       ),
     );
   }
