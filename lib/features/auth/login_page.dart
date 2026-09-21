@@ -82,14 +82,20 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      /* Chữ thanh trạng thái phải NGƯỢC với nền. iOS đọc statusBarBrightness
+         (mô tả NỀN), Android đọc statusBarIconBrightness (mô tả ICON) — hai
+         trường ngược nghĩa nhau. */
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.dark,      // iOS mô tả NỀN
-        statusBarIconBrightness: Brightness.light, // Android mô tả ICON
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: Np.bg,
+        backgroundColor: c.bg,
         body: SafeArea(
           child: ListView(
             // Đệm đáy cộng chiều cao bàn phím, nếu không bàn phím che mất nút.
@@ -114,8 +120,8 @@ class _LoginPageState extends State<LoginPage> {
                     child: Container(
                       width: 9,
                       height: 9,
-                      decoration: const BoxDecoration(
-                        color: Np.acid,
+                      decoration: BoxDecoration(
+                        color: c.acid,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -166,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
                           child: Text(
                             _obscure ? 'Hiện' : 'Ẩn',
                             style: NpType.meta.copyWith(
-                              color: Np.acid,
+                              color: c.acidText,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -228,7 +234,7 @@ class _LoginPageState extends State<LoginPage> {
                   onTap: _busy ? null : widget.onSkip,
                   child: Text('Xem cơ hội trước đã',
                       style: NpType.meta.copyWith(
-                        color: Np.faint,
+                        color: c.faint,
                         fontWeight: FontWeight.w500,
                       )),
                 ),
@@ -251,13 +257,14 @@ class _LoginPageState extends State<LoginPage> {
   void _goRegister() => _notYet('Đăng ký tài khoản');
 
   void _notYet(String what) {
+    final c = Np.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: Np.surfaceHi,
+        backgroundColor: c.surfaceHi,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Np.rSm),
-          side: const BorderSide(color: Np.line),
+          side: BorderSide(color: c.line),
         ),
         content: Text(
           '$what chưa có trong app. Tạm thời dùng trên website nhé.',
@@ -301,13 +308,14 @@ class _Field extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = Np.of(context);
     final focused = focusNode.hasFocus;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label.toUpperCase(),
-          style: NpType.label.copyWith(color: focused ? Np.acid : Np.faint),
+          style: NpType.label.copyWith(color: focused ? c.acidText : c.faint),
         ),
         const SizedBox(height: Np.s2),
         Row(
@@ -322,7 +330,7 @@ class _Field extends StatelessWidget {
                 onFieldSubmitted: onSubmitted,
                 autocorrect: false,
                 enableSuggestions: false,
-                cursorColor: Np.acid,
+                cursorColor: c.acidText,
                 cursorWidth: 1.6,
                 style: NpType.body.copyWith(
                   fontSize: 17,
@@ -332,7 +340,7 @@ class _Field extends StatelessWidget {
                   hintText: hint,
                   hintStyle: NpType.body.copyWith(
                     fontSize: 17,
-                    color: Np.faint,
+                    color: c.faint,
                     fontWeight: FontWeight.w400,
                   ),
                   isDense: true,
@@ -344,7 +352,7 @@ class _Field extends StatelessWidget {
                   focusedErrorBorder: InputBorder.none,
                   // Lỗi nằm dưới vạch nên chiều cao ô không nhảy khi lỗi hiện.
                   errorStyle: NpType.meta.copyWith(
-                    color: Np.danger,
+                    color: c.danger,
                     fontSize: 12.5,
                     height: 1.8,
                     fontWeight: FontWeight.w500,
@@ -359,7 +367,7 @@ class _Field extends StatelessWidget {
         AnimatedContainer(
           duration: const Duration(milliseconds: 160),
           height: focused ? 1.6 : 1,
-          color: focused ? Np.acid : Np.line,
+          color: focused ? c.acidText : c.line,
         ),
       ],
     );
@@ -378,7 +386,9 @@ class _SocialTile extends StatelessWidget {
   final bool enabled;
 
   @override
-  Widget build(BuildContext context) => Semantics(
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Semantics(
         button: true,
         label: 'Đăng nhập bằng ${provider.label}',
         child: GestureDetector(
@@ -388,27 +398,31 @@ class _SocialTile extends StatelessWidget {
             child: Container(
               height: 56,
               alignment: Alignment.center,
-              decoration: Np.card(radius: Np.rMd),
+              decoration: Np.card(c, radius: Np.rMd),
               child: SocialMark(provider: provider, size: 22),
             ),
           ),
         ),
       );
+  }
 }
 
 class _OrRow extends StatelessWidget {
   const _OrRow();
   @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          const Expanded(child: Divider(color: Np.line)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Np.s3),
-            child: Text('hoặc', style: NpType.meta.copyWith(color: Np.faint)),
-          ),
-          const Expanded(child: Divider(color: Np.line)),
-        ],
-      );
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Row(
+      children: [
+        Expanded(child: Divider(color: c.line)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Np.s3),
+          child: Text('hoặc', style: NpType.meta.copyWith(color: c.faint)),
+        ),
+        Expanded(child: Divider(color: c.line)),
+      ],
+    );
+  }
 }
 
 class _SignUpRow extends StatelessWidget {
@@ -416,7 +430,9 @@ class _SignUpRow extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => Center(
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Center(
         child: GestureDetector(
           onTap: onTap,
           child: Wrap(
@@ -427,7 +443,7 @@ class _SignUpRow extends StatelessWidget {
               Text(
                 'Đăng ký',
                 style: NpType.meta.copyWith(
-                  color: Np.acid,
+                  color: c.acidText,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -435,6 +451,7 @@ class _SignUpRow extends StatelessWidget {
           ),
         ),
       );
+  }
 }
 
 class _ErrorNote extends StatelessWidget {
@@ -442,26 +459,28 @@ class _ErrorNote extends StatelessWidget {
   final String message;
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Container(
         padding: const EdgeInsets.all(Np.s3 + 2),
         decoration: BoxDecoration(
-          color: Np.danger.withValues(alpha: 0.10),
+          color: c.danger.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(Np.rSm),
-          border: Border.all(color: Np.danger.withValues(alpha: 0.28)),
+          border: Border.all(color: c.danger.withValues(alpha: 0.28)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.error_outline_rounded,
-                color: Np.danger, size: 18),
+            Icon(Icons.error_outline_rounded, color: c.danger, size: 18),
             const SizedBox(width: Np.s2 + 2),
             Expanded(
               child: Text(
                 message,
-                style: NpType.meta.copyWith(color: Np.danger, fontSize: 13.5),
+                style: NpType.meta.copyWith(color: c.danger, fontSize: 13.5),
               ),
             ),
           ],
         ),
       );
+  }
 }

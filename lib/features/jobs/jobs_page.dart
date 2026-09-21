@@ -59,17 +59,20 @@ class _JobsPageState extends State<JobsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // Nền tối nên chữ thanh trạng thái phải SÁNG. iOS đọc
       // statusBarBrightness (mô tả NỀN), Android đọc statusBarIconBrightness
       // (mô tả ICON) — hai trường ngược nghĩa nhau.
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.dark,
-        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: Np.bg,
+        backgroundColor: c.bg,
         appBar: AppBar(
           titleSpacing: Np.gutter,
           toolbarHeight: 74,
@@ -85,18 +88,18 @@ class _JobsPageState extends State<JobsPage> {
         ),
         body: RefreshIndicator(
           onRefresh: _load,
-          color: Np.acid,
-          backgroundColor: Np.surfaceHi,
-          child: _buildBody(),
+          color: c.acid,
+          backgroundColor: c.surfaceHi,
+          child: _buildBody(c),
         ),
       ),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(NpColors c) {
     if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Np.acid, strokeWidth: 2.4),
+      return Center(
+        child: CircularProgressIndicator(color: c.acidText, strokeWidth: 2.4),
       );
     }
     if (_error != null) return _ErrorView(message: _error!, onRetry: _load);
@@ -143,6 +146,7 @@ class _Tabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = Np.of(context);
     final defs = <(OrgTab, String, int)>[
       (OrgTab.all, 'Tất cả', counts.all),
       (OrgTab.business, 'Doanh nghiệp', counts.business),
@@ -167,16 +171,16 @@ class _Tabs extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: Np.s4, vertical: Np.s2 + 2),
                 decoration: BoxDecoration(
-                  color: active ? Np.acid : Colors.transparent,
+                  color: active ? c.acid : Colors.transparent,
                   borderRadius: BorderRadius.circular(Np.rPill),
-                  border: Border.all(color: active ? Np.acid : Np.line),
+                  border: Border.all(color: active ? c.acid : c.line),
                 ),
                 child: Text(
                   '$label  $count',
                   style: NpType.meta.copyWith(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
-                    color: active ? Np.onAcid : Np.muted,
+                    color: active ? c.onAcid : c.muted,
                   ),
                 ),
               ),
@@ -191,17 +195,21 @@ class _Tabs extends StatelessWidget {
 class _EmptyView extends StatelessWidget {
   const _EmptyView();
   @override
-  Widget build(BuildContext context) => ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 90),
-          Icon(Icons.inbox_rounded, size: 40, color: Np.faint),
-          SizedBox(height: 14),
-          Center(
-            child: Text('Chưa có cơ hội nào ở mục này', style: NpType.meta),
-          ),
-        ],
-      );
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        const SizedBox(height: 90),
+        Icon(Icons.inbox_rounded, size: 40, color: c.faint),
+        const SizedBox(height: Np.s4),
+        Center(
+          child: Text('Chưa có cơ hội nào ở mục này',
+              style: NpType.meta.copyWith(color: c.muted)),
+        ),
+      ],
+    );
+  }
 }
 
 class _ErrorView extends StatelessWidget {
@@ -210,29 +218,31 @@ class _ErrorView extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(Np.gutter),
-        children: [
-          const SizedBox(height: 70),
-          const Icon(Icons.cloud_off_rounded, size: 40, color: Np.faint),
-          const SizedBox(height: 14),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: NpType.body,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Đang gọi: ${AppConfig.apiUrl}',
-            textAlign: TextAlign.center,
-            style: NpType.meta.copyWith(fontSize: 12, color: Np.faint),
-          ),
-          const SizedBox(height: 20),
-          Center(
-            child: AcidButton(
-                label: 'Thử lại', onTap: onRetry, expand: false),
-          ),
-        ],
-      );
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(Np.gutter),
+      children: [
+        const SizedBox(height: 70),
+        Icon(Icons.cloud_off_rounded, size: 40, color: c.faint),
+        const SizedBox(height: Np.s4),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: NpType.body.copyWith(color: c.ink),
+        ),
+        const SizedBox(height: Np.s2),
+        Text(
+          'Đang gọi: ${AppConfig.apiUrl}',
+          textAlign: TextAlign.center,
+          style: NpType.meta.copyWith(fontSize: 12, color: c.faint),
+        ),
+        const SizedBox(height: Np.s5),
+        Center(
+          child: AcidButton(label: 'Thử lại', onTap: onRetry, expand: false),
+        ),
+      ],
+    );
+  }
 }

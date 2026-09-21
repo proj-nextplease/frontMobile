@@ -32,7 +32,10 @@ class _AcidButtonState extends State<AcidButton> {
 
   @override
   Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final pressed = _down && !widget.busy;
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _down = true),
       onTapCancel: () => setState(() => _down = false),
@@ -53,26 +56,28 @@ class _AcidButtonState extends State<AcidButton> {
               : const EdgeInsets.symmetric(horizontal: Np.s6),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Np.acid,
+            color: c.acid,
             borderRadius: BorderRadius.circular(Np.rMd),
             // Quầng sáng tắt lúc bấm — nút "áp xuống mặt phẳng".
-            boxShadow: pressed || widget.busy ? null : Np.acidGlow,
+            boxShadow: pressed || widget.busy
+                ? null
+                : Np.glow(c, isDark: isDark),
           ),
           child: widget.busy
-              ? const SizedBox(
+              ? SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2.4, color: Np.onAcid),
+                      strokeWidth: 2.4, color: c.onAcid),
                 )
               : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(widget.label,
-                        style: NpType.button.copyWith(color: Np.onAcid)),
+                        style: NpType.button.copyWith(color: c.onAcid)),
                     if (widget.icon != null) ...[
                       const SizedBox(width: Np.s2),
-                      Icon(widget.icon, color: Np.onAcid, size: 18),
+                      Icon(widget.icon, color: c.onAcid, size: 18),
                     ],
                   ],
                 ),
@@ -84,35 +89,36 @@ class _AcidButtonState extends State<AcidButton> {
 
 /// Chip thông tin: viền mờ, không nền.
 ///
-/// Không tô nền cho chip: một dãy chip có nền trên nền tối tạo ra quá nhiều
-/// mảng sáng cạnh nhau, và mắt không còn biết đâu là thông tin chính. Viền mờ
-/// đủ để gom nhóm mà không tranh chấp với nội dung.
+/// Không tô nền cho chip: một dãy chip có nền tạo ra quá nhiều mảng cạnh nhau
+/// và mắt không còn biết đâu là thông tin chính. Viền mờ đủ để gom nhóm mà
+/// không tranh chấp với nội dung.
 class MetaChip extends StatelessWidget {
-  const MetaChip({super.key, required this.label, this.icon, this.tone});
+  const MetaChip({super.key, required this.label, this.icon, this.accent = false});
 
   final String label;
   final IconData? icon;
 
-  /// Chỉ truyền khi chip mang nghĩa đặc biệt (phần thưởng, trạng thái).
-  /// Mặc định trung tính.
-  final Color? tone;
+  /// Bật khi chip mang nghĩa đặc biệt. Mặc định trung tính — tô màu hết là
+  /// quay lại lỗi "quá nhiều màu".
+  final bool accent;
 
   @override
   Widget build(BuildContext context) {
-    final c = tone ?? Np.muted;
+    final c = Np.of(context);
+    final fg = accent ? c.acidText : c.muted;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: Np.s3, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(Np.rPill),
         border: Border.all(
-          color: tone == null ? Np.line : c.withValues(alpha: 0.35),
+          color: accent ? fg.withValues(alpha: 0.45) : c.line,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 13, color: c),
+            Icon(icon, size: 13, color: fg),
             const SizedBox(width: 5),
           ],
           Text(
@@ -120,7 +126,7 @@ class MetaChip extends StatelessWidget {
             style: NpType.meta.copyWith(
               fontSize: 12.5,
               fontWeight: FontWeight.w500,
-              color: tone == null ? Np.muted : c,
+              color: fg,
             ),
           ),
         ],
@@ -131,25 +137,29 @@ class MetaChip extends StatelessWidget {
 
 /// Nhãn mục nhỏ viết hoa, có gạch acid ngắn dẫn trước.
 ///
-/// Gạch dẫn là cách rẻ nhất để một nhãn 11px không bị trôi mất trên nền tối,
-/// mà không phải tăng cỡ chữ hay tô cả dòng thành màu.
+/// Gạch dẫn là cách rẻ nhất để một nhãn 11px không bị trôi mất, mà không phải
+/// tăng cỡ chữ hay tô cả dòng thành màu.
 class SectionLabel extends StatelessWidget {
   const SectionLabel(this.text, {super.key});
   final String text;
 
   @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          Container(
-            width: 14,
-            height: 2,
-            decoration: BoxDecoration(
-              color: Np.acid,
-              borderRadius: BorderRadius.circular(2),
-            ),
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Row(
+      children: [
+        Container(
+          width: 14,
+          height: 2,
+          decoration: BoxDecoration(
+            color: c.acidText,
+            borderRadius: BorderRadius.circular(2),
           ),
-          const SizedBox(width: Np.s2),
-          Text(text.toUpperCase(), style: NpType.label),
-        ],
-      );
+        ),
+        const SizedBox(width: Np.s2),
+        Text(text.toUpperCase(),
+            style: NpType.label.copyWith(color: c.muted)),
+      ],
+    );
+  }
 }

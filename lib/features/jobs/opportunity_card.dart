@@ -29,6 +29,7 @@ class OpportunityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = Np.of(context);
     final posted = relativeTime(item.createdAt);
     final isQuest = item.kind == OpportunityKind.quest;
     final hasPay = item.compensation != null && item.compensation! > 0;
@@ -37,7 +38,7 @@ class OpportunityCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(Np.s5),
-        decoration: Np.card(),
+        decoration: Np.card(c),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -54,7 +55,7 @@ class OpportunityCard extends StatelessWidget {
                   ),
                 ),
                 if (isQuest)
-                  const MetaChip(label: 'Quest', tone: Np.acid),
+                  const MetaChip(label: 'Quest', accent: true),
               ],
             ),
             const SizedBox(height: Np.s4),
@@ -79,7 +80,7 @@ class OpportunityCard extends StatelessWidget {
                   style: NpType.title.copyWith(
                     fontSize: hasPay ? 19 : 15,
                     fontWeight: FontWeight.w700,
-                    color: hasPay ? Np.acid : Np.muted,
+                    color: hasPay ? c.acidText : c.muted,
                     letterSpacing: -0.4,
                   ),
                 ),
@@ -110,10 +111,10 @@ class OpportunityCard extends StatelessWidget {
 
             if (posted.isNotEmpty) ...[
               const SizedBox(height: Np.s4),
-              const Divider(color: Np.line, height: 1),
+              Divider(color: c.line, height: 1),
               const SizedBox(height: Np.s3),
               Text(posted,
-                  style: NpType.meta.copyWith(fontSize: 12, color: Np.faint)),
+                  style: NpType.meta.copyWith(fontSize: 12, color: c.faint)),
             ],
           ],
         ),
@@ -135,6 +136,7 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = Np.of(context);
     const size = 26.0;
     final trimmed = name.trim();
     final initials = trimmed.isEmpty
@@ -146,15 +148,15 @@ class _Logo extends StatelessWidget {
           height: size,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Np.surfaceHi,
+            color: c.surfaceHi,
             borderRadius: BorderRadius.circular(7),
-            border: Border.all(color: Np.line),
+            border: Border.all(color: c.line),
           ),
           child: Text(
             initials,
             style: NpType.label.copyWith(
               fontSize: 9.5,
-              color: Np.muted,
+              color: c.muted,
               letterSpacing: 0,
             ),
           ),

@@ -54,7 +54,10 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
     return MaterialApp(
       title: 'nextplease',
       debugShowCheckedModeBanner: false,
-      theme: buildNpTheme(),
+      // Hai bộ theme, MaterialApp tự chọn theo cài đặt sáng/tối của máy.
+      // themeMode mặc định là ThemeMode.system nên không cần khai báo.
+      theme: buildNpTheme(Brightness.light),
+      darkTheme: buildNpTheme(Brightness.dark),
       home: switch (_stage) {
         _Stage.splash => SplashPage(onDone: _afterSplash),
         _Stage.login => LoginPage(

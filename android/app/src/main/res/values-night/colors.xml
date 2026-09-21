@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nền splash native, CHẾ ĐỘ TỐI. Trùng NpColors.dark.bg. -->
+    <color name="np_launch_bg">#FF0B0B0D</color>
+</resources>

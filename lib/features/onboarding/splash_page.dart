@@ -98,21 +98,28 @@ class _SplashPageState extends State<SplashPage>
 
   @override
   Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      /* Chữ thanh trạng thái phải NGƯỢC với nền. iOS đọc statusBarBrightness
+         (mô tả NỀN), Android đọc statusBarIconBrightness (mô tả ICON) — hai
+         trường ngược nghĩa nhau, nên cùng một chế độ phải đặt hai giá trị
+         trái dấu. */
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.dark,      // iOS mô tả NỀN
-        statusBarIconBrightness: Brightness.light, // Android mô tả ICON
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: Np.bg,
+        backgroundColor: c.bg,
         body: AnimatedBuilder(
           animation: Listenable.merge([_c, _float]),
           builder: (context, _) => Stack(
             children: [
               Positioned.fill(
                 child: CustomPaint(
-                  painter: _DotGrid(progress: _grid.value),
+                  painter: _DotGrid(progress: _grid.value, ink: c.ink),
                 ),
               ),
 
@@ -125,6 +132,7 @@ class _SplashPageState extends State<SplashPage>
                   // nhưng dùng chung một mạch.
                   t: ((_c.value - card.delay) / 0.22).clamp(0.0, 1.0),
                   drift: _float.value,
+                  colors: c,
                 ),
 
               Center(
@@ -133,17 +141,24 @@ class _SplashPageState extends State<SplashPage>
                   // bằng đúng chữ "nextplease", mà chữ đó gần bằng bề ngang
                   // màn hình, nên nó tràn ra cả hai mép.
                   padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                  /* Căn GIỮA, không phải căn trái.
+                     Bản trước căn trái: khối nội dung rộng bằng đúng chữ
+                     "nextplease" còn vạch và dòng phụ thì ngắn hơn nhiều, nên
+                     bên phải hở ra một mảng trống lớn và trông như lỗi. Căn
+                     giữa làm mọi phần tử cùng chung một trục, khoảng trống hai
+                     bên bằng nhau. */
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      _Sweep(t: _bar.value),
+                      _Sweep(t: _bar.value, color: c.acid),
                       const SizedBox(height: Np.s5),
                       _MaskedRise(
                         t: _word.value,
                         child: Text(
                           'nextplease',
-                          style: NpType.display.copyWith(fontSize: 40),
+                          style: NpType.display
+                              .copyWith(fontSize: 40, color: c.ink),
                         ),
                       ),
                       const SizedBox(height: Np.s2),
@@ -151,7 +166,8 @@ class _SplashPageState extends State<SplashPage>
                         t: _tag.value,
                         child: Text(
                           'hồ sơ dựa trên bằng chứng',
-                          style: NpType.meta.copyWith(fontSize: 14),
+                          style: NpType.meta
+                              .copyWith(fontSize: 14, color: c.muted),
                         ),
                       ),
                     ],
@@ -165,7 +181,7 @@ class _SplashPageState extends State<SplashPage>
                 left: Np.gutter,
                 right: Np.gutter,
                 bottom: Np.s10,
-                child: _ProgressLine(t: _progress.value),
+                child: _ProgressLine(t: _progress.value, colors: c),
               ),
             ],
           ),
@@ -177,8 +193,9 @@ class _SplashPageState extends State<SplashPage>
 
 /// Vạch acid kéo ngang, có chấm sáng chạy ở đầu mũi.
 class _Sweep extends StatelessWidget {
-  const _Sweep({required this.t});
+  const _Sweep({required this.t, required this.color});
   final double t;
+  final Color color;
 
   @override
   Widget build(BuildContext context) => SizedBox(
@@ -191,7 +208,7 @@ class _Sweep extends StatelessWidget {
               width: 190 * t,
               height: 3,
               decoration: BoxDecoration(
-                color: Np.acid,
+                color: color,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -202,11 +219,11 @@ class _Sweep extends StatelessWidget {
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: Np.acid,
+                    color: color,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: Np.acid.withValues(alpha: 0.6),
+                        color: color.withValues(alpha: 0.6),
                         blurRadius: 12,
                       ),
                     ],
@@ -229,8 +246,11 @@ class _MaskedRise extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ClipRect(
+        // topCenter chứ không topLeft: Align quyết định cả vị trí ngang, nên
+        // topLeft sẽ dạt chữ về trái trong khi vạch ở trên đã căn giữa — hai
+        // phần tử lệch trục nhau.
         child: Align(
-          alignment: Alignment.topLeft,
+          alignment: Alignment.topCenter,
           heightFactor: 1,
           child: Transform.translate(
             offset: Offset(0, 40 * (1 - t)),
@@ -248,6 +268,7 @@ class _FloatingCard extends StatelessWidget {
     required this.angle,
     required this.t,
     required this.drift,
+    required this.colors,
   });
 
   final String label;
@@ -257,6 +278,8 @@ class _FloatingCard extends StatelessWidget {
 
   /// 0..1 lặp vô hạn, dùng làm pha của chuyển động trôi.
   final double drift;
+
+  final NpColors colors;
 
   @override
   Widget build(BuildContext context) {
@@ -281,16 +304,16 @@ class _FloatingCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: Np.s3, vertical: Np.s2 - 1),
                 decoration: BoxDecoration(
-                  color: Np.surfaceHi,
+                  color: colors.surfaceHi,
                   borderRadius: BorderRadius.circular(Np.rPill),
-                  border: Border.all(color: Np.line),
+                  border: Border.all(color: colors.line),
                 ),
                 child: Text(
                   label,
                   style: NpType.meta.copyWith(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w500,
-                    color: Np.muted,
+                    color: colors.muted,
                   ),
                 ),
               ),
@@ -303,8 +326,9 @@ class _FloatingCard extends StatelessWidget {
 }
 
 class _ProgressLine extends StatelessWidget {
-  const _ProgressLine({required this.t});
+  const _ProgressLine({required this.t, required this.colors});
   final double t;
+  final NpColors colors;
 
   @override
   Widget build(BuildContext context) => ClipRRect(
@@ -313,10 +337,10 @@ class _ProgressLine extends StatelessWidget {
           height: 2,
           child: Stack(
             children: [
-              Container(color: Np.line),
+              Container(color: colors.line),
               FractionallySizedBox(
                 widthFactor: t.clamp(0.0, 1.0),
-                child: Container(color: Np.acid),
+                child: Container(color: colors.acid),
               ),
             ],
           ),
@@ -330,8 +354,12 @@ class _ProgressLine extends StatelessWidget {
 /// là một Container thì cây widget phình lên vô ích, còn ở đây chỉ là một lượt
 /// drawCircle.
 class _DotGrid extends CustomPainter {
-  _DotGrid({required this.progress});
+  _DotGrid({required this.progress, required this.ink});
   final double progress;
+
+  /// Chấm vẽ bằng màu MỰC, không phải màu cố định: ở chế độ sáng thì chấm
+  /// phải tối đi mới thấy được, ngược hẳn với chế độ tối.
+  final Color ink;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -340,7 +368,7 @@ class _DotGrid extends CustomPainter {
     const gap = 34.0;
     final center = Offset(size.width / 2, size.height / 2);
     final maxDist = center.distance;
-    final paint = Paint()..color = Np.ink;
+    final paint = Paint()..color = ink;
 
     for (double y = gap / 2; y < size.height; y += gap) {
       for (double x = gap / 2; x < size.width; x += gap) {
@@ -353,11 +381,12 @@ class _DotGrid extends CustomPainter {
 
         // Mờ dần về rìa, để lưới không tranh chấp với chữ ở giữa.
         final alpha = 0.055 * local * (1 - d * 0.55);
-        canvas.drawCircle(p, 1.3, paint..color = Np.ink.withValues(alpha: alpha));
+        canvas.drawCircle(p, 1.3, paint..color = ink.withValues(alpha: alpha));
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant _DotGrid old) => old.progress != progress;
+  bool shouldRepaint(covariant _DotGrid old) =>
+      old.progress != progress || old.ink != ink;
 }

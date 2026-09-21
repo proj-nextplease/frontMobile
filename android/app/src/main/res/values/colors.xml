@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Trùng Np.bg trong lib/core/design.dart. Lệch nhau thì lúc mở app sẽ
-         thấy một cú chớp đổi màu ở chỗ nối giữa splash native và khung hình
-         đầu tiên của Flutter. -->
-    <color name="np_bg">#FF0B0B0D</color>
+    <!-- Nền splash native, CHẾ ĐỘ SÁNG. Trùng NpColors.light.bg trong
+         lib/core/design.dart. Lệch nhau thì lúc mở app sẽ thấy một cú chớp
+         đổi màu ở chỗ nối giữa splash native và khung hình đầu của Flutter. -->
+    <color name="np_launch_bg">#FFFBFBFA</color>
 </resources>
