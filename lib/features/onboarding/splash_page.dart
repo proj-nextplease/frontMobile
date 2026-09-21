@@ -3,15 +3,15 @@ import 'package:flutter/services.dart';
 
 import '../../core/theme.dart';
 
-/// Màn hình mở app — hệ giấy/sticker.
+/// Màn hình mở app.
 ///
 /// Hai lớp splash chứ không phải một:
 ///   1. Splash NATIVE (Info.plist, styles.xml) — hiện ngay khoảnh khắc chạm
 ///      icon, trước cả khi Flutter khởi động. Không lập trình được gì ở đó.
 ///   2. Màn hình này — chạy SAU khi Flutter sẵn sàng, nên mới có hoạt hoạ.
 ///
-/// Hai lớp phải CÙNG MÀU NỀN, nếu không sẽ thấy một cú chớp đổi màu ở chỗ nối.
-/// Đổi Paper.bg ở đây thì phải đổi cả LaunchScreen.storyboard và colors.xml.
+/// Hai lớp phải CÙNG MÀU NỀN. Đổi Np.bg thì phải đổi cả LaunchScreen.storyboard
+/// và colors.xml, nếu không sẽ thấy một cú chớp đổi màu ở chỗ nối.
 ///
 /// Thời lượng cố ý ngắn: đây là thuế thu trên MỌI lần mở app.
 class SplashPage extends StatefulWidget {
@@ -31,17 +31,17 @@ class _SplashPageState extends State<SplashPage>
   );
 
   // Lệch pha để mắt có thứ tự bám theo, thay vì mọi thứ cùng bật một lúc.
-  late final _card = CurvedAnimation(
+  late final _orb = CurvedAnimation(
     parent: _c,
-    curve: const Interval(0.0, 0.45, curve: Curves.easeOutBack),
+    curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic),
+  );
+  late final _word = CurvedAnimation(
+    parent: _c,
+    curve: const Interval(0.22, 0.65, curve: Curves.easeOutCubic),
   );
   late final _tagline = CurvedAnimation(
     parent: _c,
-    curve: const Interval(0.35, 0.7, curve: Curves.easeOut),
-  );
-  late final _stickers = CurvedAnimation(
-    parent: _c,
-    curve: const Interval(0.5, 0.9, curve: Curves.easeOutBack),
+    curve: const Interval(0.45, 0.85, curve: Curves.easeOut),
   );
 
   @override
@@ -67,75 +67,61 @@ class _SplashPageState extends State<SplashPage>
         statusBarIconBrightness: Brightness.dark, // Android mô tả ICON
       ),
       child: Scaffold(
-        backgroundColor: Paper.bg,
-        body: Center(
-          child: AnimatedBuilder(
-            animation: _c,
-            builder: (context, _) => Stack(
-              alignment: Alignment.center,
-              children: [
-                // Ba sticker nhỏ bay quanh, hiện sau cùng.
-                _Sticker(
-                  t: _stickers.value,
-                  offset: const Offset(-118, -86),
-                  angle: -0.22,
-                  fill: Paper.coral,
-                  glyph: '★',
-                ),
-                _Sticker(
-                  t: _stickers.value,
-                  offset: const Offset(126, -54),
-                  angle: 0.26,
-                  fill: Paper.violet,
-                  glyph: '✦',
-                ),
-                _Sticker(
-                  t: _stickers.value,
-                  offset: const Offset(-96, 92),
-                  angle: 0.16,
-                  fill: Paper.lime,
-                  glyph: '✓',
-                  glyphColor: Paper.ink,
-                ),
-
-                Column(
+        backgroundColor: Np.bg,
+        body: AnimatedBuilder(
+          animation: _c,
+          builder: (context, _) => Stack(
+            children: [
+              // Hai quầng gradient mờ nở ra từ nền. Đây là nguồn màu duy nhất
+              // của màn hình — chữ giữ nguyên màu mực.
+              _Orb(
+                t: _orb.value,
+                alignment: const Alignment(-0.85, -0.6),
+                size: 320,
+                color: Np.violet,
+              ),
+              _Orb(
+                t: _orb.value,
+                alignment: const Alignment(0.9, 0.35),
+                size: 280,
+                color: Np.pink,
+              ),
+              Center(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Transform.scale(
-                      scale: _card.value,
-                      child: Container(
-                        padding: const EdgeInsets.fromLTRB(20, 13, 20, 15),
-                        decoration: Paper.card(
-                          fill: Paper.lime, radius: 18, dx: 5, dy: 5,
-                        ),
-                        child: const Text(
-                          'nextplease:',
-                          style: TextStyle(
-                            color: Paper.ink,
-                            fontSize: 34,
+                    Opacity(
+                      opacity: _word.value,
+                      child: Transform.translate(
+                        offset: Offset(0, 14 * (1 - _word.value)),
+                        child: GradientText(
+                          'nextplease',
+                          style: const TextStyle(
+                            fontSize: 40,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: -1.3,
-                            height: 1,
+                            letterSpacing: -2,
+                            height: 1.1,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
                     Opacity(
                       opacity: _tagline.value,
                       child: const Text(
                         'hồ sơ dựa trên bằng chứng',
                         style: TextStyle(
-                          color: Paper.ink,
+                          color: Np.muted,
                           fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -0.2,
                         ),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -143,43 +129,34 @@ class _SplashPageState extends State<SplashPage>
   }
 }
 
-class _Sticker extends StatelessWidget {
-  const _Sticker({
+/// Quầng sáng mờ. Dùng gradient radial tắt dần về trong suốt thay vì
+/// ImageFiltered(blur): blur thật tốn GPU và ở đây không nhìn ra khác biệt.
+class _Orb extends StatelessWidget {
+  const _Orb({
     required this.t,
-    required this.offset,
-    required this.angle,
-    required this.fill,
-    required this.glyph,
-    this.glyphColor = Paper.bg,
+    required this.alignment,
+    required this.size,
+    required this.color,
   });
 
   final double t;
-  final Offset offset;
-  final double angle;
-  final Color fill;
-  final String glyph;
-  final Color glyphColor;
+  final Alignment alignment;
+  final double size;
+  final Color color;
 
   @override
-  Widget build(BuildContext context) => Transform.translate(
-        offset: offset,
-        child: Transform.rotate(
-          angle: angle,
-          child: Transform.scale(
-            scale: t,
-            child: Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: Paper.card(fill: fill, radius: 12, dx: 3, dy: 3),
-              child: Text(
-                glyph,
-                style: TextStyle(
-                  color: glyphColor,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+  Widget build(BuildContext context) => Align(
+        alignment: alignment,
+        child: Container(
+          width: size * (0.6 + 0.4 * t),
+          height: size * (0.6 + 0.4 * t),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [
+                color.withValues(alpha: 0.22 * t),
+                color.withValues(alpha: 0),
+              ],
             ),
           ),
         ),

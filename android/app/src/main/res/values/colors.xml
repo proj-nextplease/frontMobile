@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Trùng Paper.bg trong lib/core/paper_theme.dart. Lệch nhau thì lúc mở
-         app sẽ thấy một cú chớp đổi màu ở chỗ nối giữa splash native và
-         khung hình đầu tiên của Flutter. -->
-    <color name="np_paper">#FFFBF7EF</color>
+    <!-- Trùng Np.bg trong lib/core/design.dart. Lệch nhau thì lúc mở app sẽ
+         thấy một cú chớp đổi màu ở chỗ nối giữa splash native và khung hình
+         đầu tiên của Flutter. -->
+    <color name="np_bg">#FFF7F7FB</color>
 </resources>

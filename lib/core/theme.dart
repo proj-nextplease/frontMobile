@@ -1,52 +1,38 @@
 import 'package:flutter/material.dart';
 
-import 'paper_theme.dart';
+import 'design.dart';
 
-export 'paper_theme.dart';
+export 'design.dart';
+export 'widgets.dart';
 
-/// Theme của app — hệ GIẤY/STICKER cho toàn bộ màn hình.
-///
-/// Trước đây app dùng hệ tối `nextplease-dark` như web. Đổi hết sang hệ giấy
-/// theo yêu cầu: app di động hướng tới sinh viên, và hệ giấy đã là ngôn ngữ
-/// nextplease dùng cho các bề mặt hướng tới họ (trang portfolio công khai).
-///
-/// Giữ hai hệ trong cùng một app sẽ tệ hơn chọn hẳn một: người dùng đi từ
-/// màn hình sáng sang màn hình tối trong cùng một luồng sẽ tưởng mình đã
-/// rời khỏi app.
 ThemeData buildNpTheme() {
-  const base = TextStyle(color: Paper.ink, height: 1.4, letterSpacing: -0.1);
+  const base = TextStyle(color: Np.ink, height: 1.4, letterSpacing: -0.2);
 
   return ThemeData(
     useMaterial3: true,
-    scaffoldBackgroundColor: Paper.bg,
+    scaffoldBackgroundColor: Np.bg,
     colorScheme: const ColorScheme.light(
-      primary: Paper.ink,
-      onPrimary: Paper.bg,
-      secondary: Paper.violet,
-      surface: Paper.bg,
-      onSurface: Paper.ink,
-      error: Paper.coral,
+      primary: Np.violet,
+      onPrimary: Colors.white,
+      secondary: Np.pink,
+      surface: Np.surface,
+      onSurface: Np.ink,
     ),
     appBarTheme: const AppBarTheme(
-      backgroundColor: Paper.bg,
+      backgroundColor: Np.bg,
       surfaceTintColor: Colors.transparent,
-      foregroundColor: Paper.ink,
+      foregroundColor: Np.ink,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
     ),
     textTheme: TextTheme(
-      titleMedium: base.copyWith(fontSize: 17, fontWeight: FontWeight.w800, height: 1.25),
+      titleLarge: base.copyWith(fontSize: 26, fontWeight: FontWeight.w800, height: 1.15),
+      titleMedium: base.copyWith(fontSize: 16.5, fontWeight: FontWeight.w700, height: 1.3),
       bodyMedium: base.copyWith(fontSize: 15.5),
-      bodySmall: base.copyWith(
-        fontSize: 13.5,
-        height: 1.4,
-        color: Paper.ink.withValues(alpha: 0.62),
-      ),
-      labelLarge: base.copyWith(fontSize: 15, fontWeight: FontWeight.w800, height: 1),
+      bodySmall: base.copyWith(fontSize: 13.5, color: Np.muted, height: 1.4),
+      labelLarge: base.copyWith(fontSize: 15.5, fontWeight: FontWeight.w700, height: 1),
     ),
-    dividerTheme: const DividerThemeData(
-      color: Paper.ink, thickness: 1.5, space: 1.5,
-    ),
+    dividerTheme: const DividerThemeData(color: Np.line, thickness: 1, space: 1),
   );
 }

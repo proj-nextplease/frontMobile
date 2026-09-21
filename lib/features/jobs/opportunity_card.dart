@@ -7,15 +7,15 @@ import '../../core/theme.dart';
 import 'opportunity.dart';
 import 'opportunity_labels.dart';
 
-/// Thẻ một cơ hội — hệ giấy/sticker.
+/// Thẻ một cơ hội.
 ///
-/// Một quyết định đi ngược bản năng: thẻ ở đây KHÔNG có bóng đổ cứng, chỉ có
-/// viền 2px. DESIGN.md nói rõ "bóng đổ cứng chỉ cho các tấm lớn; gắn cho từng
-/// ô thì 30 cái bóng chồng xuống một cột". Danh sách này có 10–14 thẻ, đủ để
-/// biến thành một cột bóng lởm chởm và làm mắt không bám được nội dung.
-///
-/// Bóng cứng vẫn giữ cho những thứ ĐƠN LẺ trên màn hình: chip lọc đang chọn,
-/// nhãn Quest, nút. Đó là cách "loud ở vỏ, calm ở ruột" áp vào một danh sách.
+/// Kỷ luật màu: đa số chip là trung tính. Chỉ hai thứ được tô màu, và mỗi màu
+/// mang đúng một nghĩa —
+///   tím   = quest (loại cơ hội khác)
+///   mint  = phần thưởng EXP
+/// Lương KHÔNG tô màu dù nó quan trọng nhất; nó nổi bằng chữ đậm và cỡ lớn
+/// hơn. Tô màu cho mọi thứ quan trọng là cách nhanh nhất quay lại lỗi "quá
+/// nhiều màu" của bản trước.
 class OpportunityCard extends StatelessWidget {
   const OpportunityCard({super.key, required this.item, this.onTap});
 
@@ -28,126 +28,91 @@ class OpportunityCard extends StatelessWidget {
     final posted = relativeTime(item.createdAt);
     final isQuest = item.kind == OpportunityKind.quest;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Paper.bg,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Paper.ink, width: Paper.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _Logo(url: item.companyLogo, name: item.companyName),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.title,
-                        style: t.titleMedium,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        item.companyName,
-                        style: t.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(Np.rLg),
+        child: Container(
+          padding: const EdgeInsets.all(Np.cardPad),
+          decoration: Np.card(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _Logo(url: item.companyLogo, name: item.companyName),
+                  const SizedBox(width: 13),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.title,
+                            style: t.titleMedium,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 3),
+                        Text(item.companyName,
+                            style: t.bodySmall,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                      ],
+                    ),
                   ),
-                ),
-                if (isQuest) const _QuestTag(),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 7,
-              runSpacing: 7,
-              children: [
-                _Chip(
-                  label: salaryLabel(
-                    compensation: item.compensation,
-                    isQuest: isQuest,
-                  ),
-                  // Tiền là thứ ứng viên quét mắt tìm đầu tiên — cho nó nền lime.
-                  fill: item.compensation != null ? Paper.lime : null,
-                ),
-                _Chip(
-                  label: item.isRemote
-                      ? '${item.location ?? "Không rõ"} · Remote'
-                      : (item.location ?? 'Không rõ'),
-                ),
-                _Chip(label: typeLabel(item.typeCode)),
-                if (item.expReward != null)
-                  _Chip(label: '+${item.expReward} EXP', fill: Paper.violet, onDark: true),
-              ],
-            ),
-            if (posted.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text(
-                posted,
-                style: t.bodySmall?.copyWith(fontSize: 12.5),
+                  if (isQuest) ...[
+                    const SizedBox(width: 8),
+                    const SoftChip(label: 'Quest', tone: Np.violet),
+                  ],
+                ],
               ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      salaryLabel(
+                        compensation: item.compensation,
+                        isQuest: isQuest,
+                      ),
+                      style: t.titleMedium?.copyWith(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: item.compensation != null ? Np.ink : Np.muted,
+                      ),
+                    ),
+                  ),
+                  if (item.expReward != null)
+                    SoftChip(label: '+${item.expReward} EXP', tone: Np.mint),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 7,
+                runSpacing: 7,
+                children: [
+                  SoftChip(
+                    icon: Icons.place_outlined,
+                    label: item.isRemote
+                        ? '${item.location ?? "Không rõ"} · Remote'
+                        : (item.location ?? 'Không rõ'),
+                  ),
+                  SoftChip(
+                    icon: Icons.work_outline_rounded,
+                    label: typeLabel(item.typeCode),
+                  ),
+                ],
+              ),
+              if (posted.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(posted, style: t.bodySmall?.copyWith(fontSize: 12.5)),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
   }
-}
-
-class _QuestTag extends StatelessWidget {
-  const _QuestTag();
-  @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(left: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        decoration: Paper.card(fill: Paper.coral, radius: 999, dx: 2, dy: 2),
-        child: const Text(
-          'QUEST',
-          style: TextStyle(
-            color: Paper.bg,
-            fontSize: 10.5,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.5,
-            height: kViUppercaseLineHeight,
-          ),
-        ),
-      );
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({required this.label, this.fill, this.onDark = false});
-  final String label;
-  final Color? fill;
-  final bool onDark;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: fill ?? Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: Paper.ink, width: 1.5),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12.8,
-            fontWeight: FontWeight.w700,
-            color: onDark ? Paper.bg : Paper.ink,
-          ),
-        ),
-      );
 }
 
 /// Logo tổ chức, có phương án dự phòng.
@@ -163,7 +128,7 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const size = 46.0;
+    const size = 48.0;
     final trimmed = name.trim();
     final initials = trimmed.isEmpty
         ? 'NP'
@@ -174,14 +139,13 @@ class _Logo extends StatelessWidget {
           height: size,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Paper.violet,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Paper.ink, width: 1.5),
+            gradient: Np.brand,
+            borderRadius: BorderRadius.circular(Np.rSm + 2),
           ),
           child: Text(
             initials,
             style: const TextStyle(
-              color: Paper.bg,
+              color: Colors.white,
               fontWeight: FontWeight.w800,
               fontSize: 15,
             ),
@@ -209,12 +173,11 @@ class _Logo extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Paper.bg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Paper.ink, width: 1.5),
+        color: Np.bg,
+        borderRadius: BorderRadius.circular(Np.rSm + 2),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10.5),
+        borderRadius: BorderRadius.circular(Np.rSm + 2),
         child: image,
       ),
     );

@@ -10,7 +10,7 @@ void main() {
     await tester.pumpWidget(const NextPleaseApp());
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('nextplease:'), findsOneWidget);
+    expect(find.text('nextplease'), findsOneWidget);
     expect(find.text('hồ sơ dựa trên bằng chứng'), findsOneWidget);
   });
 }

@@ -60,39 +60,37 @@ class _JobsPageState extends State<JobsPage> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // Nền sáng nên phải ép chữ thanh trạng thái sang tối, nếu không giờ và
-      // pin vẽ màu trắng và gần như vô hình.
+      // Nền sáng nên phải ép chữ thanh trạng thái sang tối. iOS đọc
+      // statusBarBrightness (mô tả NỀN), Android đọc statusBarIconBrightness
+      // (mô tả ICON) — hai trường ngược nghĩa nhau.
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.light,    // iOS mô tả NỀN
-        statusBarIconBrightness: Brightness.dark, // Android mô tả ICON
+        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: Paper.bg,
+        backgroundColor: Np.bg,
         appBar: AppBar(
-          titleSpacing: NpSpace.gutter,
-          title: Row(
+          titleSpacing: Np.gutter,
+          toolbarHeight: 62,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: Paper.card(fill: Paper.lime, radius: 10, dx: 3, dy: 3),
-                child: const Text(
-                  'Cơ hội',
-                  style: TextStyle(
-                    color: Paper.ink,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 20,
-                    height: 1.2,
-                  ),
-                ),
-              ),
+              Text('Cơ hội',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontSize: 27,
+                        letterSpacing: -0.9,
+                      )),
+              Text('${_items.length} vị trí đang mở',
+                  style: Theme.of(context).textTheme.bodySmall),
             ],
           ),
         ),
         body: RefreshIndicator(
           onRefresh: _load,
-          color: Paper.ink,
-          backgroundColor: Paper.lime,
+          color: Np.violet,
+          backgroundColor: Np.surface,
           child: _buildBody(),
         ),
       ),
@@ -102,7 +100,7 @@ class _JobsPageState extends State<JobsPage> {
   Widget _buildBody() {
     if (_loading) {
       return const Center(
-        child: CircularProgressIndicator(color: Paper.ink, strokeWidth: 3),
+        child: CircularProgressIndicator(color: Np.violet, strokeWidth: 3),
       );
     }
     if (_error != null) return _ErrorView(message: _error!, onRetry: _load);
@@ -124,7 +122,7 @@ class _JobsPageState extends State<JobsPage> {
               ? const _EmptyView()
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(
-                      NpSpace.gutter, 4, NpSpace.gutter, 28),
+                      Np.gutter, 4, Np.gutter, 28),
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: list.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 14),
@@ -159,7 +157,7 @@ class _Tabs extends StatelessWidget {
       height: 58,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: NpSpace.gutter),
+        padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
         itemCount: defs.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
@@ -169,22 +167,22 @@ class _Tabs extends StatelessWidget {
             child: GestureDetector(
               onTap: () => onChanged(tab),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
+                duration: const Duration(milliseconds: 150),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: active ? Paper.lime : Paper.bg,
-                  borderRadius: BorderRadius.circular(NpRadius.pill),
-                  border: Border.all(color: Paper.ink, width: Paper.border),
-                  // Bóng cứng CHỈ cho chip đang chọn — đây là thứ đơn lẻ trên
-                  // màn hình, khác với thẻ trong danh sách.
-                  boxShadow: active ? Paper.hardShadow(dx: 3, dy: 3) : null,
+                  // Chip đang chọn mang gradient thương hiệu; chip nghỉ là thẻ
+                  // trắng. Không viền ở cả hai trạng thái.
+                  gradient: active ? Np.brand : null,
+                  color: active ? null : Np.surface,
+                  borderRadius: BorderRadius.circular(Np.rPill),
+                  boxShadow: active ? Np.brandShadow : Np.cardShadow,
                 ),
                 child: Text(
                   '$label  $count',
                   style: TextStyle(
-                    color: Paper.ink,
-                    fontWeight: FontWeight.w800,
+                    color: active ? Colors.white : Np.ink,
+                    fontWeight: FontWeight.w600,
                     fontSize: 13.6,
                   ),
                 ),
@@ -204,12 +202,12 @@ class _EmptyView extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         children: const [
           SizedBox(height: 90),
-          Icon(Icons.inbox_outlined, size: 44, color: Paper.ink),
+          Icon(Icons.inbox_rounded, size: 44, color: Np.muted),
           SizedBox(height: 14),
           Center(
             child: Text(
               'Chưa có cơ hội nào ở mục này',
-              style: TextStyle(color: Paper.ink, fontWeight: FontWeight.w600),
+              style: TextStyle(color: Np.muted, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -224,39 +222,28 @@ class _ErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(NpSpace.gutter),
+        padding: const EdgeInsets.all(Np.gutter),
         children: [
           const SizedBox(height: 70),
-          const Icon(Icons.cloud_off_outlined, size: 44, color: Paper.ink),
+          const Icon(Icons.cloud_off_rounded, size: 44, color: Np.muted),
           const SizedBox(height: 14),
           Text(
             message,
             textAlign: TextAlign.center,
             style: const TextStyle(
-                color: Paper.ink, height: 1.5, fontWeight: FontWeight.w600),
+                color: Np.ink, height: 1.5, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
           Text(
             'Đang gọi: ${AppConfig.apiUrl}',
             textAlign: TextAlign.center,
-            style: TextStyle(
-                color: Paper.ink.withValues(alpha: 0.6), fontSize: 12),
+            style: const TextStyle(color: Np.muted, fontSize: 12),
           ),
           const SizedBox(height: 20),
           Center(
-            child: FilledButton(
-              onPressed: onRetry,
-              style: FilledButton.styleFrom(
-                backgroundColor: Paper.lime,
-                foregroundColor: Paper.ink,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
-                shape: StadiumBorder(
-                  side: BorderSide(color: Paper.ink, width: Paper.border),
-                ),
-              ),
-              child: const Text('Thử lại',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
+            child: SizedBox(
+              width: 170,
+              child: GradientButton(label: 'Thử lại', onTap: onRetry),
             ),
           ),
         ],
