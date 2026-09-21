@@ -162,6 +162,20 @@ class _HomePageState extends State<HomePage> {
       });
     final rail = recent.take(6).toList();
 
+    // Sắp hết hạn: chỉ những tin CÒN hạn và hạn gần nhất. Tin đã quá hạn bị
+    // loại hẳn — nhắc người dùng về một cơ hội họ không còn nộp được nữa là
+    // vô ích và gây bực.
+    final now = DateTime.now();
+    final closing = _items
+        .where((o) {
+          final d = o.deadlineAt ?? o.endsAt;
+          return d != null && d.isAfter(now);
+        })
+        .toList()
+      ..sort((a, b) => (a.deadlineAt ?? a.endsAt)!
+          .compareTo((b.deadlineAt ?? b.endsAt)!));
+    final closingTop = closing.take(3).toList();
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -230,6 +244,34 @@ class _HomePageState extends State<HomePage> {
                   ),
           ),
 
+          // Sắp hết hạn: danh sách DỌC và gọn, không phải băng chuyền nữa.
+          // Đổi kiểu trình bày là có chủ ý — hai băng chuyền chồng nhau sẽ
+          // biến trang thành một dãy thanh cuốn, và người dùng không biết
+          // phần nào đáng dừng lại.
+          if (closingTop.isNotEmpty) ...[
+            const SizedBox(height: Np.s8),
+            const _RailHead(title: 'Sắp hết hạn'),
+            const SizedBox(height: Np.s4),
+            for (final item in closingTop) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                child: _DeadlineRow(
+                  item: item,
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => OpportunityDetailPage(
+                        summary: item,
+                        isGuest: widget.isGuest,
+                        onSignIn: widget.onSignIn,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: Np.s2),
+            ],
+          ],
+
           if (_topics.isNotEmpty) ...[
             const SizedBox(height: Np.s8),
             const _RailHead(title: 'Sinh viên đang bàn'),
@@ -245,6 +287,12 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ],
+
+          const SizedBox(height: Np.s10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+            child: _ClosingCard(onSeeAll: widget.onSeeAll, total: _items.length),
+          ),
         ],
       ),
       ),
@@ -624,6 +672,117 @@ class _RailSkeleton extends StatelessWidget {
       itemCount: 2,
       separatorBuilder: (_, _) => const SizedBox(width: Np.s3),
       itemBuilder: (_, _) => Container(width: 254, decoration: Np.card(c)),
+    );
+  }
+}
+
+/// Một dòng "sắp hết hạn": ngắn, chỉ nói tiêu đề và còn mấy ngày.
+///
+/// Số ngày là thông tin CHÍNH ở đây nên nó đứng riêng bên phải và được tô
+/// màu, khác hẳn thẻ trong băng chuyền nơi lương mới là thứ nổi.
+class _DeadlineRow extends StatelessWidget {
+  const _DeadlineRow({required this.item, required this.onTap});
+  final Opportunity item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final left = daysLeft(item.deadlineAt ?? item.endsAt) ?? 0;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: Np.s4, vertical: Np.s3 + 2),
+        decoration: Np.card(c, radius: Np.rMd),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.title,
+                      style: NpType.body.copyWith(
+                        color: c.ink,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 2),
+                  Text(item.companyName,
+                      style: NpType.meta.copyWith(fontSize: 12, color: c.muted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            const SizedBox(width: Np.s3),
+            Text(
+              left == 0 ? 'hôm nay' : 'còn $left ngày',
+              style: NpType.meta.copyWith(
+                // Dưới 7 ngày thì chuyển sang màu cảnh báo. Đây là lúc con số
+                // thật sự có nghĩa với người đang cân nhắc nộp đơn.
+                color: left <= 7 ? c.danger : c.acidText,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Khối kết thúc trang. Ngoài việc lấp chỗ trống, nó trả lời câu hỏi tự nhiên
+/// của người vừa cuộn hết: "vậy còn gì nữa không".
+class _ClosingCard extends StatelessWidget {
+  const _ClosingCard({required this.onSeeAll, required this.total});
+  final VoidCallback onSeeAll;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return GestureDetector(
+      onTap: onSeeAll,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(Np.s5),
+        decoration: BoxDecoration(
+          color: c.band,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(Np.rLg),
+            topRight: Radius.circular(Np.rLg),
+            bottomRight: Radius.circular(Np.rLg),
+            bottomLeft: Radius.circular(40),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Còn $total cơ hội đang mở',
+                      style: NpType.h1.copyWith(fontSize: 19, color: c.onBand)),
+                  const SizedBox(height: 3),
+                  Text('Xem hết trong tab Cơ hội',
+                      style: NpType.meta.copyWith(
+                          color: c.onBand.withValues(alpha: 0.6))),
+                ],
+              ),
+            ),
+            Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(color: c.acid, shape: BoxShape.circle),
+              child: NpIco(NpIcon.arrow, size: 19, color: c.onAcid),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

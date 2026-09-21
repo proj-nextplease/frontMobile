@@ -5,8 +5,12 @@ import 'package:flutter/material.dart';
 /// Dựng bằng ThemeExtension thay vì hằng số tĩnh: hằng số tĩnh không đổi được
 /// theo chế độ máy, mà app này cần thích ứng. Widget lấy màu qua `Np.of(context)`.
 ///
-/// Một ràng buộc thật của bảng màu này: **lime trên nền sáng gần như không đọc
-/// được**. Nên có hai token riêng —
+/// Vì sao KHÔNG dùng lime nữa: lime nằm ở vùng hue vàng-xanh, nên hạ độ sáng
+/// xuống cho đủ tương phản trên nền trắng thì nó thành màu ô-liu quân đội —
+/// nhìn không ra là cùng màu với bản sáng. Xanh lá thật (hue ~150) thì đậm
+/// lên vẫn đọc ra là xanh lá.
+///
+/// Vẫn giữ hai token riêng —
 ///   `acid`     : dùng làm NỀN (nút, chip đang chọn). Sáng hay tối đều dùng
 ///                được vì chữ đặt lên nó luôn là màu mực.
 ///   `acidText` : dùng làm MÀU CHỮ. Ở chế độ tối thì vẫn là lime; ở chế độ
@@ -68,9 +72,9 @@ class NpColors extends ThemeExtension<NpColors> {
     muted: Color(0xFF86868E),
     faint: Color(0xFF5A5A62),
     line: Color(0x14FFFFFF),
-    acid: Color(0xFFC8FF4D),
-    acidText: Color(0xFFC8FF4D),
-    onAcid: Color(0xFF0B0B0D),
+    acid: Color(0xFF2EE87F),
+    acidText: Color(0xFF3CEE8A),
+    onAcid: Color(0xFF07160D),
     danger: Color(0xFFFF6B6B),
     band: Color(0xFF1C1C22),
     onBand: Color(0xFFFAFAFA),
@@ -86,11 +90,11 @@ class NpColors extends ThemeExtension<NpColors> {
     muted: Color(0xFF6E6E7A),
     faint: Color(0xFF9B9BA6),
     line: Color(0x14000000),
-    acid: Color(0xFFC8FF4D),
-    // Lime nguyên bản trên nền trắng có độ tương phản khoảng 1.3:1 — dưới xa
-    // ngưỡng đọc được. Phiên bản đậm này đạt ~4.6:1.
-    acidText: Color(0xFF4E7A00),
-    onAcid: Color(0xFF14141A),
+    acid: Color(0xFF2EE87F),
+    // Cùng hue với bản sáng, chỉ hạ độ sáng — nên vẫn đọc ra là một màu. Đạt
+    // khoảng 4.8:1 trên nền trắng.
+    acidText: Color(0xFF0B7A42),
+    onAcid: Color(0xFF07160D),
     danger: Color(0xFFD92D20),
     band: Color(0xFF14141A),
     onBand: Color(0xFFFAFAFA),
@@ -214,9 +218,11 @@ abstract final class NpType {
   /// Archivo là font BIẾN THIÊN với trục chiều rộng (wdth). Nén về 88 cho
   /// tiêu đề khổng lồ vẫn vừa một dòng mà không phải giảm cỡ chữ — giảm cỡ là
   /// cách làm mất luôn độ tương phản vừa dựng lên.
+  /// wdth 94 chứ không 88. Nén sâu làm chữ trông gắng sức; 94 vẫn gọn hơn
+  /// mặc định mà không bóp các dấu tiếng Việt.
   static const _archivo = [
     FontVariation('wght', 800),
-    FontVariation('wdth', 88),
+    FontVariation('wdth', 94),
   ];
 
   /// line-height 1.0 — với chữ hoa tiếng Việt thì 0.95 là SÀN tuyệt đối, dưới
@@ -229,12 +235,19 @@ abstract final class NpType {
     letterSpacing: -1.4,
   );
 
+  /// Tiêu đề cỡ vừa dùng Be Vietnam Pro, KHÔNG phải Archivo nén.
+  ///
+  /// Archivo ở trục wdth 88 là chữ nén — rất hiệu quả ở cỡ 38px trở lên, nơi
+  /// cần dồn nhiều chữ vào một dòng. Nhưng xuống cỡ 23px thì nét dọc sít lại
+  /// và các dấu tiếng Việt chen nhau, đọc ra là chật chứ không phải chắc.
+  /// Trộn hai font vẫn giữ, nhưng ranh giới rõ hơn: Archivo CHỈ cho chữ
+  /// khổng lồ, mọi thứ còn lại là Be Vietnam Pro.
   static const h1 = TextStyle(
-    fontFamily: 'Archivo',
-    fontVariations: _archivo,
-    fontSize: 28,
-    height: 1.08,
-    letterSpacing: -0.9,
+    fontFamily: 'BeVietnamPro',
+    fontSize: 22,
+    fontWeight: FontWeight.w700,
+    height: 1.25,
+    letterSpacing: -0.5,
   );
 
   static const title = TextStyle(
