@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -225,11 +227,20 @@ class _BottomBar extends StatelessWidget {
       ),
     ];
 
+    /* Khoảng hở dưới đáy.
+
+       Trước đây là s3 CỘNG toàn bộ vùng an toàn (46pt trên iPhone 17), khiến
+       thanh trôi khá cao. Giờ trừ bớt để nó xích xuống sát hơn.
+
+       Vẫn phải chừa một chút: thanh gạt Home của iOS nằm trong vùng đó, và
+       dán sát mép thì người dùng vuốt lên thoát app sẽ chạm nhầm vào tab.
+       max(...) là để lo cho máy KHÔNG có thanh gạt — Android phím cứng hay
+       iPhone đời cũ có vùng an toàn bằng 0, lúc đó phải tự chừa 8pt. */
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    final gap = math.max(Np.s2, safeBottom - Np.s4);
+
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        Np.s4, 0, Np.s4,
-        Np.s3 + MediaQuery.paddingOf(context).bottom,
-      ),
+      padding: EdgeInsets.fromLTRB(Np.s4, 0, Np.s4, gap),
       child: Row(
         children: [
           Expanded(

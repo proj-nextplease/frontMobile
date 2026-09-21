@@ -161,7 +161,7 @@ abstract final class Np {
   /// Thanh điều hướng NỔI và đè lên nội dung (extendBody), nên nếu không chừa
   /// thì mục cuối cùng của mọi danh sách bị nó che. 66 là chiều cao thanh,
   /// cộng lề và một khoảng thở.
-  static const navInset = 72.0 + s3 + s5;
+  static const navInset = 72.0 + s2 + s5;
 
   /// Quầng sáng dưới nút nhấn — ánh sáng màu hắt xuống, không phải bóng đen.
   /// Ở chế độ sáng thì nhạt hơn, vì trên nền trắng quầng đậm trông như vết bẩn.
