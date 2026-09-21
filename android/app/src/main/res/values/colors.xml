@@ -3,5 +3,5 @@
     <!-- Trùng Np.bg trong lib/core/design.dart. Lệch nhau thì lúc mở app sẽ
          thấy một cú chớp đổi màu ở chỗ nối giữa splash native và khung hình
          đầu tiên của Flutter. -->
-    <color name="np_bg">#FF0A0A0F</color>
+    <color name="np_bg">#FF0B0B0D</color>
 </resources>

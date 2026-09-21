@@ -51,7 +51,6 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    // Ô đang gõ có viền tím; phải vẽ lại khi tiêu điểm đổi.
     _emailFocus.addListener(_redraw);
     _passwordFocus.addListener(_redraw);
   }
@@ -84,155 +83,158 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // Nền tối nên chữ thanh trạng thái phải SÁNG. iOS đọc
-      // statusBarBrightness (mô tả NỀN), Android đọc statusBarIconBrightness
-      // (mô tả ICON) — hai trường ngược nghĩa nhau.
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.dark,
-        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,      // iOS mô tả NỀN
+        statusBarIconBrightness: Brightness.light, // Android mô tả ICON
       ),
       child: Scaffold(
         backgroundColor: Np.bg,
-        body: Stack(
-          children: [
-            // Quầng gradient duy nhất, neo ở góc trên. Toàn bộ màu của màn
-            // hình đến từ đây và từ nút chính — không rải ra chỗ khác.
-            const _TopGlow(),
-            SafeArea(
-              child: ListView(
-                // Đệm đáy cộng chiều cao bàn phím, nếu không bàn phím che mất
-                // nút Đăng nhập.
-                padding: EdgeInsets.fromLTRB(
-                  Np.gutter, 12, Np.gutter,
-                  28 + MediaQuery.viewInsetsOf(context).bottom,
-                ),
+        body: SafeArea(
+          child: ListView(
+            // Đệm đáy cộng chiều cao bàn phím, nếu không bàn phím che mất nút.
+            padding: EdgeInsets.fromLTRB(
+              Np.gutter, Np.s6, Np.gutter,
+              Np.s8 + MediaQuery.viewInsetsOf(context).bottom,
+            ),
+            children: [
+              const SectionLabel('Đăng nhập'),
+              const SizedBox(height: Np.s5),
+
+              // Tiêu đề khổng lồ cạnh nhãn 11px ở trên — đây chính là độ
+              // tương phản cỡ chữ mà bốn bản trước thiếu.
+              Text('Chào bạn,', style: NpType.display),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  const SizedBox(height: 26),
-                  Text('Chào bạn 👋',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          )),
-                  const SizedBox(height: 8),
-                  const _Headline(),
-                  const SizedBox(height: 32),
-
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        _Field(
-                          controller: _email,
-                          focusNode: _emailFocus,
-                          hint: 'Email',
-                          icon: Icons.alternate_email_rounded,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          onSubmitted: (_) => _passwordFocus.requestFocus(),
-                          validator: (v) {
-                            final s = (v ?? '').trim();
-                            if (s.isEmpty) return 'Chưa nhập email';
-                            if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                                .hasMatch(s)) {
-                              return 'Email không hợp lệ';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 13),
-                        _Field(
-                          controller: _password,
-                          focusNode: _passwordFocus,
-                          hint: 'Mật khẩu',
-                          icon: Icons.lock_outline_rounded,
-                          obscure: _obscure,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => _submit(),
-                          validator: (v) =>
-                              (v ?? '').isEmpty ? 'Chưa nhập mật khẩu' : null,
-                          trailing: IconButton(
-                            onPressed: () =>
-                                setState(() => _obscure = !_obscure),
-                            icon: Icon(
-                              _obscure
-                                  ? Icons.visibility_off_rounded
-                                  : Icons.visibility_rounded,
-                              color: Np.muted,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: _busy ? null : _forgotPassword,
-                      style: TextButton.styleFrom(
-                        foregroundColor: Np.violet,
-                        minimumSize: Size.zero,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  Text('quay lại nhé', style: NpType.display),
+                  // Dấu chấm acid: điểm màu duy nhất ở nửa trên màn hình.
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 7, left: 3),
+                    child: Container(
+                      width: 9,
+                      height: 9,
+                      decoration: const BoxDecoration(
+                        color: Np.acid,
+                        shape: BoxShape.circle,
                       ),
-                      child: const Text('Quên mật khẩu?',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 13.5)),
-                    ),
-                  ),
-
-                  if (_error != null) ...[
-                    const SizedBox(height: 4),
-                    _ErrorNote(message: _error!),
-                    const SizedBox(height: 4),
-                  ],
-
-                  const SizedBox(height: 12),
-                  GradientButton(
-                    label: 'Đăng nhập',
-                    busy: _busy,
-                    onTap: _submit,
-                    icon: Icons.arrow_forward_rounded,
-                  ),
-
-                  const SizedBox(height: 26),
-                  const _OrRow(),
-                  const SizedBox(height: 16),
-
-                  Row(
-                    children: [
-                      for (final p in SocialProvider.values) ...[
-                        Expanded(
-                          child: _SocialTile(
-                            provider: p,
-                            enabled: !_busy,
-                            onTap: () => _run(() => widget.onSocialLogin(p)),
-                          ),
-                        ),
-                        if (p != SocialProvider.values.last)
-                          const SizedBox(width: 11),
-                      ],
-                    ],
-                  ),
-
-                  const SizedBox(height: 26),
-                  _SignUpRow(onTap: _busy ? null : _goRegister),
-                  const SizedBox(height: 4),
-                  Center(
-                    child: TextButton(
-                      onPressed: _busy ? null : widget.onSkip,
-                      style: TextButton.styleFrom(foregroundColor: Np.muted),
-                      child: const Text('Xem cơ hội trước đã',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 14.5)),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+
+              const SizedBox(height: Np.s10),
+
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    _Field(
+                      controller: _email,
+                      focusNode: _emailFocus,
+                      label: 'Email',
+                      hint: 'ban@truong.edu.vn',
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) => _passwordFocus.requestFocus(),
+                      validator: (v) {
+                        final s = (v ?? '').trim();
+                        if (s.isEmpty) return 'Chưa nhập email';
+                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                            .hasMatch(s)) {
+                          return 'Email không hợp lệ';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: Np.s5),
+                    _Field(
+                      controller: _password,
+                      focusNode: _passwordFocus,
+                      label: 'Mật khẩu',
+                      hint: 'Ít nhất 6 ký tự',
+                      obscure: _obscure,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _submit(),
+                      validator: (v) =>
+                          (v ?? '').isEmpty ? 'Chưa nhập mật khẩu' : null,
+                      trailing: GestureDetector(
+                        onTap: () => setState(() => _obscure = !_obscure),
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: Np.s3),
+                          child: Text(
+                            _obscure ? 'Hiện' : 'Ẩn',
+                            style: NpType.meta.copyWith(
+                              color: Np.acid,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: Np.s4),
+              Align(
+                alignment: Alignment.centerRight,
+                child: GestureDetector(
+                  onTap: _busy ? null : _forgotPassword,
+                  child: Text('Quên mật khẩu?',
+                      style: NpType.meta.copyWith(fontWeight: FontWeight.w500)),
+                ),
+              ),
+
+              if (_error != null) ...[
+                const SizedBox(height: Np.s5),
+                _ErrorNote(message: _error!),
+              ],
+
+              const SizedBox(height: Np.s6),
+              AcidButton(
+                label: 'Đăng nhập',
+                busy: _busy,
+                onTap: _submit,
+                icon: Icons.arrow_forward_rounded,
+              ),
+
+              const SizedBox(height: Np.s8),
+              const _OrRow(),
+              const SizedBox(height: Np.s5),
+
+              Row(
+                children: [
+                  for (final p in SocialProvider.values) ...[
+                    Expanded(
+                      child: _SocialTile(
+                        provider: p,
+                        enabled: !_busy,
+                        onTap: () => _run(() => widget.onSocialLogin(p)),
+                      ),
+                    ),
+                    if (p != SocialProvider.values.last)
+                      const SizedBox(width: Np.s3),
+                  ],
+                ],
+              ),
+
+              const SizedBox(height: Np.s8),
+              _SignUpRow(onTap: _busy ? null : _goRegister),
+              const SizedBox(height: Np.s5),
+              Center(
+                child: GestureDetector(
+                  onTap: _busy ? null : widget.onSkip,
+                  child: Text('Xem cơ hội trước đã',
+                      style: NpType.meta.copyWith(
+                        color: Np.faint,
+                        fontWeight: FontWeight.w500,
+                      )),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -251,73 +253,33 @@ class _LoginPageState extends State<LoginPage> {
   void _notYet(String what) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: Np.ink,
+        backgroundColor: Np.surfaceHi,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Np.rSm)),
+          borderRadius: BorderRadius.circular(Np.rSm),
+          side: const BorderSide(color: Np.line),
+        ),
         content: Text(
           '$what chưa có trong app. Tạm thời dùng trên website nhé.',
-          style: const TextStyle(fontWeight: FontWeight.w500),
+          style: NpType.body.copyWith(fontSize: 14),
         ),
       ),
     );
   }
 }
 
-class _TopGlow extends StatelessWidget {
-  const _TopGlow();
-  @override
-  Widget build(BuildContext context) => Positioned(
-        top: -140,
-        right: -90,
-        child: Container(
-          width: 340,
-          height: 340,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              colors: [
-                Np.violet.withValues(alpha: 0.38),
-                Np.pink.withValues(alpha: 0.12),
-                Np.pink.withValues(alpha: 0),
-              ],
-              stops: const [0, 0.55, 1],
-            ),
-          ),
-        ),
-      );
-}
-
-class _Headline extends StatelessWidget {
-  const _Headline();
-  @override
-  Widget build(BuildContext context) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Tìm việc xịn,',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 32,
-                    letterSpacing: -1.1,
-                  )),
-          // Chỉ MỘT cụm được tô gradient trên mỗi màn hình. Tô nhiều chỗ thì
-          // không còn chỗ nào là điểm nhấn.
-          GradientText(
-            'xây hồ sơ thật.',
-            style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                  fontSize: 32,
-                  letterSpacing: -1.1,
-                ),
-          ),
-        ],
-      );
-}
-
+/// Ô nhập kiểu "gạch chân", không phải hộp.
+///
+/// Đây là thay đổi bố cục đáng kể nhất so với bốn bản trước: hộp viền kín làm
+/// biểu mẫu trông nặng và chiếm nhiều chiều cao. Gạch chân nhẹ hơn hẳn, và
+/// dồn sự chú ý vào chính chữ người dùng gõ. Vạch đổi sang acid khi đang gõ —
+/// đó là toàn bộ chỉ báo tiêu điểm cần có.
 class _Field extends StatelessWidget {
   const _Field({
     required this.controller,
     required this.focusNode,
+    required this.label,
     required this.hint,
-    required this.icon,
     this.obscure = false,
     this.keyboardType,
     this.textInputAction,
@@ -328,8 +290,8 @@ class _Field extends StatelessWidget {
 
   final TextEditingController controller;
   final FocusNode focusNode;
+  final String label;
   final String hint;
-  final IconData icon;
   final bool obscure;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
@@ -340,63 +302,66 @@ class _Field extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final focused = focusNode.hasFocus;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 130),
-      decoration: BoxDecoration(
-        color: focused ? Np.surfaceHi : Np.surface,
-        borderRadius: BorderRadius.circular(Np.rMd),
-        // Ô nghỉ: viền sáng mờ như mọi bề mặt khác. Ô đang gõ: viền tím kèm
-        // quầng sáng cùng tông — trên nền tối đây là cách duy nhất thể hiện
-        // tiêu điểm, vì bóng đen sẽ vô hình.
-        border: Border.all(
-          color: focused ? Np.violet : Np.line,
-          width: focused ? 1.6 : 1,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: NpType.label.copyWith(color: focused ? Np.acid : Np.faint),
         ),
-        boxShadow: focused
-            ? [
-                BoxShadow(
-                  color: Np.violet.withValues(alpha: 0.28),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
+        const SizedBox(height: Np.s2),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: controller,
+                focusNode: focusNode,
+                obscureText: obscure,
+                keyboardType: keyboardType,
+                textInputAction: textInputAction,
+                onFieldSubmitted: onSubmitted,
+                autocorrect: false,
+                enableSuggestions: false,
+                cursorColor: Np.acid,
+                cursorWidth: 1.6,
+                style: NpType.body.copyWith(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w500,
                 ),
-              ]
-            : null,
-      ),
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        obscureText: obscure,
-        keyboardType: keyboardType,
-        textInputAction: textInputAction,
-        onFieldSubmitted: onSubmitted,
-        autocorrect: false,
-        enableSuggestions: false,
-        cursorColor: Np.violet,
-        style: const TextStyle(
-            color: Np.ink, fontSize: 16, fontWeight: FontWeight.w500),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: const TextStyle(color: Np.muted, fontWeight: FontWeight.w400),
-          prefixIcon: Icon(icon,
-              size: 20, color: focused ? Np.violet : Np.muted),
-          suffixIcon: trailing,
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(vertical: 17),
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          errorBorder: InputBorder.none,
-          focusedErrorBorder: InputBorder.none,
-          // Lỗi hiện dưới khung để chiều cao ô không nhảy khi lỗi xuất hiện.
-          errorStyle: const TextStyle(
-            color: Color(0xFFE5484D),
-            fontWeight: FontWeight.w600,
-            fontSize: 12.5,
-            height: 1.6,
-          ),
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: NpType.body.copyWith(
+                    fontSize: 17,
+                    color: Np.faint,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.only(bottom: Np.s3),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  focusedErrorBorder: InputBorder.none,
+                  // Lỗi nằm dưới vạch nên chiều cao ô không nhảy khi lỗi hiện.
+                  errorStyle: NpType.meta.copyWith(
+                    color: Np.danger,
+                    fontSize: 12.5,
+                    height: 1.8,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                validator: validator,
+              ),
+            ),
+            ?trailing,
+          ],
         ),
-        validator: validator,
-      ),
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          height: focused ? 1.6 : 1,
+          color: focused ? Np.acid : Np.line,
+        ),
+      ],
     );
   }
 }
@@ -419,12 +384,12 @@ class _SocialTile extends StatelessWidget {
         child: GestureDetector(
           onTap: enabled ? onTap : null,
           child: Opacity(
-            opacity: enabled ? 1 : 0.45,
+            opacity: enabled ? 1 : 0.4,
             child: Container(
-              height: 58,
+              height: 56,
               alignment: Alignment.center,
               decoration: Np.card(radius: Np.rMd),
-              child: SocialMark(provider: provider, size: 24),
+              child: SocialMark(provider: provider, size: 22),
             ),
           ),
         ),
@@ -434,15 +399,14 @@ class _SocialTile extends StatelessWidget {
 class _OrRow extends StatelessWidget {
   const _OrRow();
   @override
-  Widget build(BuildContext context) => const Row(
+  Widget build(BuildContext context) => Row(
         children: [
-          Expanded(child: Divider(color: Np.line)),
+          const Expanded(child: Divider(color: Np.line)),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12),
-            child: Text('hoặc tiếp tục với',
-                style: TextStyle(color: Np.muted, fontSize: 13)),
+            padding: const EdgeInsets.symmetric(horizontal: Np.s3),
+            child: Text('hoặc', style: NpType.meta.copyWith(color: Np.faint)),
           ),
-          Expanded(child: Divider(color: Np.line)),
+          const Expanded(child: Divider(color: Np.line)),
         ],
       );
 }
@@ -453,24 +417,22 @@ class _SignUpRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            const Text('Chưa có tài khoản? ',
-                style: TextStyle(color: Np.muted, fontSize: 15)),
-            GestureDetector(
-              onTap: onTap,
-              child: const Text(
-                'Đăng ký ngay',
-                style: TextStyle(
-                  color: Np.violet,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text('Chưa có tài khoản? ', style: NpType.meta),
+              Text(
+                'Đăng ký',
+                style: NpType.meta.copyWith(
+                  color: Np.acid,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
 }
@@ -479,29 +441,24 @@ class _ErrorNote extends StatelessWidget {
   const _ErrorNote({required this.message});
   final String message;
 
-  static const _red = Color(0xFFE5484D);
-
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(13),
+        padding: const EdgeInsets.all(Np.s3 + 2),
         decoration: BoxDecoration(
-          color: _red.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(Np.rMd),
+          color: Np.danger.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(Np.rSm),
+          border: Border.all(color: Np.danger.withValues(alpha: 0.28)),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.error_outline_rounded, color: _red, size: 19),
-            const SizedBox(width: 10),
+            const Icon(Icons.error_outline_rounded,
+                color: Np.danger, size: 18),
+            const SizedBox(width: Np.s2 + 2),
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(
-                  color: _red,
-                  fontSize: 14,
-                  height: 1.45,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: NpType.meta.copyWith(color: Np.danger, fontSize: 13.5),
               ),
             ),
           ],

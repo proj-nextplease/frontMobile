@@ -72,25 +72,21 @@ class _JobsPageState extends State<JobsPage> {
         backgroundColor: Np.bg,
         appBar: AppBar(
           titleSpacing: Np.gutter,
-          toolbarHeight: 62,
+          toolbarHeight: 74,
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Cơ hội',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontSize: 27,
-                        letterSpacing: -0.9,
-                      )),
-              Text('${_items.length} vị trí đang mở',
-                  style: Theme.of(context).textTheme.bodySmall),
+              const SectionLabel('Việc làm & Quest'),
+              const SizedBox(height: Np.s2),
+              Text('Cơ hội', style: NpType.h1),
             ],
           ),
         ),
         body: RefreshIndicator(
           onRefresh: _load,
-          color: Np.violet,
-          backgroundColor: Np.surface,
+          color: Np.acid,
+          backgroundColor: Np.surfaceHi,
           child: _buildBody(),
         ),
       ),
@@ -100,7 +96,7 @@ class _JobsPageState extends State<JobsPage> {
   Widget _buildBody() {
     if (_loading) {
       return const Center(
-        child: CircularProgressIndicator(color: Np.violet, strokeWidth: 3),
+        child: CircularProgressIndicator(color: Np.acid, strokeWidth: 2.4),
       );
     }
     if (_error != null) return _ErrorView(message: _error!, onRetry: _load);
@@ -122,10 +118,10 @@ class _JobsPageState extends State<JobsPage> {
               ? const _EmptyView()
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(
-                      Np.gutter, 4, Np.gutter, 28),
+                      Np.gutter, Np.s2, Np.gutter, Np.s10),
                   physics: const AlwaysScrollableScrollPhysics(),
                   itemCount: list.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 14),
+                  separatorBuilder: (_, _) => const SizedBox(height: Np.s3),
                   itemBuilder: (_, i) => OpportunityCard(item: list[i]),
                 ),
         ),
@@ -154,12 +150,12 @@ class _Tabs extends StatelessWidget {
     ];
 
     return SizedBox(
-      height: 58,
+      height: 56,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
         itemCount: defs.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: Np.s2),
         itemBuilder: (_, i) {
           final (tab, label, count) = defs[i];
           final active = tab == current;
@@ -168,23 +164,19 @@ class _Tabs extends StatelessWidget {
               onTap: () => onChanged(tab),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: Np.s4, vertical: Np.s2 + 2),
                 decoration: BoxDecoration(
-                  // Chip đang chọn mang gradient thương hiệu; chip nghỉ là thẻ
-                  // trắng. Không viền ở cả hai trạng thái.
-                  gradient: active ? Np.brand : null,
-                  color: active ? null : Np.surface,
-                  border: active ? null : Border.all(color: Np.line),
+                  color: active ? Np.acid : Colors.transparent,
                   borderRadius: BorderRadius.circular(Np.rPill),
-                  boxShadow: active ? Np.glow : null,
+                  border: Border.all(color: active ? Np.acid : Np.line),
                 ),
                 child: Text(
                   '$label  $count',
-                  style: TextStyle(
-                    color: active ? Colors.white : Np.ink,
+                  style: NpType.meta.copyWith(
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w600,
-                    fontSize: 13.6,
+                    color: active ? Np.onAcid : Np.muted,
                   ),
                 ),
               ),
@@ -203,13 +195,10 @@ class _EmptyView extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         children: const [
           SizedBox(height: 90),
-          Icon(Icons.inbox_rounded, size: 44, color: Np.muted),
+          Icon(Icons.inbox_rounded, size: 40, color: Np.faint),
           SizedBox(height: 14),
           Center(
-            child: Text(
-              'Chưa có cơ hội nào ở mục này',
-              style: TextStyle(color: Np.muted, fontWeight: FontWeight.w500),
-            ),
+            child: Text('Chưa có cơ hội nào ở mục này', style: NpType.meta),
           ),
         ],
       );
@@ -226,26 +215,23 @@ class _ErrorView extends StatelessWidget {
         padding: const EdgeInsets.all(Np.gutter),
         children: [
           const SizedBox(height: 70),
-          const Icon(Icons.cloud_off_rounded, size: 44, color: Np.muted),
+          const Icon(Icons.cloud_off_rounded, size: 40, color: Np.faint),
           const SizedBox(height: 14),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-                color: Np.ink, height: 1.5, fontWeight: FontWeight.w500),
+            style: NpType.body,
           ),
           const SizedBox(height: 8),
           Text(
             'Đang gọi: ${AppConfig.apiUrl}',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Np.muted, fontSize: 12),
+            style: NpType.meta.copyWith(fontSize: 12, color: Np.faint),
           ),
           const SizedBox(height: 20),
           Center(
-            child: SizedBox(
-              width: 170,
-              child: GradientButton(label: 'Thử lại', onTap: onRetry),
-            ),
+            child: AcidButton(
+                label: 'Thử lại', onTap: onRetry, expand: false),
           ),
         ],
       );

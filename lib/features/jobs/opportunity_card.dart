@@ -9,13 +9,18 @@ import 'opportunity_labels.dart';
 
 /// Thẻ một cơ hội.
 ///
-/// Kỷ luật màu: đa số chip là trung tính. Chỉ hai thứ được tô màu, và mỗi màu
-/// mang đúng một nghĩa —
-///   tím   = quest (loại cơ hội khác)
-///   mint  = phần thưởng EXP
-/// Lương KHÔNG tô màu dù nó quan trọng nhất; nó nổi bằng chữ đậm và cỡ lớn
-/// hơn. Tô màu cho mọi thứ quan trọng là cách nhanh nhất quay lại lỗi "quá
-/// nhiều màu" của bản trước.
+/// Thứ tự đọc được dựng có chủ ý, từ trên xuống:
+///   logo + tên tổ chức   → "ai đăng"
+///   TIÊU ĐỀ cỡ lớn       → "việc gì"
+///   LƯƠNG cỡ lớn, acid   → "được bao nhiêu"
+///   chip                 → "ở đâu, dạng gì"
+///
+/// Bốn bản trước đặt tiêu đề và tên tổ chức sát nhau cùng cỡ, nên mắt phải
+/// đọc mới phân biệt được. Ở đây tên tổ chức nằm TRÊN, nhỏ và mờ, còn tiêu đề
+/// đứng riêng một khối — quét mắt là ra ngay.
+///
+/// Lương là thông tin duy nhất được tô acid. Đó là con số người dùng tìm đầu
+/// tiên, và cho nó độc quyền màu nhấn đáng giá hơn rải màu khắp thẻ.
 class OpportunityCard extends StatelessWidget {
   const OpportunityCard({super.key, required this.item, this.onTap});
 
@@ -24,91 +29,93 @@ class OpportunityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
     final posted = relativeTime(item.createdAt);
     final isQuest = item.kind == OpportunityKind.quest;
+    final hasPay = item.compensation != null && item.compensation! > 0;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Np.rLg),
-        child: Container(
-          padding: const EdgeInsets.all(Np.cardPad),
-          decoration: Np.card(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _Logo(url: item.companyLogo, name: item.companyName),
-                  const SizedBox(width: 13),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(item.title,
-                            style: t.titleMedium,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 3),
-                        Text(item.companyName,
-                            style: t.bodySmall,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
-                      ],
-                    ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(Np.s5),
+        decoration: Np.card(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                _Logo(url: item.companyLogo, name: item.companyName),
+                const SizedBox(width: Np.s3),
+                Expanded(
+                  child: Text(
+                    item.companyName,
+                    style: NpType.meta.copyWith(fontWeight: FontWeight.w500),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  if (isQuest) ...[
-                    const SizedBox(width: 8),
-                    const SoftChip(label: 'Quest', tone: Np.violet),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      salaryLabel(
-                        compensation: item.compensation,
-                        isQuest: isQuest,
-                      ),
-                      style: t.titleMedium?.copyWith(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: item.compensation != null ? Np.ink : Np.muted,
-                      ),
-                    ),
-                  ),
-                  if (item.expReward != null)
-                    SoftChip(label: '+${item.expReward} EXP', tone: Np.mint),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 7,
-                runSpacing: 7,
-                children: [
-                  SoftChip(
-                    icon: Icons.place_outlined,
-                    label: item.isRemote
-                        ? '${item.location ?? "Không rõ"} · Remote'
-                        : (item.location ?? 'Không rõ'),
-                  ),
-                  SoftChip(
-                    icon: Icons.work_outline_rounded,
-                    label: typeLabel(item.typeCode),
-                  ),
-                ],
-              ),
-              if (posted.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Text(posted, style: t.bodySmall?.copyWith(fontSize: 12.5)),
+                ),
+                if (isQuest)
+                  const MetaChip(label: 'Quest', tone: Np.acid),
               ],
+            ),
+            const SizedBox(height: Np.s4),
+
+            Text(
+              item.title,
+              style: NpType.title.copyWith(fontSize: 18, height: 1.28),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: Np.s3),
+
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  salaryLabel(
+                    compensation: item.compensation,
+                    isQuest: isQuest,
+                  ),
+                  style: NpType.title.copyWith(
+                    fontSize: hasPay ? 19 : 15,
+                    fontWeight: FontWeight.w700,
+                    color: hasPay ? Np.acid : Np.muted,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                if (item.expReward != null) ...[
+                  const SizedBox(width: Np.s2),
+                  Text('· +${item.expReward} EXP', style: NpType.meta),
+                ],
+              ],
+            ),
+            const SizedBox(height: Np.s4),
+
+            Wrap(
+              spacing: Np.s2,
+              runSpacing: Np.s2,
+              children: [
+                MetaChip(
+                  icon: Icons.place_outlined,
+                  label: item.isRemote
+                      ? '${item.location ?? "Không rõ"} · Remote'
+                      : (item.location ?? 'Không rõ'),
+                ),
+                MetaChip(
+                  icon: Icons.schedule_rounded,
+                  label: typeLabel(item.typeCode),
+                ),
+              ],
+            ),
+
+            if (posted.isNotEmpty) ...[
+              const SizedBox(height: Np.s4),
+              const Divider(color: Np.line, height: 1),
+              const SizedBox(height: Np.s3),
+              Text(posted,
+                  style: NpType.meta.copyWith(fontSize: 12, color: Np.faint)),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -128,7 +135,7 @@ class _Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const size = 48.0;
+    const size = 26.0;
     final trimmed = name.trim();
     final initials = trimmed.isEmpty
         ? 'NP'
@@ -139,15 +146,16 @@ class _Logo extends StatelessWidget {
           height: size,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: Np.brand,
-            borderRadius: BorderRadius.circular(Np.rSm + 2),
+            color: Np.surfaceHi,
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: Np.line),
           ),
           child: Text(
             initials,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: 15,
+            style: NpType.label.copyWith(
+              fontSize: 9.5,
+              color: Np.muted,
+              letterSpacing: 0,
             ),
           ),
         );
@@ -169,17 +177,9 @@ class _Logo extends StatelessWidget {
           errorBuilder: (_, _, _) => fallback());
     }
 
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: Np.surfaceHi,
-        borderRadius: BorderRadius.circular(Np.rSm + 2),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(Np.rSm + 2),
-        child: image,
-      ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(7),
+      child: image,
     );
   }
 }

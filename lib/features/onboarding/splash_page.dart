@@ -13,7 +13,9 @@ import '../../core/theme.dart';
 /// Hai lớp phải CÙNG MÀU NỀN. Đổi Np.bg thì phải đổi cả LaunchScreen.storyboard
 /// và colors.xml, nếu không sẽ thấy một cú chớp đổi màu ở chỗ nối.
 ///
-/// Thời lượng cố ý ngắn: đây là thuế thu trên MỌI lần mở app.
+/// Hoạt hoạ: một vạch acid kéo ngang rồi chữ hiện lên từ dưới vạch đó — như
+/// thể vạch vừa "quét" chữ ra. Ngắn, 1,3 giây, vì đây là thuế thu trên MỌI
+/// lần mở app.
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key, required this.onDone});
 
@@ -27,21 +29,20 @@ class _SplashPageState extends State<SplashPage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1500),
+    duration: const Duration(milliseconds: 1300),
   );
 
-  // Lệch pha để mắt có thứ tự bám theo, thay vì mọi thứ cùng bật một lúc.
-  late final _orb = CurvedAnimation(
+  late final _sweep = CurvedAnimation(
     parent: _c,
-    curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic),
+    curve: const Interval(0.0, 0.5, curve: Curves.easeInOutCubic),
   );
   late final _word = CurvedAnimation(
     parent: _c,
-    curve: const Interval(0.22, 0.65, curve: Curves.easeOutCubic),
+    curve: const Interval(0.28, 0.72, curve: Curves.easeOutCubic),
   );
-  late final _tagline = CurvedAnimation(
+  late final _tag = CurvedAnimation(
     parent: _c,
-    curve: const Interval(0.45, 0.85, curve: Curves.easeOut),
+    curve: const Interval(0.55, 0.9, curve: Curves.easeOut),
   );
 
   @override
@@ -63,102 +64,60 @@ class _SplashPageState extends State<SplashPage>
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarBrightness: Brightness.dark,    // iOS mô tả NỀN
+        statusBarBrightness: Brightness.dark,     // iOS mô tả NỀN
         statusBarIconBrightness: Brightness.light, // Android mô tả ICON
       ),
       child: Scaffold(
         backgroundColor: Np.bg,
-        body: AnimatedBuilder(
-          animation: _c,
-          builder: (context, _) => Stack(
-            children: [
-              // Hai quầng gradient mờ nở ra từ nền. Đây là nguồn màu duy nhất
-              // của màn hình — chữ giữ nguyên màu mực.
-              _Orb(
-                t: _orb.value,
-                alignment: const Alignment(-0.85, -0.6),
-                size: 320,
-                color: Np.violet,
-              ),
-              _Orb(
-                t: _orb.value,
-                alignment: const Alignment(0.9, 0.35),
-                size: 280,
-                color: Np.pink,
-              ),
-              Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Opacity(
-                      opacity: _word.value,
-                      child: Transform.translate(
-                        offset: Offset(0, 14 * (1 - _word.value)),
-                        child: GradientText(
-                          'nextplease',
-                          style: const TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -2,
-                            height: 1.1,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Opacity(
-                      opacity: _tagline.value,
-                      child: const Text(
-                        'hồ sơ dựa trên bằng chứng',
-                        style: TextStyle(
-                          color: Np.muted,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                    ),
-                  ],
+        body: Center(
+          child: AnimatedBuilder(
+            animation: _c,
+            builder: (context, _) => Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Vạch quét. Kéo từ 0 tới hết bề ngang chữ.
+                Container(
+                  width: 210 * _sweep.value,
+                  height: 3,
+                  decoration: BoxDecoration(
+                    color: Np.acid,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: Np.s5),
+
+                // Chữ trượt lên và hiện dần từ dưới vạch.
+                ClipRect(
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    heightFactor: 1,
+                    child: Transform.translate(
+                      offset: Offset(0, 44 * (1 - _word.value)),
+                      child: Opacity(
+                        opacity: _word.value,
+                        child: Text(
+                          'nextplease',
+                          style: NpType.display.copyWith(fontSize: 42),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: Np.s3),
+                Opacity(
+                  opacity: _tag.value,
+                  child: Text(
+                    'hồ sơ dựa trên bằng chứng',
+                    style: NpType.meta.copyWith(fontSize: 14),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
-
-/// Quầng sáng mờ. Dùng gradient radial tắt dần về trong suốt thay vì
-/// ImageFiltered(blur): blur thật tốn GPU và ở đây không nhìn ra khác biệt.
-class _Orb extends StatelessWidget {
-  const _Orb({
-    required this.t,
-    required this.alignment,
-    required this.size,
-    required this.color,
-  });
-
-  final double t;
-  final Alignment alignment;
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Align(
-        alignment: alignment,
-        child: Container(
-          width: size * (0.6 + 0.4 * t),
-          height: size * (0.6 + 0.4 * t),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              colors: [
-                color.withValues(alpha: 0.40 * t),
-                color.withValues(alpha: 0),
-              ],
-            ),
-          ),
-        ),
-      );
 }

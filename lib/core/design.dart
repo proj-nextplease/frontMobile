@@ -1,85 +1,167 @@
 import 'package:flutter/material.dart';
 
-/// Hệ thiết kế app di động nextplease — TỐI, gradient phát sáng.
+/// Hệ thiết kế app di động nextplease.
 ///
-/// Lịch sử ba bản trước, ghi lại để không quay vòng:
-///   1. Tối emerald  — đúng chuẩn web nhưng khô khan.
-///   2. Giấy/sticker — bị chê quá nhiều màu và viền đen thô.
-///   3. Gradient nền sáng — vẫn chưa đẹp. Giả thuyết: gradient đúng hướng,
-///      nhưng đặt trên nền gần-trắng thì nó trông rẻ, vì nền sáng làm màu bị
-///      "dẹt" — không có gì để nó phát sáng lên.
+/// ─── Vì sao bản này khác bốn bản trước ────────────────────────────────────
 ///
-/// Bản này giữ nguyên dải gradient nhưng đổi sang nền tối. Trên nền tối, cùng
-/// một màu sẽ đọc ra là PHÁT SÁNG thay vì chỉ là một mảng màu, và bóng đổ
-/// nhuộm màu trở nên có nghĩa thật sự.
+/// Bốn lần trước đều bị chê chưa đẹp, và nhìn lại thì cả bốn có CHUNG một bộ
+/// khung — chỉ khác lớp sơn. Sai lầm nằm ở chỗ đó: cái quyết định một app
+/// trông cao cấp hay rẻ tiền hiếm khi là bảng màu.
 ///
-/// Kỷ luật màu giữ nguyên từ bản trước, vì đó không phải chỗ sai:
-///   - MỘT họ gradient làm điểm nhấn, còn lại trung tính.
-///   - Màu thứ hai (mint) dành riêng cho phần thưởng EXP.
-///   - Không viền đen. Ranh giới là đường sáng mờ 1px, kiểu mép kính.
+/// Hai thứ thật sự quyết định, và cả bốn bản trước đều thiếu:
+///
+///   1. CHỮ. Cả bốn bản dùng font mặc định của hệ thống, nên trông y như một
+///      app Flutter mẫu bất kể sơn màu gì. Bản này nhúng font thật và dựng
+///      một thang chữ có ĐỘ TƯƠNG PHẢN LỚN — tiêu đề 40px cạnh nhãn 11px.
+///      Tương phản cỡ chữ là thứ tạo ra nhịp, và nhịp là thứ mắt đọc ra là
+///      "có chủ ý".
+///
+///   2. MỘT màu nhấn, phẳng, bão hoà cao. Bỏ hẳn gradient tím→hồng: đó là
+///      gradient bị dùng nhiều nhất thập kỷ qua, nên nó đọc ra là "mẫu có
+///      sẵn" chứ không phải một quyết định. Một màu duy nhất, dùng đúng chỗ,
+///      luôn tự tin hơn hai màu chuyển sắc.
 abstract final class Np {
-  // ── Nền, bề mặt, chữ ───────────────────────────────────────────────────
-  static const bg = Color(0xFF0A0A0F);        // gần đen, ngả xanh rất nhẹ
-  static const surface = Color(0xFF15151E);   // thẻ
-  static const surfaceHi = Color(0xFF1C1C28); // thẻ nổi hơn một bậc
-  static const ink = Color(0xFFF2F2F7);       // chữ chính
-  static const muted = Color(0xFF8E8EA3);     // chữ phụ
+  // ── Nền và bề mặt ──────────────────────────────────────────────────────
+  // Xám trung tính, KHÔNG ngả xanh. Nền ngả xanh là mặc định của mọi bộ giao
+  // diện tối, và nó làm màu nhấn ấm bị xỉn.
+  static const bg = Color(0xFF0B0B0D);
+  static const surface = Color(0xFF151518);
+  static const surfaceHi = Color(0xFF1E1E23);
 
-  /// Ranh giới trên nền tối phải là đường SÁNG mờ, không phải đường tối — nó
-  /// bắt chước mép bắt sáng của một tấm kính, nên đọc ra là vật thể chứ không
-  /// phải nét vẽ.
-  static const line = Color(0x14FFFFFF);      // trắng 8%
+  // ── Chữ ────────────────────────────────────────────────────────────────
+  static const ink = Color(0xFFFAFAFA);
+  static const muted = Color(0xFF86868E);
+  static const faint = Color(0xFF5A5A62);
 
-  // ── Một họ gradient duy nhất ───────────────────────────────────────────
-  static const violet = Color(0xFF8B5CF6);
-  static const pink = Color(0xFFEC4899);
+  /// Ranh giới là đường SÁNG mờ, bắt chước mép bắt sáng của vật thể.
+  static const line = Color(0x14FFFFFF);
 
-  static const brand = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [violet, pink],
-  );
+  // ── Một màu nhấn duy nhất ──────────────────────────────────────────────
+  /// Lime điện. Nối được với emerald của thương hiệu web nhưng trẻ hơn hẳn,
+  /// và trên nền gần-đen thì nó tự phát sáng mà không cần hiệu ứng nào.
+  static const acid = Color(0xFFC8FF4D);
 
-  /// Màu thứ hai, CHỈ cho phần thưởng EXP/quest.
-  static const mint = Color(0xFF2DD4A7);
+  /// Chữ đặt TRÊN nền acid. Không bao giờ dùng trắng — lime quá sáng, chữ
+  /// trắng trên đó gần như không đọc được.
+  static const onAcid = Color(0xFF0B0B0D);
+
+  /// Màu cảnh báo. Không tính là màu nhấn thứ hai vì nó chỉ xuất hiện khi có
+  /// lỗi, và không bao giờ đứng cạnh acid.
+  static const danger = Color(0xFFFF6B6B);
 
   // ── Bo góc ─────────────────────────────────────────────────────────────
-  static const rSm = 12.0;
-  static const rMd = 18.0;
-  static const rLg = 24.0;
+  static const rSm = 10.0;
+  static const rMd = 16.0;
+  static const rLg = 22.0;
   static const rPill = 999.0;
 
-  // ── Khoảng cách ────────────────────────────────────────────────────────
-  static const gutter = 20.0;
-  static const cardPad = 18.0;
+  // ── Nhịp khoảng cách ───────────────────────────────────────────────────
+  // Bội số của 4. Dùng thang cố định thay vì con số tuỳ hứng là cách rẻ nhất
+  // để cả app trông có kỷ luật.
+  static const s1 = 4.0;
+  static const s2 = 8.0;
+  static const s3 = 12.0;
+  static const s4 = 16.0;
+  static const s5 = 20.0;
+  static const s6 = 24.0;
+  static const s8 = 32.0;
+  static const s10 = 40.0;
 
-  /// Thẻ trên nền tối KHÔNG cần bóng — bóng đen trên nền đen là vô hình.
-  /// Cái tạo ra chiều sâu ở đây là bề mặt sáng hơn nền, cộng một đường viền
-  /// sáng mờ. Đó là lý do bản này bỏ hẳn boxShadow cho thẻ.
-  static BoxDecoration card({double radius = rLg, bool elevated = false}) =>
-      BoxDecoration(
-        color: elevated ? surfaceHi : surface,
-        borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: line),
-      );
+  static const gutter = s5;
 
-  /// Bóng cho nút gradient: đây mới là chỗ bóng có tác dụng trên nền tối, vì
-  /// nó là ÁNH SÁNG màu hắt xuống chứ không phải bóng đen.
-  static List<BoxShadow> get glow => [
+  /// Quầng sáng dưới nút nhấn — ánh sáng màu hắt xuống, không phải bóng đen.
+  static List<BoxShadow> get acidGlow => [
         BoxShadow(
-          color: violet.withValues(alpha: 0.45),
-          blurRadius: 28,
-          offset: const Offset(0, 10),
+          color: acid.withValues(alpha: 0.22),
+          blurRadius: 26,
+          offset: const Offset(0, 8),
         ),
       ];
 
-  /// Nền nhạt cùng tông cho chip.
-  static BoxDecoration softChip(Color tone) => BoxDecoration(
-        color: tone.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(rPill),
+  static BoxDecoration card({double radius = rLg, bool hi = false}) =>
+      BoxDecoration(
+        color: hi ? surfaceHi : surface,
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: line),
       );
 }
 
-/// Chữ hoa tiếng Việt cần line-height ≥ 0.95, nếu không dấu Ẫ/Ộ/Ế bị cắt ngọn.
-/// Con số này là SÀN, không phải lựa chọn thẩm mỹ.
-const double kViUppercaseLineHeight = 0.95;
+/// ─── Thang chữ ──────────────────────────────────────────────────────────
+///
+/// Archivo chỉ dùng cho tiêu đề lớn; mọi chữ còn lại là Be Vietnam Pro.
+/// Trộn hai font là có chủ ý: tiêu đề cần tính cách, chữ đọc cần dễ đọc, và
+/// một font hiếm khi giỏi cả hai.
+abstract final class NpType {
+  /// Archivo là font BIẾN THIÊN với trục chiều rộng (wdth). Nén về 88 cho
+  /// tiêu đề khổng lồ vẫn vừa một dòng mà không phải giảm cỡ chữ — giảm cỡ
+  /// là cách làm mất luôn độ tương phản vừa dựng lên.
+  static const _archivoCompressed = [
+    FontVariation('wght', 800),
+    FontVariation('wdth', 88),
+  ];
+
+  /// Tiêu đề khổng lồ. line-height 0.98 — với chữ hoa tiếng Việt thì 0.95 là
+  /// SÀN tuyệt đối, dưới mức đó dấu Ẫ/Ộ/Ế bị cắt ngọn.
+  static const display = TextStyle(
+    fontFamily: 'Archivo',
+    fontVariations: _archivoCompressed,
+    fontSize: 40,
+    height: 1.0,
+    letterSpacing: -1.4,
+    color: Np.ink,
+  );
+
+  static const h1 = TextStyle(
+    fontFamily: 'Archivo',
+    fontVariations: _archivoCompressed,
+    fontSize: 28,
+    height: 1.08,
+    letterSpacing: -0.9,
+    color: Np.ink,
+  );
+
+  static const title = TextStyle(
+    fontFamily: 'BeVietnamPro',
+    fontSize: 16.5,
+    fontWeight: FontWeight.w600,
+    height: 1.32,
+    letterSpacing: -0.3,
+    color: Np.ink,
+  );
+
+  static const body = TextStyle(
+    fontFamily: 'BeVietnamPro',
+    fontSize: 15,
+    fontWeight: FontWeight.w400,
+    height: 1.5,
+    letterSpacing: -0.1,
+    color: Np.ink,
+  );
+
+  static const meta = TextStyle(
+    fontFamily: 'BeVietnamPro',
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    height: 1.45,
+    letterSpacing: -0.05,
+    color: Np.muted,
+  );
+
+  /// Nhãn nhỏ viết hoa. Giãn chữ dương vì chữ hoa ở cỡ nhỏ dính vào nhau.
+  static const label = TextStyle(
+    fontFamily: 'BeVietnamPro',
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    height: 1.2,
+    letterSpacing: 0.9,
+    color: Np.muted,
+  );
+
+  static const button = TextStyle(
+    fontFamily: 'BeVietnamPro',
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    height: 1.1,
+    letterSpacing: -0.2,
+  );
+}
