@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/api_client.dart';
 import '../../core/config.dart';
 import '../../core/theme.dart';
@@ -58,18 +59,42 @@ class _JobsPageState extends State<JobsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Cơ hội',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
-        ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      // Nền sáng nên phải ép chữ thanh trạng thái sang tối, nếu không giờ và
+      // pin vẽ màu trắng và gần như vô hình.
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: Brightness.light,    // iOS mô tả NỀN
+        statusBarIconBrightness: Brightness.dark, // Android mô tả ICON
       ),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        color: NpColors.emerald,
-        backgroundColor: NpColors.inkSoft,
-        child: _buildBody(),
+      child: Scaffold(
+        backgroundColor: Paper.bg,
+        appBar: AppBar(
+          titleSpacing: NpSpace.gutter,
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: Paper.card(fill: Paper.lime, radius: 10, dx: 3, dy: 3),
+                child: const Text(
+                  'Cơ hội',
+                  style: TextStyle(
+                    color: Paper.ink,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    height: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        body: RefreshIndicator(
+          onRefresh: _load,
+          color: Paper.ink,
+          backgroundColor: Paper.lime,
+          child: _buildBody(),
+        ),
       ),
     );
   }
@@ -77,7 +102,7 @@ class _JobsPageState extends State<JobsPage> {
   Widget _buildBody() {
     if (_loading) {
       return const Center(
-        child: CircularProgressIndicator(color: NpColors.emerald),
+        child: CircularProgressIndicator(color: Paper.ink, strokeWidth: 3),
       );
     }
     if (_error != null) return _ErrorView(message: _error!, onRetry: _load);
@@ -143,22 +168,23 @@ class _Tabs extends StatelessWidget {
           return Center(
             child: GestureDetector(
               onTap: () => onChanged(tab),
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                 decoration: BoxDecoration(
-                  color: active ? NpColors.emerald : Colors.transparent,
+                  color: active ? Paper.lime : Paper.bg,
                   borderRadius: BorderRadius.circular(NpRadius.pill),
-                  border: Border.all(
-                    color: active ? NpColors.emerald : NpColors.lineDark,
-                  ),
+                  border: Border.all(color: Paper.ink, width: Paper.border),
+                  // Bóng cứng CHỈ cho chip đang chọn — đây là thứ đơn lẻ trên
+                  // màn hình, khác với thẻ trong danh sách.
+                  boxShadow: active ? Paper.hardShadow(dx: 3, dy: 3) : null,
                 ),
                 child: Text(
                   '$label  $count',
                   style: TextStyle(
-                    // Chữ trên nền emerald là ink, không phải trắng — DESIGN.md
-                    color: active ? NpColors.ink : NpColors.mutedDark,
-                    fontWeight: FontWeight.w700,
+                    color: Paper.ink,
+                    fontWeight: FontWeight.w800,
                     fontSize: 13.6,
                   ),
                 ),
@@ -178,12 +204,12 @@ class _EmptyView extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         children: const [
           SizedBox(height: 90),
-          Icon(Icons.inbox_outlined, size: 44, color: NpColors.mutedDark),
+          Icon(Icons.inbox_outlined, size: 44, color: Paper.ink),
           SizedBox(height: 14),
           Center(
             child: Text(
               'Chưa có cơ hội nào ở mục này',
-              style: TextStyle(color: NpColors.mutedDark),
+              style: TextStyle(color: Paper.ink, fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -201,30 +227,33 @@ class _ErrorView extends StatelessWidget {
         padding: const EdgeInsets.all(NpSpace.gutter),
         children: [
           const SizedBox(height: 70),
-          const Icon(Icons.cloud_off_outlined,
-              size: 44, color: NpColors.mutedDark),
+          const Icon(Icons.cloud_off_outlined, size: 44, color: Paper.ink),
           const SizedBox(height: 14),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: NpColors.mutedDark, height: 1.5),
+            style: const TextStyle(
+                color: Paper.ink, height: 1.5, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
             'Đang gọi: ${AppConfig.apiUrl}',
             textAlign: TextAlign.center,
-            style: const TextStyle(color: NpColors.mutedDark, fontSize: 12),
+            style: TextStyle(
+                color: Paper.ink.withValues(alpha: 0.6), fontSize: 12),
           ),
           const SizedBox(height: 20),
           Center(
             child: FilledButton(
               onPressed: onRetry,
               style: FilledButton.styleFrom(
-                backgroundColor: NpColors.emerald,
-                foregroundColor: NpColors.ink,
+                backgroundColor: Paper.lime,
+                foregroundColor: Paper.ink,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 26, vertical: 14),
-                shape: const StadiumBorder(),
+                shape: StadiumBorder(
+                  side: BorderSide(color: Paper.ink, width: Paper.border),
+                ),
               ),
               child: const Text('Thử lại',
                   style: TextStyle(fontWeight: FontWeight.w700)),

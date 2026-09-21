@@ -6,11 +6,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nextplease_mobile/app.dart';
 
 void main() {
-  testWidgets('Mở app thì hiện màn hình chào với wordmark', (tester) async {
+  testWidgets('Mở app thì hiện màn hình chào', (tester) async {
     await tester.pumpWidget(const NextPleaseApp());
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('nextplease'), findsOneWidget);
-    expect(find.text('Hồ sơ dựa trên bằng chứng'), findsOneWidget);
+    expect(find.text('nextplease:'), findsOneWidget);
+    expect(find.text('hồ sơ dựa trên bằng chứng'), findsOneWidget);
   });
 }

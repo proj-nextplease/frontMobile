@@ -52,6 +52,22 @@ abstract final class Paper {
       );
 }
 
+/// Bo góc. Giữ nguyên tên từ hệ tối để các màn hình đã viết không phải sửa,
+/// nhưng giá trị theo hệ giấy: bo lớn hơn, vì viền 2px đặc cần góc rộng mới
+/// không bị gãy thành hình đa giác.
+abstract final class NpRadius {
+  static const sm = 10.0;
+  static const md = 12.0;   // ô nhập
+  static const lg = 18.0;   // thẻ
+  static const pill = 9999.0;
+}
+
+abstract final class NpSpace {
+  static const cardPad = 18.0;
+  static const gridGap = 14.0;
+  static const gutter = 20.0;
+}
+
 /// Chữ hoa tiếng Việt cần line-height ≥ 0.95, nếu không dấu Ẫ/Ộ/Ế bị cắt ngọn.
 /// Con số này là SÀN, không phải lựa chọn thẩm mỹ.
 const double kViUppercaseLineHeight = 0.95;
