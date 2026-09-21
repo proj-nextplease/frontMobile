@@ -149,7 +149,10 @@ class _MainShellState extends State<MainShell> {
               onOpenProfile: () => _onTab(3),
             ),
             JobsPage(isGuest: widget.isGuest, onSignIn: widget.onSignIn),
-            const DiscussionsPage(),
+            DiscussionsPage(
+              isGuest: widget.isGuest,
+              onSignIn: widget.onSignIn,
+            ),
             ProfilePage(
               isGuest: widget.isGuest,
               onSignIn: widget.onSignIn,
