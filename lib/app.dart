@@ -25,6 +25,9 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
   final _auth = AuthService();
   _Stage _stage = _Stage.splash;
 
+  /// Cần để đóng màn hình đăng nhập được ĐẨY LÊN từ chỗ khác trong app.
+  final _navKey = GlobalKey<NavigatorState>();
+
   @override
   void initState() {
     super.initState();
@@ -37,8 +40,12 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
       _auth.changes.listen((state) {
         if (!mounted) return;
         if (state.event == AuthChangeEvent.signedIn) {
+          // Đóng màn hình đăng nhập nếu nó đang được đẩy lên trên danh sách.
+          // Không có gì để đóng thì popUntil trả về ngay.
+          _navKey.currentState?.popUntil((r) => r.isFirst);
           setState(() => _stage = _Stage.home);
         } else if (state.event == AuthChangeEvent.signedOut) {
+          _navKey.currentState?.popUntil((r) => r.isFirst);
           setState(() => _stage = _Stage.login);
         }
       });
@@ -49,11 +56,35 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
     setState(() => _stage = _auth.signedIn ? _Stage.home : _Stage.login);
   }
 
+  /// Mở màn hình đăng nhập TỪ danh sách cơ hội.
+  ///
+  /// Đẩy lên thành một route riêng thay vì đổi _stage. Khác biệt quan trọng:
+  /// đổi _stage sẽ huỷ JobsPage, kéo theo mất vị trí cuộn, mất tab đang chọn
+  /// và phải gọi lại API. Đẩy route thì JobsPage vẫn nằm nguyên bên dưới, nên
+  /// đóng lại là trở về đúng chỗ đang đọc dở.
+  ///
+  /// Đây cũng là lý do màn hình đăng nhập ở đây có nút đóng còn ở lần mở app
+  /// thì không: một bên là bước bắt buộc, một bên là việc người dùng có thể
+  /// đổi ý.
+  void _openLoginSheet(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => LoginPage(
+          onEmailLogin: _auth.signInWithPassword,
+          onSocialLogin: _auth.signInWithProvider,
+          onClose: () => Navigator.of(context).maybePop(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'nextplease',
       debugShowCheckedModeBanner: false,
+      navigatorKey: _navKey,
       // Hai bộ theme, MaterialApp tự chọn theo cài đặt sáng/tối của máy.
       // themeMode mặc định là ThemeMode.system nên không cần khai báo.
       theme: buildNpTheme(Brightness.light),
@@ -65,11 +96,13 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
             onSocialLogin: _auth.signInWithProvider,
             onSkip: () => setState(() => _stage = _Stage.home),
           ),
-        // Khách vào qua nút "Xem cơ hội trước đã" — truyền cờ để màn hình
-        // đó hiện đường quay lại đăng nhập.
-        _Stage.home => JobsPage(
-            isGuest: !_auth.signedIn,
-            onSignIn: () => setState(() => _stage = _Stage.login),
+        // Khách vào qua nút "Xem cơ hội trước đã" — truyền cờ để màn hình đó
+        // hiện đường quay lại đăng nhập.
+        _Stage.home => Builder(
+            builder: (context) => JobsPage(
+              isGuest: !_auth.signedIn,
+              onSignIn: () => _openLoginSheet(context),
+            ),
           ),
       },
     );

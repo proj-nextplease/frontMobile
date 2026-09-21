@@ -23,15 +23,24 @@ class LoginPage extends StatefulWidget {
     super.key,
     required this.onEmailLogin,
     required this.onSocialLogin,
-    required this.onSkip,
+    this.onSkip,
+    this.onClose,
   });
 
   final Future<String?> Function(String email, String password) onEmailLogin;
   final Future<String?> Function(SocialProvider provider) onSocialLogin;
 
+  /// Cho xem danh sách cơ hội mà chưa cần đăng nhập.
+  ///
   /// Web để /jobs công khai, nên chặn đăng nhập ngay màn hình đầu sẽ chặt hơn
   /// web một cách vô lý — và là cách nhanh nhất để người dùng mới gỡ app.
-  final VoidCallback onSkip;
+  ///
+  /// Chỉ có ở lần mở app. Khi màn hình này được đẩy lên TỪ danh sách cơ hội
+  /// thì người dùng đã ở đó rồi, nên [onClose] thay chỗ.
+  final VoidCallback? onSkip;
+
+  /// Đóng màn hình và quay về chỗ cũ. Chỉ có khi được đẩy lên từ nơi khác.
+  final VoidCallback? onClose;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -104,7 +113,24 @@ class _LoginPageState extends State<LoginPage> {
               Np.s8 + MediaQuery.viewInsetsOf(context).bottom,
             ),
             children: [
-              const SectionLabel('Đăng nhập'),
+              Row(
+                children: [
+                  const SectionLabel('Đăng nhập'),
+                  const Spacer(),
+                  // Chỉ hiện khi màn hình này được đẩy lên từ nơi khác. Ở lần
+                  // mở app thì không có gì phía dưới để quay về.
+                  if (widget.onClose != null)
+                    GestureDetector(
+                      onTap: widget.onClose,
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.all(Np.s1),
+                        child: Icon(Icons.close_rounded,
+                            size: 22, color: c.muted),
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: Np.s5),
 
               // Tiêu đề khổng lồ cạnh nhãn 11px ở trên — đây chính là độ
@@ -226,17 +252,19 @@ class _LoginPageState extends State<LoginPage> {
                 ],
               ),
 
-              const SizedBox(height: Np.s8),
-              Center(
-                child: GestureDetector(
-                  onTap: _busy ? null : widget.onSkip,
-                  child: Text('Xem cơ hội trước đã',
-                      style: NpType.meta.copyWith(
-                        color: c.faint,
-                        fontWeight: FontWeight.w500,
-                      )),
+              if (widget.onSkip != null) ...[
+                const SizedBox(height: Np.s8),
+                Center(
+                  child: GestureDetector(
+                    onTap: _busy ? null : widget.onSkip,
+                    child: Text('Xem cơ hội trước đã',
+                        style: NpType.meta.copyWith(
+                          color: c.faint,
+                          fontWeight: FontWeight.w500,
+                        )),
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),
