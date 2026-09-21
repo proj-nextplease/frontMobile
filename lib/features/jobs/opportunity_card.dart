@@ -4,6 +4,9 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
+import '../profile/me_store.dart';
+import 'applied_store.dart';
+import 'eligibility.dart';
 import 'opportunity.dart';
 import 'opportunity_labels.dart';
 import 'save_button.dart';
@@ -43,6 +46,7 @@ class OpportunityCard extends StatelessWidget {
     final isQuest = item.kind == OpportunityKind.quest;
     final hasPay = item.compensation != null && item.compensation! > 0;
 
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -63,6 +67,7 @@ class OpportunityCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                _BadgeSlot(item: item, isGuest: isGuest),
                 if (isQuest) const MetaChip(label: 'Quest', accent: true),
                 // Lùi lề để vùng chạm rộng của nút tim không đội thẻ ra.
                 Transform.translate(
@@ -211,5 +216,66 @@ Uint8List? _tryDecode(String b64) {
     return base64Decode(b64);
   } catch (_) {
     return null;
+  }
+}
+
+/// Chỗ đặt nhãn chặn, tự vẽ lại khi hồ sơ hoặc danh sách đơn đã nộp thay đổi.
+///
+/// Phải nghe hai kho đó: cả hai đều nạp BẤT ĐỒNG BỘ sau khi danh sách đã dựng
+/// xong. Không nghe thì lần cuộn đầu tiên mọi thẻ đều trông như nộp được, và
+/// nhãn chỉ hiện ra khi người dùng tình cờ làm danh sách dựng lại.
+class _BadgeSlot extends StatelessWidget {
+  const _BadgeSlot({required this.item, required this.isGuest});
+  final Opportunity item;
+  final bool isGuest;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        MeStore.instance,
+        AppliedStore.instance,
+      ]),
+      builder: (_, _) {
+        // Nhãn chặn hiện NGAY trên thẻ. Để dành tới màn chi tiết mới nói thì
+        // người dùng đã mở tin, đọc mô tả và bấm ứng tuyển rồi — mất công cho
+        // cả hai bên. Tin vẫn hiện đầy đủ chứ không bị lọc đi: người ta cần
+        // thấy mình đang hướng tới cái gì, không phải một danh sách bị cắt ngầm.
+        final badge = eligibilityOf(item, isGuest: isGuest).badge;
+        if (badge == null) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(right: Np.s2),
+          child: _Badge(label: badge),
+        );
+      },
+    );
+  }
+}
+
+/// Nhãn "không nộp được" trên thẻ.
+///
+/// Trung tính chứ không đỏ: đây không phải lỗi của người dùng, và tô đỏ ba
+/// bốn thẻ trong một danh sách sẽ làm cả trang trông như đang báo hỏng.
+class _Badge extends StatelessWidget {
+  const _Badge({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: Np.s2 + 2, vertical: 3),
+      decoration: BoxDecoration(
+        color: c.surfaceHi,
+        borderRadius: BorderRadius.circular(Np.rPill),
+        border: Border.all(color: c.line),
+      ),
+      child: Text(label,
+          style: NpType.meta.copyWith(
+            fontSize: 11.5,
+            color: c.muted,
+            fontWeight: FontWeight.w600,
+          )),
+    );
   }
 }

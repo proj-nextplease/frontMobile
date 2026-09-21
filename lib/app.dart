@@ -6,8 +6,10 @@ import 'core/theme.dart';
 import 'features/auth/auth_service.dart';
 import 'features/auth/login_page.dart';
 import 'features/shell/main_shell.dart';
+import 'features/jobs/applied_store.dart';
 import 'features/jobs/saved_store.dart';
 import 'features/profile/gamification_store.dart';
+import 'features/profile/me_store.dart';
 import 'features/onboarding/splash_page.dart';
 
 /// Luồng mở app: splash → (đăng nhập | danh sách cơ hội).
@@ -46,6 +48,11 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
           // cuộn đầu tiên chứ không phải sau khi người dùng bấm thử.
           SavedStore.instance.hydrate();
           GamificationStore.instance.hydrate();
+          // Hai kho này quyết định nút Ứng tuyển hiện ra thế nào (xem
+          // eligibility.dart). Không nạp ở đây thì thẻ và màn chi tiết mời
+          // người dùng nộp một cơ hội mà máy chủ sẽ từ chối.
+          MeStore.instance.hydrate();
+          AppliedStore.instance.hydrate();
           // Đóng màn hình đăng nhập nếu nó đang được đẩy lên trên danh sách.
           // Không có gì để đóng thì popUntil trả về ngay.
           _navKey.currentState?.popUntil((r) => r.isFirst);
@@ -55,6 +62,8 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
           // tim của người trước.
           SavedStore.instance.clear();
           GamificationStore.instance.clear();
+          MeStore.instance.clear();
+          AppliedStore.instance.clear();
           _navKey.currentState?.popUntil((r) => r.isFirst);
           setState(() => _stage = _Stage.login);
         }
@@ -69,6 +78,8 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
     if (_auth.signedIn) {
       SavedStore.instance.hydrate();
       GamificationStore.instance.hydrate();
+      MeStore.instance.hydrate();
+      AppliedStore.instance.hydrate();
     }
     setState(() => _stage = _auth.signedIn ? _Stage.home : _Stage.login);
   }

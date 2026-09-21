@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import 'opportunities_repository.dart';
+import 'applied_store.dart';
+import 'eligibility.dart';
 import 'opportunity.dart';
 import 'opportunity_labels.dart';
 import 'save_button.dart';
@@ -114,8 +116,7 @@ class _OpportunityDetailPageState extends State<OpportunityDetailPage> {
           ],
         ),
         bottomNavigationBar: _ApplyBar(
-          item: it,
-          isGuest: widget.isGuest,
+          eligibility: eligibilityOf(it, isGuest: widget.isGuest),
           applying: _applying,
           onSignIn: widget.onSignIn,
           onApply: _openApplySheet,
@@ -135,6 +136,7 @@ class _OpportunityDetailPageState extends State<OpportunityDetailPage> {
 
     setState(() => _applying = true);
     final err = await _repo.apply(_item, note);
+    if (err == null) AppliedStore.instance.markApplied(_item);
     if (!mounted) return;
     setState(() => _applying = false);
 
@@ -315,15 +317,13 @@ class _CompanyRow extends StatelessWidget {
 /// bắt người dùng cuộn hết mới thấy nút ứng tuyển là chắc chắn mất người.
 class _ApplyBar extends StatelessWidget {
   const _ApplyBar({
-    required this.item,
-    required this.isGuest,
+    required this.eligibility,
     required this.applying,
     required this.onApply,
     this.onSignIn,
   });
 
-  final Opportunity item;
-  final bool isGuest;
+  final Eligibility eligibility;
   final bool applying;
   final VoidCallback onApply;
   final VoidCallback? onSignIn;
@@ -331,6 +331,8 @@ class _ApplyBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
+    final reason = eligibility.reason;
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         Np.gutter, Np.s3, Np.gutter,
@@ -340,11 +342,76 @@ class _ApplyBar extends StatelessWidget {
         color: c.bg,
         border: Border(top: BorderSide(color: c.line)),
       ),
-      child: AcidButton(
-        label: isGuest ? 'Đăng nhập để ứng tuyển' : 'Ứng tuyển',
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Lý do nằm TRÊN nút chứ không phải trong một hộp thoại sau khi bấm.
+          // Đây là toàn bộ điểm của thay đổi này: nói trước, không nói sau.
+          if (reason != null) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                NpIco(
+                  eligibility.blocker == Blocker.applied
+                      ? NpIcon.send
+                      : NpIcon.bolt,
+                  size: 15,
+                  color: eligibility.blocker == Blocker.applied
+                      ? c.acidText
+                      : c.muted,
+                ),
+                const SizedBox(width: Np.s2),
+                Expanded(
+                  child: Text(reason,
+                      style: NpType.meta.copyWith(fontSize: 12.5, color: c.muted)),
+                ),
+              ],
+            ),
+            const SizedBox(height: Np.s3),
+          ],
+          _button(c),
+        ],
+      ),
+    );
+  }
+
+  Widget _button(NpColors c) {
+    if (eligibility.blocker == Blocker.guest) {
+      return AcidButton(
+        label: 'Đăng nhập để ứng tuyển',
+        icon: Icons.arrow_forward_rounded,
+        onTap: onSignIn ?? () {},
+      );
+    }
+    if (eligibility.canApply) {
+      return AcidButton(
+        label: 'Ứng tuyển',
         busy: applying,
         icon: Icons.arrow_forward_rounded,
-        onTap: isGuest ? (onSignIn ?? () {}) : onApply,
+        onTap: onApply,
+      );
+    }
+
+    // Nút tắt, KHÔNG phải nút ẩn. Ẩn hẳn thì người dùng đi tìm nút ứng tuyển
+    // và tưởng app hỏng; để đó mà xám thì họ hiểu ngay là có nút, chỉ chưa
+    // dùng được — và dòng lý do phía trên nói vì sao.
+    return Container(
+      width: double.infinity,
+      height: 52,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(Np.rPill),
+        border: Border.all(color: c.line),
+      ),
+      child: Text(
+        switch (eligibility.blocker) {
+          Blocker.applied => 'Đã nộp đơn',
+          Blocker.expired => 'Đã hết hạn',
+          Blocker.reputation => 'Chưa đủ điểm uy tín',
+          _ => 'Không nộp được',
+        },
+        style: NpType.button.copyWith(color: c.faint),
       ),
     );
   }
