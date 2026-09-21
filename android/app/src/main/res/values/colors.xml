@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Trùng NpColors.ink trong lib/core/theme.dart. Lệch nhau thì lúc mở app
+         sẽ thấy một cú chớp đổi màu ở chỗ nối giữa splash native và Flutter. -->
+    <color name="np_ink">#FF0B0F0E</color>
+</resources>
