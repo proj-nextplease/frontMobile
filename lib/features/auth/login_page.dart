@@ -227,8 +227,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
 
               const SizedBox(height: Np.s8),
-              _SignUpRow(onTap: _busy ? null : _goRegister),
-              const SizedBox(height: Np.s5),
               Center(
                 child: GestureDetector(
                   onTap: _busy ? null : widget.onSkip,
@@ -251,10 +249,9 @@ class _LoginPageState extends State<LoginPage> {
     _run(() => widget.onEmailLogin(_email.text.trim(), _password.text));
   }
 
-  // Hai luồng này chưa dựng. Nói thẳng ra thay vì để nút bấm vào không có gì
-  // xảy ra — người dùng sẽ tưởng app hỏng.
+  // Luồng này chưa dựng. Nói thẳng ra thay vì để nút bấm vào không có gì xảy
+  // ra — người dùng sẽ tưởng app hỏng.
   void _forgotPassword() => _notYet('Đặt lại mật khẩu');
-  void _goRegister() => _notYet('Đăng ký tài khoản');
 
   void _notYet(String what) {
     final c = Np.of(context);
@@ -422,35 +419,6 @@ class _OrRow extends StatelessWidget {
         Expanded(child: Divider(color: c.line)),
       ],
     );
-  }
-}
-
-class _SignUpRow extends StatelessWidget {
-  const _SignUpRow({required this.onTap});
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Np.of(context);
-    return Center(
-        child: GestureDetector(
-          onTap: onTap,
-          child: Wrap(
-            alignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              Text('Chưa có tài khoản? ', style: NpType.meta),
-              Text(
-                'Đăng ký',
-                style: NpType.meta.copyWith(
-                  color: c.acidText,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
   }
 }
 

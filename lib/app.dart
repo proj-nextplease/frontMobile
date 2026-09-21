@@ -65,7 +65,12 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
             onSocialLogin: _auth.signInWithProvider,
             onSkip: () => setState(() => _stage = _Stage.home),
           ),
-        _Stage.home => const JobsPage(),
+        // Khách vào qua nút "Xem cơ hội trước đã" — truyền cờ để màn hình
+        // đó hiện đường quay lại đăng nhập.
+        _Stage.home => JobsPage(
+            isGuest: !_auth.signedIn,
+            onSignIn: () => setState(() => _stage = _Stage.login),
+          ),
       },
     );
   }

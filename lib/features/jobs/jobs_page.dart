@@ -10,7 +10,18 @@ import 'opportunity_card.dart';
 enum OrgTab { all, business, club }
 
 class JobsPage extends StatefulWidget {
-  const JobsPage({super.key});
+  const JobsPage({super.key, this.isGuest = false, this.onSignIn});
+
+  /// Người dùng vào đây qua nút "Xem cơ hội trước đã", chưa đăng nhập.
+  ///
+  /// Danh sách cơ hội là công khai nên vẫn xem được, nhưng lưu tin và nộp đơn
+  /// thì không. Nếu không nói gì thì họ sẽ bấm vào một tin rồi mới phát hiện
+  /// mình bị chặn — và lúc đó không có đường nào quay lại màn hình đăng nhập.
+  final bool isGuest;
+
+  /// Quay về màn hình đăng nhập. Chỉ có ý nghĩa khi [isGuest].
+  final VoidCallback? onSignIn;
+
   @override
   State<JobsPage> createState() => _JobsPageState();
 }
@@ -51,6 +62,13 @@ class _JobsPageState extends State<JobsPage> {
     }
   }
 
+  /// Vị trí chèn ô gợi ý. Đặt sau ba thẻ chứ không phải trên cùng: người dùng
+  /// vừa chủ động bấm "xem trước đã", chặn họ ngay lập tức bằng một lời mời
+  /// đăng nhập là đi ngược điều họ vừa chọn. Để họ xem vài tin rồi mới mời.
+  static const _kPromptAt = 3;
+
+  bool _showPrompt(int count) => widget.isGuest && count > _kPromptAt;
+
   List<Opportunity> get _filtered => switch (_tab) {
         OrgTab.all => _items,
         OrgTab.business => _items.where((e) => !e.isClub).toList(),
@@ -82,9 +100,36 @@ class _JobsPageState extends State<JobsPage> {
             children: [
               const SectionLabel('Việc làm & Quest'),
               const SizedBox(height: Np.s2),
-              Text('Cơ hội', style: NpType.h1),
+              Text('Cơ hội', style: NpType.h1.copyWith(color: c.ink)),
             ],
           ),
+          actions: [
+            // Đường quay lại, luôn thấy được. Không dùng mũi tên back của hệ
+            // thống: ở đây không có ngăn xếp điều hướng để quay về, và nhãn
+            // chữ nói rõ bấm vào sẽ được gì.
+            if (widget.isGuest)
+              Padding(
+                padding: const EdgeInsets.only(right: Np.gutter),
+                child: GestureDetector(
+                  onTap: widget.onSignIn,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: Np.s4, vertical: Np.s2),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(Np.rPill),
+                      border: Border.all(color: c.line),
+                    ),
+                    child: Text(
+                      'Đăng nhập',
+                      style: NpType.meta.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: c.ink,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
         body: RefreshIndicator(
           onRefresh: _load,
@@ -123,9 +168,22 @@ class _JobsPageState extends State<JobsPage> {
                   padding: const EdgeInsets.fromLTRB(
                       Np.gutter, Np.s2, Np.gutter, Np.s10),
                   physics: const AlwaysScrollableScrollPhysics(),
-                  itemCount: list.length,
+                  // Chèn thêm một ô gợi ý đăng nhập vào giữa danh sách, nên
+                  // số phần tử nhiều hơn số cơ hội đúng một.
+                  itemCount: list.length + (_showPrompt(list.length) ? 1 : 0),
                   separatorBuilder: (_, _) => const SizedBox(height: Np.s3),
-                  itemBuilder: (_, i) => OpportunityCard(item: list[i]),
+                  itemBuilder: (_, i) {
+                    if (_showPrompt(list.length)) {
+                      if (i == _kPromptAt) {
+                        return _SignInPrompt(onTap: widget.onSignIn);
+                      }
+                      // Sau vị trí chèn thì chỉ số dịch lùi một bậc.
+                      if (i > _kPromptAt) {
+                        return OpportunityCard(item: list[i - 1]);
+                      }
+                    }
+                    return OpportunityCard(item: list[i]);
+                  },
                 ),
         ),
       ],
@@ -187,6 +245,48 @@ class _Tabs extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Ô gợi ý đăng nhập, nằm xen giữa danh sách.
+///
+/// Nói CỤ THỂ đăng nhập để được gì, thay vì chỉ "đăng nhập đi". Người dùng
+/// đang xem việc làm; lý do thuyết phục nhất là những việc họ sắp muốn làm
+/// với chính những tin này.
+class _SignInPrompt extends StatelessWidget {
+  const _SignInPrompt({required this.onTap});
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Container(
+      padding: const EdgeInsets.all(Np.s5),
+      decoration: Np.card(c, hi: true),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionLabel('Đang xem với tư cách khách'),
+          const SizedBox(height: Np.s3),
+          Text(
+            'Đăng nhập để lưu tin và nộp đơn',
+            style: NpType.title.copyWith(fontSize: 18, color: c.ink),
+          ),
+          const SizedBox(height: Np.s2),
+          Text(
+            'Hồ sơ năng lực của bạn cũng nằm ở đây — mỗi việc hoàn thành là một '
+            'minh chứng được xác thực.',
+            style: NpType.meta.copyWith(color: c.muted),
+          ),
+          const SizedBox(height: Np.s5),
+          AcidButton(
+            label: 'Đăng nhập',
+            onTap: onTap ?? () {},
+            icon: Icons.arrow_forward_rounded,
+          ),
+        ],
       ),
     );
   }
