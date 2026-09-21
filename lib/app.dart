@@ -7,6 +7,7 @@ import 'features/auth/auth_service.dart';
 import 'features/auth/login_page.dart';
 import 'features/shell/main_shell.dart';
 import 'features/jobs/saved_store.dart';
+import 'features/profile/gamification_store.dart';
 import 'features/onboarding/splash_page.dart';
 
 /// Luồng mở app: splash → (đăng nhập | danh sách cơ hội).
@@ -44,6 +45,7 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
           // Nạp danh sách đã lưu ngay khi có phiên, để tim hiện đúng ở lần
           // cuộn đầu tiên chứ không phải sau khi người dùng bấm thử.
           SavedStore.instance.hydrate();
+          GamificationStore.instance.hydrate();
           // Đóng màn hình đăng nhập nếu nó đang được đẩy lên trên danh sách.
           // Không có gì để đóng thì popUntil trả về ngay.
           _navKey.currentState?.popUntil((r) => r.isFirst);
@@ -52,6 +54,7 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
           // Không xoá thì người tiếp theo đăng nhập trên cùng thiết bị sẽ thấy
           // tim của người trước.
           SavedStore.instance.clear();
+          GamificationStore.instance.clear();
           _navKey.currentState?.popUntil((r) => r.isFirst);
           setState(() => _stage = _Stage.login);
         }
@@ -63,7 +66,10 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
     // Phiên khôi phục từ Keychain lúc mở app KHÔNG bắn sự kiện signedIn —
     // nó đã đăng nhập sẵn từ trước. Nên phải nạp tay ở đây, nếu không người
     // dùng cũ mở app sẽ thấy mọi tin đều chưa lưu.
-    if (_auth.signedIn) SavedStore.instance.hydrate();
+    if (_auth.signedIn) {
+      SavedStore.instance.hydrate();
+      GamificationStore.instance.hydrate();
+    }
     setState(() => _stage = _auth.signedIn ? _Stage.home : _Stage.login);
   }
 

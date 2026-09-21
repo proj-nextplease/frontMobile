@@ -7,6 +7,7 @@ import 'opportunities_repository.dart';
 import 'opportunity.dart';
 import 'opportunity_card.dart';
 import 'opportunity_detail_page.dart';
+import 'seen_store.dart';
 
 enum OrgTab { all, business, club }
 
@@ -54,6 +55,7 @@ class _JobsPageState extends State<JobsPage> {
         _items = data;
         _loading = false;
       });
+      SeenStore.instance.recount(data);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
