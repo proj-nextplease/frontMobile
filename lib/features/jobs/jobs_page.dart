@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import 'opportunities_repository.dart';
 import 'opportunity.dart';
 import 'opportunity_card.dart';
+import 'opportunity_detail_page.dart';
 
 enum OrgTab { all, business, club }
 
@@ -61,6 +62,19 @@ class _JobsPageState extends State<JobsPage> {
       });
     }
   }
+
+  Widget _card(Opportunity item) => OpportunityCard(
+        item: item,
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => OpportunityDetailPage(
+              summary: item,
+              isGuest: widget.isGuest,
+              onSignIn: widget.onSignIn,
+            ),
+          ),
+        ),
+      );
 
   /// Vị trí chèn ô gợi ý. Đặt sau ba thẻ chứ không phải trên cùng: người dùng
   /// vừa chủ động bấm "xem trước đã", chặn họ ngay lập tức bằng một lời mời
@@ -179,10 +193,10 @@ class _JobsPageState extends State<JobsPage> {
                       }
                       // Sau vị trí chèn thì chỉ số dịch lùi một bậc.
                       if (i > _kPromptAt) {
-                        return OpportunityCard(item: list[i - 1]);
+                        return _card(list[i - 1]);
                       }
                     }
-                    return OpportunityCard(item: list[i]);
+                    return _card(list[i]);
                   },
                 ),
         ),

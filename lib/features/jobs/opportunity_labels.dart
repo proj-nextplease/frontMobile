@@ -44,3 +44,29 @@ String relativeTime(DateTime? d) {
   if (diff.inDays < 30) return 'Đăng ${diff.inDays} ngày trước';
   return 'Đăng ${(diff.inDays / 30).round()} tháng trước';
 }
+
+/// Ngày tháng kiểu Việt: 20/10/2026.
+String dmy(DateTime? d) {
+  if (d == null) return '—';
+  String p(int n) => n.toString().padLeft(2, '0');
+  return '${p(d.day)}/${p(d.month)}/${d.year}';
+}
+
+/// Còn bao nhiêu ngày tới hạn.
+///
+/// Trả về null khi không có hạn hoặc đã qua hạn — nơi gọi tự quyết hiển thị
+/// gì, vì "còn 0 ngày" và "đã hết hạn" là hai thông điệp khác nhau.
+int? daysLeft(DateTime? deadline) {
+  if (deadline == null) return null;
+  final d = deadline.difference(DateTime.now()).inDays;
+  return d < 0 ? null : d;
+}
+
+/// Phần thưởng quest gộp thành một dòng.
+String rewardLine({int? exp, int? np}) {
+  final parts = <String>[
+    if (exp != null && exp > 0) '+$exp EXP',
+    if (np != null && np > 0) '+$np NP',
+  ];
+  return parts.isEmpty ? '—' : parts.join('  ·  ');
+}

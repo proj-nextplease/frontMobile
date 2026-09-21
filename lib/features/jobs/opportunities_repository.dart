@@ -31,6 +31,40 @@ class OpportunitiesRepository {
     ];
   }
 
+  /// Nạp chi tiết một cơ hội.
+  ///
+  /// Chỉ tin tuyển dụng mới cần gọi thêm: GET /jobs/{id} trả về `capacity` và
+  /// `formFields` mà danh sách không có.
+  ///
+  /// Quest thì KHÔNG có endpoint chi tiết công khai — backend chỉ có
+  /// /organizer/quests/{id} và nó đòi quyền tổ chức. Nhưng danh sách quest đã
+  /// trả về đủ mọi trường (kể cả description và formFields), nên không thiếu
+  /// gì. Trả lại nguyên bản tóm tắt.
+  Future<Opportunity> fetchDetail(Opportunity summary) async {
+    if (summary.isQuest) return summary;
+    try {
+      final data = await _api.get('/jobs/${summary.id}');
+      if (data is Map<String, dynamic>) return summary.mergeDetail(data);
+    } on ApiException {
+      // Không nâng lỗi lên: bản tóm tắt đã đủ để hiển thị gần hết màn hình
+      // chi tiết. Chặn cả trang chỉ vì thiếu `capacity` là quá tay.
+    }
+    return summary;
+  }
+
+  /// Nộp đơn. Trả null nếu thành công, hoặc thông điệp lỗi tiếng Việt.
+  Future<String?> apply(Opportunity item, String coverNote) async {
+    final path = item.isQuest
+        ? '/quests/${item.id}/apply'
+        : '/jobs/${item.id}/apply';
+    try {
+      await _api.post(path, body: {'coverNote': coverNote, 'answers': {}});
+      return null;
+    } on ApiException catch (e) {
+      return e.message;
+    }
+  }
+
   /// null = nhánh này hỏng. Nuốt lỗi ở đây là CỐ Ý — nơi gọi quyết định có
   /// nghiêm trọng hay không dựa trên việc cả hai cùng null.
   Future<List<dynamic>?> _tryFetch(Future<dynamic> Function() run) async {
