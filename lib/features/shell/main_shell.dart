@@ -137,6 +137,8 @@ class _MainShellState extends State<MainShell> {
               isGuest: widget.isGuest,
               onSignIn: widget.onSignIn,
               onSeeAll: () => setState(() => _index = 1),
+              onOpenDiscussions: () => _onTab(2),
+              onOpenProfile: () => _onTab(3),
             ),
             JobsPage(isGuest: widget.isGuest, onSignIn: widget.onSignIn),
             const DiscussionsPage(),

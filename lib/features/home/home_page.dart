@@ -8,38 +8,47 @@ import '../jobs/opportunity.dart';
 import '../jobs/opportunity_detail_page.dart';
 import '../jobs/opportunity_labels.dart';
 import '../jobs/saved_store.dart';
-import '../profile/gamification_store.dart';
+import '../profile/me_store.dart';
 
 /// Trang chủ.
 ///
-/// ─── Vì sao bản trước trông "máy làm" ────────────────────────────────────
-/// Mọi khối đều là một thẻ chữ nhật bo góc, viền mờ, cách đều nhau, xếp dọc.
-/// Không có gì trội hơn gì, không có nhịp, không có chỗ nào phá khung. Cộng
-/// thêm hai ô thống kê đối xứng và vài emoji làm trang trí — đó là công thức
-/// của một giao diện dựng vội.
+/// ─── Vì sao bản trước bị bỏ ──────────────────────────────────────────────
+/// Nó có ba mục — "Vừa lên sàn", "Sắp hết hạn", và khối kết thúc — nhưng cả
+/// ba đều là CÙNG một danh sách cơ hội, chỉ xếp khác nhau. Cuộn hết trang
+/// không biết thêm điều gì. Tệ hơn, tab Cơ hội đã làm đúng việc đó đầy đủ
+/// hơn, nên trang chủ chỉ là một bản sao kém hơn của tab bên cạnh.
+/// Thứ to nhất màn hình lại là tên cắt từ email của chính người đang nhìn —
+/// một thông tin họ đã biết, chiếm một phần tư màn hình đầu.
 ///
-/// Bản này đổi ba thứ ở tầng bố cục, không phải tầng màu:
+/// ─── Bản này ─────────────────────────────────────────────────────────────
+/// Trang chủ trả lời "HÔM NAY TÔI NÊN LÀM GÌ", tab Cơ hội trả lời "thị
+/// trường đang có gì". Hai câu khác nhau nên hai màn hình không còn giẫm
+/// chân nhau.
 ///
-///   1. DẢI MÀU TRÀN MÉP ở đầu trang, bo một góc lớn lệch hẳn sang trái. Nó
-///      là khối duy nhất trội hẳn lên, nên mắt có chỗ để bắt đầu.
-///   2. HAI Ô CHỒNG LÊN mép dải, không nằm gọn bên dưới. Chỗ chồng lấn đó là
-///      thứ khiến bố cục đọc ra là "có người sắp đặt".
-///   3. BĂNG CHUYỀN NGANG thay cho chồng thẻ dọc. Thẻ dọc khiến trang chủ
-///      thành bản sao thu nhỏ của tab Cơ hội; băng chuyền nói rõ "đây là vài
-///      cái tiêu biểu, muốn đủ thì sang bên kia".
+///   1. MỘT thẻ lớn duy nhất ở trên: cơ hội hợp nhất với hồ sơ người dùng,
+///      kèm lý do vì sao nó được chọn. Không phải sáu thẻ ngang nhau.
+///   2. MỘT lời nhắc duy nhất, chọn theo mức cấp bách thực tế (xem
+///      `_nudge`) — không phải bảng thống kê toàn số 0.
+///   3. Nội dung thật ở phần cộng đồng: tiêu đề bài viết, không phải chip
+///      chủ đề rỗng.
 ///
-/// Và bỏ hết emoji — thay bằng biểu tượng vẽ tay trong bộ NpIcon.
+/// Nền sáng liền mạch, không còn dải tối — dải đó buộc mọi màu thương hiệu
+/// phải tồn tại ở hai phiên bản, và đó chính là nguồn gốc vụ hai sắc xanh.
 class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
     required this.isGuest,
     required this.onSignIn,
     required this.onSeeAll,
+    required this.onOpenDiscussions,
+    required this.onOpenProfile,
   });
 
   final bool isGuest;
   final VoidCallback onSignIn;
   final VoidCallback onSeeAll;
+  final VoidCallback onOpenDiscussions;
+  final VoidCallback onOpenProfile;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -48,38 +57,30 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final _api = ApiClient();
   late final _repo = OpportunitiesRepository(_api);
-
-  final _scroll = ScrollController();
-
-  /// Dải màu ở đầu trang TỐI, nên khi nó còn che thanh trạng thái thì giờ và
-  /// pin phải sáng. Cuộn qua nó rồi thì nền lại sáng và chữ phải tối lại.
-  ///
-  /// Không có chỗ này thì ở chế độ sáng, giờ và pin gần như vô hình trên dải.
-  bool _overBand = true;
+  final _me = MeStore.instance;
 
   List<Opportunity> _items = const [];
+  List<Map<String, dynamic>> _posts = const [];
   List<Map<String, dynamic>> _topics = const [];
-  int _applications = 0;
-  String? _email;
+  List<Map<String, dynamic>> _apps = const [];
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(_onScroll);
+    _me.addListener(_onMe);
+    SavedStore.instance.addListener(_onMe);
     _load();
   }
 
-  /// Ngưỡng là chiều cao dải trừ đi phần thanh trạng thái. Đổi sớm hơn một
-  /// nhịp để chữ không kịp lẫn vào nền lúc đang chuyển.
-  void _onScroll() {
-    final over = _scroll.offset < 150;
-    if (over != _overBand) setState(() => _overBand = over);
+  void _onMe() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    _scroll.dispose();
+    _me.removeListener(_onMe);
+    SavedStore.instance.removeListener(_onMe);
     super.dispose();
   }
 
@@ -100,6 +101,15 @@ class _HomePageState extends State<HomePage> {
       // Danh sách rỗng đã tự nói lên vấn đề.
     }
 
+    final posts = await _get('/discussions/posts');
+    if (mounted && posts is List) {
+      setState(() =>
+          _posts = posts.whereType<Map<String, dynamic>>().take(3).toList());
+    }
+
+    // Chủ đề nạp riêng vì nó CÓ dữ liệu ngay cả khi chưa ai đăng bài — và đó
+    // chính là trường hợp cần tới: mục cộng đồng rỗng thì mời người dùng mở
+    // bài đầu tiên, thay vì biến mất và để lại một khoảng trắng.
     final topics = await _get('/discussions/topics');
     if (mounted && topics is List) {
       setState(() =>
@@ -107,15 +117,11 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (!widget.isGuest) {
-      // Hai lệnh gọi này CHỈ dành cho người đã đăng nhập; gọi khi là khách sẽ
-      // nhận 401 và không mang lại gì.
-      final me = await _get('/me');
+      // Chỉ dành cho người đã đăng nhập; gọi khi là khách sẽ nhận 401.
+      await _me.hydrate();
       final apps = await _get('/me/applications');
-      if (mounted) {
-        setState(() {
-          _email = me is Map ? '${me['email'] ?? ''}' : null;
-          _applications = apps is List ? apps.length : 0;
-        });
+      if (mounted && apps is List) {
+        setState(() => _apps = apps.whereType<Map<String, dynamic>>().toList());
       }
     }
     if (mounted) setState(() => _loading = false);
@@ -133,406 +139,397 @@ class _HomePageState extends State<HomePage> {
   /// "một màn hình biết bạn vừa mở nó lúc nào".
   String get _greeting {
     final h = DateTime.now().hour;
-    if (h < 11) return 'Sáng rồi';
-    if (h < 14) return 'Trưa rồi';
-    if (h < 18) return 'Chiều rồi';
-    return 'Tối rồi';
+    if (h < 11) return 'Chào buổi sáng';
+    if (h < 14) return 'Chào buổi trưa';
+    if (h < 18) return 'Chào buổi chiều';
+    return 'Chào buổi tối';
   }
 
-  String get _name {
-    final e = _email;
-    if (widget.isGuest || e == null || e.isEmpty) return 'bạn ơi';
-    final at = e.indexOf('@');
-    return at > 0 ? e.substring(0, at) : e;
+  /// Chỉ lấy tên gọi, không lấy cả họ — dòng chào dài quá thì nó thành một
+  /// câu để đọc chứ không còn là lời chào.
+  String? get _firstName {
+    final n = _me.name?.trim();
+    if (n == null || n.isEmpty) return null;
+    final parts = n.split(RegExp(r'\s+'));
+    return parts.last;
   }
+
+  // ── Xếp hạng cơ hội ────────────────────────────────────────────────────
+
+  /// Số kỹ năng của tin trùng với kỹ năng trong hồ sơ.
+  int _matchCount(Opportunity o) {
+    if (_me.skills.isEmpty || o.skills.isEmpty) return 0;
+    return o.skills
+        .where((s) => _me.skills.contains(s.trim().toLowerCase()))
+        .length;
+  }
+
+  /// Danh sách cơ hội đã sắp theo mức phù hợp.
+  ///
+  /// Thứ tự ưu tiên: khớp kỹ năng → hạn gần → mới đăng. Tin đã quá hạn và tin
+  /// vượt quá điểm uy tín hiện tại bị loại hẳn, vì gợi ý một việc người dùng
+  /// không nộp được là tệ hơn không gợi ý gì.
+  List<Opportunity> get _ranked {
+    final now = DateTime.now();
+    final list = _items.where((o) {
+      final d = o.deadlineAt ?? o.endsAt;
+      if (d != null && d.isBefore(now)) return false;
+      if (_me.loaded && o.minReqRs > _me.reputationScore) return false;
+      return true;
+    }).toList();
+
+    list.sort((a, b) {
+      final m = _matchCount(b).compareTo(_matchCount(a));
+      if (m != 0) return m;
+
+      final da = a.deadlineAt ?? a.endsAt;
+      final db = b.deadlineAt ?? b.endsAt;
+      if (da != null && db != null) return da.compareTo(db);
+      if (da != null) return -1;
+      if (db != null) return 1;
+
+      final ca = a.createdAt, cb = b.createdAt;
+      if (ca == null && cb == null) return 0;
+      if (ca == null) return 1;
+      if (cb == null) return -1;
+      return cb.compareTo(ca);
+    });
+    return list;
+  }
+
+  /// Câu giải thích vì sao tin này được đưa lên đầu.
+  ///
+  /// Một gợi ý không nói lý do thì không phải gợi ý, nó là quảng cáo. Thứ tự
+  /// các nhánh bám đúng thứ tự xếp hạng ở `_ranked` để lời giải thích luôn
+  /// khớp với lý do thật.
+  String _reason(Opportunity o) {
+    final m = _matchCount(o);
+    if (m > 0) {
+      return 'Khớp $m/${o.skills.length} kỹ năng trong hồ sơ của bạn';
+    }
+    final left = daysLeft(o.deadlineAt ?? o.endsAt);
+    if (left != null && left <= 14) {
+      return left == 0 ? 'Hạn nộp là hôm nay' : 'Chỉ còn $left ngày để nộp';
+    }
+    if (o.minReqRs == 0) return 'Không yêu cầu điểm uy tín — nộp được ngay';
+    return 'Vừa mở, còn nhận hồ sơ';
+  }
+
+  // ── Lời nhắc ───────────────────────────────────────────────────────────
+
+  int get _pending => _apps
+      .where((a) => '${a['status']}'.toUpperCase() == 'PENDING')
+      .length;
+
+  /// Một lời nhắc duy nhất, chọn theo việc gì đang chặn người dùng nhiều nhất.
+  ///
+  /// Cố ý trả về MỘT chứ không phải danh sách: năm lời nhắc cùng lúc thì
+  /// không lời nào được đọc, và nó biến trang chủ thành bảng công việc tồn.
+  _Nudge? get _nudge {
+    if (widget.isGuest) {
+      return _Nudge(
+        icon: NpIcon.person,
+        text: 'Đăng nhập để lưu tin và nộp hồ sơ',
+        action: 'Đăng nhập',
+        onTap: widget.onSignIn,
+      );
+    }
+    if (!_me.loaded) return null;
+
+    // Thiếu kỹ năng là nghẽn lớn nhất: không có nó thì phép khớp bên trên
+    // không chạy, và người dùng chỉ nhận được tin xếp theo hạn nộp.
+    if (_me.skills.isEmpty) {
+      return _Nudge(
+        icon: NpIcon.bolt,
+        text: 'Thêm kỹ năng vào hồ sơ để được gợi ý đúng việc hơn',
+        action: 'Cập nhật',
+        onTap: widget.onOpenProfile,
+      );
+    }
+    if (_pending > 0) {
+      return _Nudge(
+        icon: NpIcon.send,
+        text: '$_pending đơn đang chờ nhà tuyển dụng phản hồi',
+        action: 'Xem',
+        onTap: widget.onOpenProfile,
+      );
+    }
+    final saved = SavedStore.instance.count;
+    if (saved > 0 && _apps.isEmpty) {
+      return _Nudge(
+        icon: NpIcon.heartFill,
+        text: 'Bạn đã lưu $saved tin nhưng chưa nộp đơn nào',
+        action: 'Xem lại',
+        onTap: widget.onOpenProfile,
+      );
+    }
+    final missing = _me.missing;
+    if (missing.isNotEmpty) {
+      return _Nudge(
+        icon: NpIcon.person,
+        text: 'Hồ sơ còn thiếu ${missing.first}',
+        action: 'Bổ sung',
+        onTap: widget.onOpenProfile,
+      );
+    }
+    return null;
+  }
+
+  // ── Dựng giao diện ─────────────────────────────────────────────────────
+
+  void _open(Opportunity o) => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => OpportunityDetailPage(
+            summary: o,
+            isGuest: widget.isGuest,
+            onSignIn: widget.onSignIn,
+          ),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Mới nhất trước. Tin thiếu createdAt xuống cuối chứ không nhảy lên đầu:
-    // thiếu dữ liệu không phải lý do để được ưu tiên.
-    final recent = [..._items]..sort((a, b) {
-        final x = a.createdAt, y = b.createdAt;
-        if (x == null && y == null) return 0;
-        if (x == null) return 1;
-        if (y == null) return -1;
-        return y.compareTo(x);
-      });
-    final rail = recent.take(6).toList();
-
-    // Sắp hết hạn: chỉ những tin CÒN hạn và hạn gần nhất. Tin đã quá hạn bị
-    // loại hẳn — nhắc người dùng về một cơ hội họ không còn nộp được nữa là
-    // vô ích và gây bực.
-    final now = DateTime.now();
-    final closing = _items
-        .where((o) {
-          final d = o.deadlineAt ?? o.endsAt;
-          return d != null && d.isAfter(now);
-        })
-        .toList()
-      ..sort((a, b) => (a.deadlineAt ?? a.endsAt)!
-          .compareTo((b.deadlineAt ?? b.endsAt)!));
-    final closingTop = closing.take(3).toList();
+    final ranked = _ranked;
+    final top = ranked.isEmpty ? null : ranked.first;
+    final rest = ranked.skip(1).take(3).toList();
+    final nudge = _nudge;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
+      // Nền sáng liền mạch từ trên xuống nên thanh trạng thái không còn phải
+      // đổi theo độ cuộn — bỏ hẳn được cả ScrollController lẫn ngưỡng đoán
+      // chiều cao dải mà bản trước phải nuôi.
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        // Lộn ngược so với các tab khác khi đang ở trên dải: iOS đọc
-        // statusBarBrightness (mô tả NỀN), Android đọc statusBarIconBrightness
-        // (mô tả ICON).
-        statusBarBrightness: _overBand
-            ? Brightness.dark
-            : (isDark ? Brightness.dark : Brightness.light),
-        statusBarIconBrightness: _overBand
-            ? Brightness.light
-            : (isDark ? Brightness.light : Brightness.dark),
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       ),
       child: RefreshIndicator(
-      onRefresh: _load,
-      color: c.acidText,
-      backgroundColor: c.surfaceHi,
-      child: ListView(
-        controller: _scroll,
-        padding: EdgeInsets.only(bottom: Np.navInset),
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          _Band(greeting: _greeting, name: _name, isGuest: widget.isGuest),
-
-          // Kéo lên đè lên mép dải. Đây là chỗ chồng lấn cố ý — thứ khiến bố
-          // cục đọc ra là có người sắp đặt, không phải máy xếp hàng.
-          Transform.translate(
-            offset: const Offset(0, -30),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
-              child: widget.isGuest
-                  ? _GuestCta(onSignIn: widget.onSignIn)
-                  : _Counters(applications: _applications),
-            ),
-          ),
-
-          const SizedBox(height: Np.s2),
-          _RailHead(
-            title: 'Vừa lên sàn',
-            action: 'Tất cả',
-            onTap: widget.onSeeAll,
-          ),
-          const SizedBox(height: Np.s4),
-          SizedBox(
-            height: 186,
-            child: _loading && rail.isEmpty
-                ? _RailSkeleton()
-                : ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: Np.gutter),
-                    itemCount: rail.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: Np.s3),
-                    itemBuilder: (_, i) => _RailCard(
-                      item: rail[i],
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => OpportunityDetailPage(
-                            summary: rail[i],
-                            isGuest: widget.isGuest,
-                            onSignIn: widget.onSignIn,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-          ),
-
-          // Sắp hết hạn: danh sách DỌC và gọn, không phải băng chuyền nữa.
-          // Đổi kiểu trình bày là có chủ ý — hai băng chuyền chồng nhau sẽ
-          // biến trang thành một dãy thanh cuốn, và người dùng không biết
-          // phần nào đáng dừng lại.
-          if (closingTop.isNotEmpty) ...[
-            const SizedBox(height: Np.s8),
-            const _RailHead(title: 'Sắp hết hạn'),
-            const SizedBox(height: Np.s4),
-            for (final item in closingTop) ...[
+        onRefresh: _load,
+        color: c.acidText,
+        backgroundColor: c.surfaceHi,
+        child: SafeArea(
+          bottom: false,
+          child: ListView(
+            padding: EdgeInsets.only(bottom: Np.navInset),
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              const SizedBox(height: Np.s4),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
-                child: _DeadlineRow(
-                  item: item,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => OpportunityDetailPage(
-                        summary: item,
-                        isGuest: widget.isGuest,
-                        onSignIn: widget.onSignIn,
+                child: _Greeting(
+                  greeting: _greeting,
+                  name: _firstName,
+                  rs: _me.loaded ? _me.reputationScore : null,
+                ),
+              ),
+
+              if (nudge != null) ...[
+                const SizedBox(height: Np.s5),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                  child: _NudgeBar(nudge: nudge),
+                ),
+              ],
+
+              const SizedBox(height: Np.s8),
+              const _Head(title: 'Nên xem hôm nay'),
+              const SizedBox(height: Np.s4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                child: top == null
+                    ? _EmptyToday(loading: _loading)
+                    : _TodayCard(
+                        item: top,
+                        reason: _reason(top),
+                        onTap: () => _open(top),
                       ),
+              ),
+
+              if (rest.isNotEmpty) ...[
+                const SizedBox(height: Np.s8),
+                _Head(
+                  // "Hợp với bạn" chỉ được dùng khi THẬT SỰ có tin khớp kỹ
+                  // năng. Có hồ sơ mà không tin nào khớp thì đây chỉ là danh
+                  // sách cơ hội khác, và gọi nó là "hợp với bạn" là nói dối
+                  // người dùng ngay ở dòng tiêu đề.
+                  title: rest.any((o) => _matchCount(o) > 0)
+                      ? 'Hợp với bạn'
+                      : 'Cơ hội khác đang mở',
+                  action: 'Tất cả',
+                  onTap: widget.onSeeAll,
+                ),
+                const SizedBox(height: Np.s4),
+                for (final o in rest) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                    child: _CompactRow(
+                      item: o,
+                      match: _matchCount(o),
+                      onTap: () => _open(o),
                     ),
                   ),
+                  const SizedBox(height: Np.s2),
+                ],
+              ],
+
+              if (_posts.isNotEmpty || _topics.isNotEmpty) ...[
+                const SizedBox(height: Np.s8),
+                _Head(
+                  title: 'Sinh viên đang bàn',
+                  action: 'Vào thảo luận',
+                  onTap: widget.onOpenDiscussions,
                 ),
-              ),
-              const SizedBox(height: Np.s2),
+                const SizedBox(height: Np.s4),
+                if (_posts.isNotEmpty)
+                  for (final p in _posts) ...[
+                    Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: Np.gutter),
+                      child: _PostRow(
+                        post: p,
+                        onTap: widget.onOpenDiscussions,
+                      ),
+                    ),
+                    const SizedBox(height: Np.s2),
+                  ]
+                else
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                    child: _StartDiscussion(
+                      topics: _topics,
+                      onTap: widget.onOpenDiscussions,
+                    ),
+                  ),
+              ],
             ],
-          ],
-
-          if (_topics.isNotEmpty) ...[
-            const SizedBox(height: Np.s8),
-            const _RailHead(title: 'Sinh viên đang bàn'),
-            const SizedBox(height: Np.s4),
-            SizedBox(
-              height: 44,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
-                itemCount: _topics.length,
-                separatorBuilder: (_, _) => const SizedBox(width: Np.s2),
-                itemBuilder: (_, i) => _TopicChip(topic: _topics[i]),
-              ),
-            ),
-          ],
-
-          const SizedBox(height: Np.s10),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
-            child: _ClosingCard(onSeeAll: widget.onSeeAll, total: _items.length),
           ),
-        ],
-      ),
-      ),
-    );
-  }
-}
-
-/// Dải màu đầu trang, tràn hết bề ngang và chạy lên dưới thanh trạng thái.
-class _Band extends StatelessWidget {
-  const _Band({
-    required this.greeting,
-    required this.name,
-    required this.isGuest,
-  });
-
-  final String greeting;
-  final String name;
-  final bool isGuest;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Np.of(context);
-    final top = MediaQuery.paddingOf(context).top;
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(Np.gutter, top + Np.s5, Np.gutter, Np.s10),
-      decoration: BoxDecoration(
-        color: c.band,
-        // CHỈ bo góc dưới-trái, và bo rất lớn. Bo đều bốn góc là hình dạng
-        // trung tính nhất có thể; lệch một góc làm nó thành một hình có chủ ý.
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(52),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    );
+  }
+}
+
+/// Lời nhắc đã chọn xong — gói lại thành dữ liệu để phần dựng giao diện không
+/// phải chứa chuỗi if/else của phần quyết định.
+class _Nudge {
+  const _Nudge({
+    required this.icon,
+    required this.text,
+    required this.action,
+    required this.onTap,
+  });
+  final NpIcon icon;
+  final String text;
+  final String action;
+  final VoidCallback onTap;
+}
+
+/// Dòng chào. Cỡ chữ vừa phải — người dùng đã biết tên mình, nó không cần to
+/// bằng nửa màn hình như bản trước.
+class _Greeting extends StatelessWidget {
+  const _Greeting({required this.greeting, required this.name, required this.rs});
+  final String greeting;
+  final String? name;
+  final int? rs;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('nextplease',
-                  style: NpType.meta.copyWith(
-                    color: c.onBand,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.4,
-                  )),
-              Text(':',
-                  style: NpType.meta.copyWith(
-                    color: c.acid,
-                    fontWeight: FontWeight.w700,
-                  )),
+                  style: NpType.label.copyWith(color: c.muted)),
+              const SizedBox(height: Np.s1),
+              Text(
+                name == null ? greeting : '$greeting, $name',
+                style: NpType.h1.copyWith(color: c.ink),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
-          const SizedBox(height: Np.s6),
-          Text(greeting,
-              style: NpType.meta.copyWith(
-                  color: c.onBand.withValues(alpha: 0.55))),
-          Text(
-            name,
-            style: NpType.display.copyWith(fontSize: 38, color: c.onBand),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+        ),
+        if (rs != null) ...[
+          const SizedBox(width: Np.s3),
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: Np.s3, vertical: Np.s1 + 2),
+            decoration: BoxDecoration(
+              color: c.acid.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(Np.rPill),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                NpIco(NpIcon.bolt, size: 14, color: c.acidText),
+                const SizedBox(width: Np.s1 + 2),
+                Text('$rs',
+                    style: NpType.meta.copyWith(
+                      color: c.acidText,
+                      fontWeight: FontWeight.w700,
+                    )),
+              ],
+            ),
           ),
-          if (!isGuest) ...[
-            const SizedBox(height: Np.s5),
-            const _LevelStrip(),
-          ],
         ],
-      ),
+      ],
     );
   }
 }
 
-/// Cấp, vạch EXP và chuỗi ngày, gộp thành MỘT dòng trong dải.
-///
-/// Gộp chứ không tách thành thẻ riêng: ba con số này cùng nói một chuyện —
-/// bạn đang tiến tới đâu — nên tách ra ba ô là làm loãng chính nó.
-class _LevelStrip extends StatelessWidget {
-  const _LevelStrip();
+/// Thanh nhắc việc. Nền nhạt chứ không viền — nó phải đọc ra là một ghi chú
+/// chứ không phải thêm một thẻ nội dung nữa.
+class _NudgeBar extends StatelessWidget {
+  const _NudgeBar({required this.nudge});
+  final _Nudge nudge;
 
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
-    return ListenableBuilder(
-      listenable: GamificationStore.instance,
-      builder: (context, _) {
-        final g = GamificationStore.instance;
-        return Row(
+    return GestureDetector(
+      onTap: nudge.onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: Np.s4, vertical: Np.s3 + 2),
+        decoration: BoxDecoration(
+          color: c.surfaceHi,
+          borderRadius: BorderRadius.circular(Np.rMd),
+          border: Border.all(color: c.line),
+        ),
+        child: Row(
           children: [
-            NpIco(NpIcon.bolt, size: 17, color: c.acid),
-            const SizedBox(width: 6),
-            Text('Cấp ${g.level}',
-                style: NpType.meta.copyWith(
-                  color: c.onBand,
-                  fontWeight: FontWeight.w600,
-                )),
+            NpIco(nudge.icon, size: 18, color: c.muted),
             const SizedBox(width: Np.s3),
             Expanded(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(Np.rPill),
-                child: Container(
-                  height: 5,
-                  color: c.onBand.withValues(alpha: 0.18),
-                  child: FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: g.progress,
-                    child: Container(color: c.acid),
-                  ),
-                ),
-              ),
+              child: Text(nudge.text,
+                  style: NpType.meta.copyWith(color: c.ink, fontSize: 13.5),
+                  maxLines: 2),
             ),
-            if (g.streak > 0) ...[
-              const SizedBox(width: Np.s3),
-              NpIco(NpIcon.flame, size: 16, color: c.acid),
-              const SizedBox(width: 4),
-              Text('${g.streak}',
-                  style: NpType.meta.copyWith(
-                    color: c.onBand,
-                    fontWeight: FontWeight.w600,
-                  )),
-            ],
+            const SizedBox(width: Np.s2),
+            Text(nudge.action,
+                style: NpType.meta.copyWith(
+                  color: c.acidText,
+                  fontWeight: FontWeight.w700,
+                )),
           ],
-        );
-      },
-    );
-  }
-}
-
-/// Hai ô đếm, chồng lên mép dải.
-class _Counters extends StatelessWidget {
-  const _Counters({required this.applications});
-  final int applications;
-
-  @override
-  Widget build(BuildContext context) => Row(
-        children: [
-          Expanded(
-            child: ListenableBuilder(
-              listenable: SavedStore.instance,
-              builder: (context, _) => _Counter(
-                icon: NpIcon.heartFill,
-                value: SavedStore.instance.count,
-                label: 'đã lưu',
-              ),
-            ),
-          ),
-          const SizedBox(width: Np.s3),
-          Expanded(
-            child: _Counter(
-              icon: NpIcon.send,
-              value: applications,
-              label: 'đã nộp',
-            ),
-          ),
-        ],
-      );
-}
-
-class _Counter extends StatelessWidget {
-  const _Counter({
-    required this.icon,
-    required this.value,
-    required this.label,
-  });
-
-  final NpIcon icon;
-  final int value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Np.of(context);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(Np.s4, Np.s3, Np.s4, Np.s3),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(Np.rMd),
-        border: Border.all(color: c.line),
-        // Ô này NỔI lên trên dải nên cần bóng, khác với mọi thẻ khác trong app.
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          NpIco(icon, size: 17, color: c.acidText),
-          const SizedBox(width: Np.s2),
-          Text('$value',
-              style: NpType.h1.copyWith(fontSize: 22, color: c.ink)),
-          const SizedBox(width: 5),
-          Text(label, style: NpType.meta.copyWith(color: c.muted)),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _GuestCta extends StatelessWidget {
-  const _GuestCta({required this.onSignIn});
-  final VoidCallback onSignIn;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Np.of(context);
-    return Container(
-      padding: const EdgeInsets.all(Np.s5),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(Np.rLg),
-        border: Border.all(color: c.line),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Làm được việc gì, có minh chứng việc đó',
-              style: NpType.title.copyWith(fontSize: 18, color: c.ink)),
-          const SizedBox(height: Np.s2),
-          Text('Đăng nhập để lưu tin, nộp đơn và tích EXP.',
-              style: NpType.meta.copyWith(color: c.muted)),
-          const SizedBox(height: Np.s5),
-          AcidButton(label: 'Đăng nhập', onTap: onSignIn),
-        ],
-      ),
-    );
-  }
-}
-
-class _RailHead extends StatelessWidget {
-  const _RailHead({required this.title, this.action, this.onTap});
+/// Tiêu đề mục. Không có gạch trang trí, không có emoji — chỉ chữ và, nếu có,
+/// một lối đi tiếp.
+class _Head extends StatelessWidget {
+  const _Head({required this.title, this.action, this.onTap});
   final String title;
   final String? action;
   final VoidCallback? onTap;
@@ -543,11 +540,10 @@ class _RailHead extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(title,
-              style: NpType.h1.copyWith(fontSize: 23, color: c.ink)),
-          const Spacer(),
+          Expanded(
+            child: Text(title, style: NpType.h1.copyWith(color: c.ink)),
+          ),
           if (action != null)
             GestureDetector(
               onTap: onTap,
@@ -559,7 +555,7 @@ class _RailHead extends StatelessWidget {
                         color: c.acidText,
                         fontWeight: FontWeight.w600,
                       )),
-                  const SizedBox(width: 5),
+                  const SizedBox(width: Np.s1),
                   NpIco(NpIcon.arrow, size: 15, color: c.acidText),
                 ],
               ),
@@ -570,67 +566,78 @@ class _RailHead extends StatelessWidget {
   }
 }
 
-/// Thẻ trong băng chuyền: hẹp, cao cố định, chỉ giữ ba thông tin.
+/// Thẻ gợi ý chính — khối lớn nhất và là khối DUY NHẤT có nút.
 ///
-/// Cắt bớt so với thẻ ở tab Cơ hội là có chủ ý — đây là bản xem lướt, không
-/// phải bản đầy đủ. Giữ nguyên mọi chi tiết thì băng chuyền lại thành danh
-/// sách nằm ngang, và trang chủ lại thành bản sao của tab bên cạnh.
-class _RailCard extends StatelessWidget {
-  const _RailCard({required this.item, required this.onTap});
+/// Dòng lý do đứng TRÊN tiêu đề chứ không phải dưới: người dùng cần biết vì
+/// sao mình đang nhìn tin này trước khi quyết định có đọc tiếp không.
+class _TodayCard extends StatelessWidget {
+  const _TodayCard({
+    required this.item,
+    required this.reason,
+    required this.onTap,
+  });
   final Opportunity item;
+  final String reason;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
-    final hasPay = item.compensation != null && item.compensation! > 0;
+    final left = daysLeft(item.deadlineAt ?? item.endsAt);
+    final pay = item.isQuest
+        ? rewardLine(exp: item.expReward, np: item.npReward)
+        : salaryLabel(compensation: item.compensation, isQuest: false);
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 254,
-        padding: const EdgeInsets.all(Np.s4),
-        decoration: Np.card(c),
+        padding: const EdgeInsets.all(Np.s5),
+        decoration: Np.card(c, radius: Np.rLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
+                NpIco(NpIcon.bolt, size: 15, color: c.acidText),
+                const SizedBox(width: Np.s2),
                 Expanded(
-                  child: Text(item.companyName,
-                      style: NpType.meta.copyWith(color: c.muted),
+                  child: Text(reason,
+                      style: NpType.meta.copyWith(
+                        color: c.acidText,
+                        fontWeight: FontWeight.w600,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
                 ),
-                if (item.isQuest)
-                  const MetaChip(label: 'Quest', accent: true),
               ],
             ),
-            const SizedBox(height: Np.s3),
-            Expanded(
-              child: Text(
-                item.title,
-                style: NpType.title.copyWith(fontSize: 17, height: 1.3),
+            const SizedBox(height: Np.s4),
+            Text(item.title,
+                style: NpType.title.copyWith(fontSize: 20, color: c.ink),
                 maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(height: Np.s3),
-            Text(
-              item.isQuest
-                  ? rewardLine(exp: item.expReward, np: item.npReward)
-                  : salaryLabel(compensation: item.compensation, isQuest: false),
-              style: NpType.title.copyWith(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: hasPay || item.isQuest ? c.acidText : c.muted,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Text(item.location ?? 'Không rõ',
-                style: NpType.meta.copyWith(fontSize: 12, color: c.faint),
+                overflow: TextOverflow.ellipsis),
+            const SizedBox(height: Np.s2),
+            Text(item.companyName,
+                style: NpType.meta.copyWith(color: c.muted),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis),
+
+            const SizedBox(height: Np.s4),
+            Wrap(
+              spacing: Np.s2,
+              runSpacing: Np.s2,
+              children: [
+                if (pay.isNotEmpty) MetaChip(label: pay),
+                if (item.location != null && item.location!.isNotEmpty)
+                  MetaChip(label: item.location!),
+                if (item.isRemote) const MetaChip(label: 'Remote'),
+                if (left != null && left <= 14)
+                  MetaChip(label: left == 0 ? 'Hạn hôm nay' : 'Còn $left ngày'),
+              ],
+            ),
+
+            const SizedBox(height: Np.s5),
+            AcidButton(label: 'Xem chi tiết', onTap: onTap),
           ],
         ),
       ),
@@ -638,57 +645,24 @@ class _RailCard extends StatelessWidget {
   }
 }
 
-class _TopicChip extends StatelessWidget {
-  const _TopicChip({required this.topic});
-  final Map<String, dynamic> topic;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Np.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Np.s4, vertical: Np.s2),
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(Np.rPill),
-        border: Border.all(color: c.line),
-      ),
-      child: Text('${topic['name'] ?? ''}',
-          style: NpType.meta.copyWith(
-            color: c.ink,
-            fontWeight: FontWeight.w500,
-          )),
-    );
-  }
-}
-
-class _RailSkeleton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final c = Np.of(context);
-    return ListView.separated(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
-      itemCount: 2,
-      separatorBuilder: (_, _) => const SizedBox(width: Np.s3),
-      itemBuilder: (_, _) => Container(width: 254, decoration: Np.card(c)),
-    );
-  }
-}
-
-/// Một dòng "sắp hết hạn": ngắn, chỉ nói tiêu đề và còn mấy ngày.
-///
-/// Số ngày là thông tin CHÍNH ở đây nên nó đứng riêng bên phải và được tô
-/// màu, khác hẳn thẻ trong băng chuyền nơi lương mới là thứ nổi.
-class _DeadlineRow extends StatelessWidget {
-  const _DeadlineRow({required this.item, required this.onTap});
+/// Dòng cơ hội rút gọn. Cố tình KHÔNG dùng lại thẻ của tab Cơ hội: thẻ đầy đủ
+/// ở đây sẽ làm trang chủ lại thành bản sao của tab bên cạnh.
+class _CompactRow extends StatelessWidget {
+  const _CompactRow({
+    required this.item,
+    required this.match,
+    required this.onTap,
+  });
   final Opportunity item;
+  final int match;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
-    final left = daysLeft(item.deadlineAt ?? item.endsAt) ?? 0;
+    final pay = item.isQuest
+        ? rewardLine(exp: item.expReward, np: item.npReward)
+        : salaryLabel(compensation: item.compensation, isQuest: false);
 
     return GestureDetector(
       onTap: onTap,
@@ -709,24 +683,38 @@ class _DeadlineRow extends StatelessWidget {
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 2),
-                  Text(item.companyName,
-                      style: NpType.meta.copyWith(fontSize: 12, color: c.muted),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 3),
+                  Text(
+                    // Ghép công ty và lương vào MỘT dòng phụ. Tách hai dòng
+                    // thì mỗi mục cao thêm 18px và ba mục là gần một phần tư
+                    // màn hình cho thông tin hạng hai.
+                    pay.isEmpty
+                        ? item.companyName
+                        : '${item.companyName} · $pay',
+                    style: NpType.meta.copyWith(fontSize: 12, color: c.muted),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
-            const SizedBox(width: Np.s3),
-            Text(
-              left == 0 ? 'hôm nay' : 'còn $left ngày',
-              style: NpType.meta.copyWith(
-                // Dưới 7 ngày thì chuyển sang màu cảnh báo. Đây là lúc con số
-                // thật sự có nghĩa với người đang cân nhắc nộp đơn.
-                color: left <= 7 ? c.danger : c.acidText,
-                fontWeight: FontWeight.w600,
+            if (match > 0) ...[
+              const SizedBox(width: Np.s3),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: Np.s2 + 2, vertical: 3),
+                decoration: BoxDecoration(
+                  color: c.acid.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(Np.rPill),
+                ),
+                child: Text('khớp $match',
+                    style: NpType.meta.copyWith(
+                      fontSize: 11.5,
+                      color: c.acidText,
+                      fontWeight: FontWeight.w700,
+                    )),
               ),
-            ),
+            ],
           ],
         ),
       ),
@@ -734,52 +722,140 @@ class _DeadlineRow extends StatelessWidget {
   }
 }
 
-/// Khối kết thúc trang. Ngoài việc lấp chỗ trống, nó trả lời câu hỏi tự nhiên
-/// của người vừa cuộn hết: "vậy còn gì nữa không".
-class _ClosingCard extends StatelessWidget {
-  const _ClosingCard({required this.onSeeAll, required this.total});
-  final VoidCallback onSeeAll;
-  final int total;
+/// Bài thảo luận thật. Bản trước chỉ hiện chip tên chủ đề — một cái nhãn
+/// không nói gì và không ai bấm.
+class _PostRow extends StatelessWidget {
+  const _PostRow({required this.post, required this.onTap});
+  final Map<String, dynamic> post;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
+    final title = '${post['title'] ?? ''}'.trim();
+    final topic = '${post['topic'] ?? post['topicName'] ?? ''}'.trim();
+    final comments = post['commentCount'] ?? post['comments'] ?? 0;
+
     return GestureDetector(
-      onTap: onSeeAll,
+      onTap: onTap,
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(Np.s5),
-        decoration: BoxDecoration(
-          color: c.band,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(Np.rLg),
-            topRight: Radius.circular(Np.rLg),
-            bottomRight: Radius.circular(Np.rLg),
-            bottomLeft: Radius.circular(40),
-          ),
-        ),
+        padding: const EdgeInsets.symmetric(
+            horizontal: Np.s4, vertical: Np.s3 + 2),
+        decoration: Np.card(c, radius: Np.rMd),
         child: Row(
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Còn $total cơ hội đang mở',
-                      style: NpType.h1.copyWith(fontSize: 19, color: c.onBand)),
-                  const SizedBox(height: 3),
-                  Text('Xem hết trong tab Cơ hội',
-                      style: NpType.meta.copyWith(
-                          color: c.onBand.withValues(alpha: 0.6))),
+                  Text(title.isEmpty ? 'Bài viết' : title,
+                      style: NpType.body.copyWith(
+                        color: c.ink,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis),
+                  if (topic.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(topic,
+                        style:
+                            NpType.meta.copyWith(fontSize: 12, color: c.muted)),
+                  ],
                 ],
               ),
             ),
-            Container(
-              width: 42,
-              height: 42,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(color: c.acid, shape: BoxShape.circle),
-              child: NpIco(NpIcon.arrow, size: 19, color: c.onAcid),
+            if (comments is num && comments > 0) ...[
+              const SizedBox(width: Np.s3),
+              NpIco(NpIcon.chat, size: 15, color: c.muted),
+              const SizedBox(width: Np.s1 + 2),
+              Text('$comments',
+                  style: NpType.meta.copyWith(fontSize: 12, color: c.muted)),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Chưa có gì để gợi ý. Hai trạng thái khác nhau — đang tải và thật sự rỗng —
+/// nói hai câu khác nhau, vì gộp lại thì lúc mạng chậm người dùng tưởng app
+/// trống không.
+class _EmptyToday extends StatelessWidget {
+  const _EmptyToday({required this.loading});
+  final bool loading;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+          horizontal: Np.s5, vertical: Np.s8),
+      decoration: Np.card(c, radius: Np.rLg),
+      child: Column(
+        children: [
+          NpIco(loading ? NpIcon.bolt : NpIcon.search, size: 24, color: c.faint),
+          const SizedBox(height: Np.s3),
+          Text(
+            loading ? 'Đang tìm việc hợp với bạn…' : 'Chưa có cơ hội nào đang mở',
+            style: NpType.meta.copyWith(color: c.muted),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Chưa ai đăng bài. Nói thẳng ra như vậy và mời người dùng mở bài đầu tiên.
+///
+/// Cách xử lý khác — giấu hẳn mục này đi — là cách bản trước làm, và nó để lại
+/// một khoảng trắng ở cuối trang mà không giải thích gì. Trạng thái rỗng là
+/// một trạng thái thật, nó đáng được thiết kế chứ không đáng bị ẩn.
+class _StartDiscussion extends StatelessWidget {
+  const _StartDiscussion({required this.topics, required this.onTap});
+  final List<Map<String, dynamic>> topics;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final names = topics
+        .map((t) => '${t['name'] ?? ''}'.trim())
+        .where((n) => n.isNotEmpty)
+        .take(3)
+        .toList();
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(Np.s5),
+        decoration: Np.card(c, radius: Np.rLg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                NpIco(NpIcon.chat, size: 18, color: c.acidText),
+                const SizedBox(width: Np.s2 + 2),
+                Expanded(
+                  child: Text('Chưa có bài nào — bạn mở đầu nhé?',
+                      style: NpType.body.copyWith(
+                        color: c.ink,
+                        fontWeight: FontWeight.w600,
+                      )),
+                ),
+              ],
             ),
+            if (names.isNotEmpty) ...[
+              const SizedBox(height: Np.s3),
+              Text('Đang có ${topics.length} chủ đề: ${names.join(' · ')}',
+                  style: NpType.meta.copyWith(fontSize: 12.5, color: c.muted),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis),
+            ],
           ],
         ),
       ),
