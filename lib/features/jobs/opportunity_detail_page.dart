@@ -6,6 +6,7 @@ import '../../core/theme.dart';
 import 'opportunities_repository.dart';
 import 'opportunity.dart';
 import 'opportunity_labels.dart';
+import 'save_button.dart';
 
 /// Màn hình chi tiết một cơ hội.
 ///
@@ -61,6 +62,17 @@ class _OpportunityDetailPageState extends State<OpportunityDetailPage> {
             icon: Icon(Icons.arrow_back_rounded, color: c.ink),
             onPressed: () => Navigator.of(context).maybePop(),
           ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: Np.s2),
+              child: SaveButton(
+                item: it,
+                isGuest: widget.isGuest,
+                onNeedSignIn: widget.onSignIn,
+                size: 24,
+              ),
+            ),
+          ],
         ),
         body: ListView(
           padding: const EdgeInsets.fromLTRB(Np.gutter, 0, Np.gutter, Np.s10),

@@ -65,6 +65,8 @@ class _JobsPageState extends State<JobsPage> {
 
   Widget _card(Opportunity item) => OpportunityCard(
         item: item,
+        isGuest: widget.isGuest,
+        onNeedSignIn: widget.onSignIn,
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => OpportunityDetailPage(

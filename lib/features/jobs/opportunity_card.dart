@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import 'opportunity.dart';
 import 'opportunity_labels.dart';
+import 'save_button.dart';
 
 /// Thẻ một cơ hội.
 ///
@@ -22,10 +23,18 @@ import 'opportunity_labels.dart';
 /// Lương là thông tin duy nhất được tô acid. Đó là con số người dùng tìm đầu
 /// tiên, và cho nó độc quyền màu nhấn đáng giá hơn rải màu khắp thẻ.
 class OpportunityCard extends StatelessWidget {
-  const OpportunityCard({super.key, required this.item, this.onTap});
+  const OpportunityCard({
+    super.key,
+    required this.item,
+    this.onTap,
+    this.isGuest = false,
+    this.onNeedSignIn,
+  });
 
   final Opportunity item;
   final VoidCallback? onTap;
+  final bool isGuest;
+  final VoidCallback? onNeedSignIn;
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +63,17 @@ class OpportunityCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (isQuest)
-                  const MetaChip(label: 'Quest', accent: true),
+                if (isQuest) const MetaChip(label: 'Quest', accent: true),
+                // Lùi lề để vùng chạm rộng của nút tim không đội thẻ ra.
+                Transform.translate(
+                  offset: const Offset(Np.s3, -Np.s2),
+                  child: SaveButton(
+                    item: item,
+                    isGuest: isGuest,
+                    onNeedSignIn: onNeedSignIn,
+                    size: 20,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: Np.s4),

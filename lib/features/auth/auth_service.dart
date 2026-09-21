@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/api_client.dart';
 import '../../core/env.dart';
 import 'login_page.dart' show SocialProvider;
 
@@ -42,6 +43,20 @@ class _SecureLocalStorage extends LocalStorage {
 class AuthService {
   static Future<void> init() async {
     if (!Env.hasSupabase) return;   // nơi gọi tự báo lỗi cấu hình
+
+    // Cắm nguồn token cho mọi lệnh gọi API. Phải làm TRƯỚC khi bất kỳ màn hình
+    // nào gọi endpoint cần đăng nhập.
+    // try/catch vì Supabase.instance NÉM LỖI nếu initialize chưa xong. Bình
+    // thường không xảy ra, nhưng một lệnh gọi API sớm mà làm sập app thì
+    // không đáng.
+    ApiClient.tokenProvider = () {
+      try {
+        return Supabase.instance.client.auth.currentSession?.accessToken;
+      } catch (_) {
+        return null;
+      }
+    };
+
     await Supabase.initialize(
       url: Env.supabaseUrl,
       // Supabase đổi tên "anon key" thành "publishable key"; vẫn là cùng một

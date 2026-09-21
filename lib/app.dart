@@ -6,6 +6,7 @@ import 'core/theme.dart';
 import 'features/auth/auth_service.dart';
 import 'features/auth/login_page.dart';
 import 'features/jobs/jobs_page.dart';
+import 'features/jobs/saved_store.dart';
 import 'features/onboarding/splash_page.dart';
 
 /// Luồng mở app: splash → (đăng nhập | danh sách cơ hội).
@@ -40,11 +41,17 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
       _auth.changes.listen((state) {
         if (!mounted) return;
         if (state.event == AuthChangeEvent.signedIn) {
+          // Nạp danh sách đã lưu ngay khi có phiên, để tim hiện đúng ở lần
+          // cuộn đầu tiên chứ không phải sau khi người dùng bấm thử.
+          SavedStore.instance.hydrate();
           // Đóng màn hình đăng nhập nếu nó đang được đẩy lên trên danh sách.
           // Không có gì để đóng thì popUntil trả về ngay.
           _navKey.currentState?.popUntil((r) => r.isFirst);
           setState(() => _stage = _Stage.home);
         } else if (state.event == AuthChangeEvent.signedOut) {
+          // Không xoá thì người tiếp theo đăng nhập trên cùng thiết bị sẽ thấy
+          // tim của người trước.
+          SavedStore.instance.clear();
           _navKey.currentState?.popUntil((r) => r.isFirst);
           setState(() => _stage = _Stage.login);
         }
@@ -53,6 +60,10 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
   }
 
   void _afterSplash() {
+    // Phiên khôi phục từ Keychain lúc mở app KHÔNG bắn sự kiện signedIn —
+    // nó đã đăng nhập sẵn từ trước. Nên phải nạp tay ở đây, nếu không người
+    // dùng cũ mở app sẽ thấy mọi tin đều chưa lưu.
+    if (_auth.signedIn) SavedStore.instance.hydrate();
     setState(() => _stage = _auth.signedIn ? _Stage.home : _Stage.login);
   }
 

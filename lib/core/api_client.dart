@@ -23,21 +23,36 @@ class ApiClient {
 
   final http.Client _client;
 
-  /// Token phiên. Tạm giữ trong bộ nhớ; bước sau sẽ chuyển sang
-  /// flutter_secure_storage để vào Keychain/Keystore, vì biến trong RAM mất
-  /// sạch mỗi lần tắt app.
-  String? accessToken;
+  /// Nguồn token, cắm một lần lúc khởi động app.
+  ///
+  /// Đặt ở đây thay vì để mỗi nơi tự truyền token vào: token đổi mỗi lần đăng
+  /// nhập, đăng xuất hoặc làm mới phiên, mà các repository thì được tạo rải
+  /// rác. Bản trước có trường `accessToken` nhưng KHÔNG AI GÁN, nên mọi lệnh
+  /// gọi cần đăng nhập đều đi ra không kèm token và nhận 401 — lỗi này im
+  /// lặng vì các endpoint công khai vẫn chạy bình thường.
+  ///
+  /// Là hàm chứ không phải giá trị: phải đọc lại ở TỪNG lệnh gọi, vì Supabase
+  /// tự làm mới token nền và giá trị chụp sẵn sẽ hết hạn.
+  static String? Function()? tokenProvider;
 
-  Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        if (accessToken != null) 'Authorization': 'Bearer $accessToken',
-      };
+  Map<String, String> get _headers {
+    final token = tokenProvider?.call();
+    return {
+      'Content-Type': 'application/json',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+    };
+  }
 
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) async {
     final uri = Uri.parse('${AppConfig.apiUrl}$path').replace(
       queryParameters: query?.map((k, v) => MapEntry(k, '$v')),
     );
     return _send(() => _client.get(uri, headers: _headers));
+  }
+
+  Future<dynamic> delete(String path) async {
+    final uri = Uri.parse('${AppConfig.apiUrl}$path');
+    return _send(() => _client.delete(uri, headers: _headers));
   }
 
   Future<dynamic> post(String path, {Object? body}) async {
