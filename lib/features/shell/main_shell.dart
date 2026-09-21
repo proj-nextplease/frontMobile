@@ -36,11 +36,16 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int _index = 1;   // mở vào tab Cơ hội, không phải Trang chủ
 
+  /// Chỉ MỘT biểu tượng cho mỗi tab, dùng chung cả hai trạng thái.
+  ///
+  /// Bản trước đổi sang biểu tượng tô đặc khi chọn, khiến tab đang chọn nặng
+  /// hơn hẳn ba tab kia. Giữ nét viền và chỉ đổi màu thì thanh cân bằng hơn —
+  /// đây chính là cách mẫu Upzi làm.
   static const _tabs = [
-    (icon: Icons.home_outlined, active: Icons.home_rounded, label: 'Trang chủ'),
-    (icon: Icons.work_outline_rounded, active: Icons.work_rounded, label: 'Cơ hội'),
-    (icon: Icons.forum_outlined, active: Icons.forum_rounded, label: 'Thảo luận'),
-    (icon: Icons.person_outline_rounded, active: Icons.person_rounded, label: 'Hồ sơ'),
+    (icon: Icons.home_outlined, label: 'Trang chủ'),
+    (icon: Icons.work_outline_rounded, label: 'Cơ hội'),
+    (icon: Icons.forum_outlined, label: 'Thảo luận'),
+    (icon: Icons.person_outline_rounded, label: 'Hồ sơ'),
   ];
 
   @override
@@ -110,7 +115,7 @@ class _BottomBar extends StatelessWidget {
   });
 
   final int index;
-  final List<({IconData icon, IconData active, String label})> tabs;
+  final List<({IconData icon, String label})> tabs;
   final ValueChanged<int> onTap;
   final VoidCallback onSearch;
 
@@ -138,7 +143,7 @@ class _BottomBar extends StatelessWidget {
         children: [
           Expanded(
             child: Container(
-              height: 66,
+              height: 72,
               decoration: BoxDecoration(
                 color: c.surface,
                 borderRadius: BorderRadius.circular(Np.rPill),
@@ -169,11 +174,16 @@ class _BottomBar extends StatelessWidget {
               height: 66,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: c.acid,
+                // Trắng, không phải lime đặc. Nút tròn lime đấu với nút hành
+                // động chính (cũng lime) ở mọi màn hình, và người dùng mất
+                // manh mối đâu mới là việc cần làm. Thanh điều hướng là hạ
+                // tầng, không phải lời kêu gọi.
+                color: c.surface,
                 shape: BoxShape.circle,
+                border: Border.all(color: c.line),
                 boxShadow: shadow,
               ),
-              child: Icon(Icons.search_rounded, size: 26, color: c.onAcid),
+              child: Icon(Icons.search_rounded, size: 25, color: c.ink),
             ),
           ),
         ],
@@ -185,7 +195,7 @@ class _BottomBar extends StatelessWidget {
 class _Item extends StatelessWidget {
   const _Item({required this.tab, required this.selected});
 
-  final ({IconData icon, IconData active, String label}) tab;
+  final ({IconData icon, String label}) tab;
   final bool selected;
 
   @override
@@ -201,16 +211,18 @@ class _Item extends StatelessWidget {
         AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
           decoration: BoxDecoration(
+            // 0.10 chứ không 0.14: ô này chỉ để gợi ý, việc báo tab nào đang
+            // chọn đã do màu icon và màu chữ đảm nhiệm rồi.
             color: selected
-                ? c.acidText.withValues(alpha: 0.14)
+                ? c.acidText.withValues(alpha: 0.10)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(Np.rSm),
+            borderRadius: BorderRadius.circular(Np.rSm + 2),
           ),
           child: Icon(
-            selected ? tab.active : tab.icon,
-            size: 21,
+            tab.icon,
+            size: 22,
             color: selected ? c.acidText : c.muted,
           ),
         ),
