@@ -49,6 +49,22 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Deep link để Supabase gọi ngược về app sau khi đăng nhập OAuth.
+	     Phải trùng với Env.oauthCallback và với mục Redirect URLs trong
+	     Supabase Dashboard. Lệch một ký tự là trình duyệt mở xong đứng im. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>vn.nextplease.mobile</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>vn.nextplease.mobile</string>
+			</array>
+		</dict>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

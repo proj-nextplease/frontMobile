@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
-import 'core/theme.dart';
-import 'features/jobs/jobs_page.dart';
 
-void main() => runApp(const NextPleaseApp());
+import 'app.dart';
+import 'features/auth/auth_service.dart';
 
-class NextPleaseApp extends StatelessWidget {
-  const NextPleaseApp({super.key});
-
-  @override
-  Widget build(BuildContext context) => MaterialApp(
-        title: 'nextplease',
-        debugShowCheckedModeBanner: false,
-        theme: buildNpTheme(),
-        home: const JobsPage(),
-      );
+Future<void> main() async {
+  // Bắt buộc trước mọi lệnh gọi plugin: Supabase đọc Keychain/Keystore ngay
+  // trong initialize, mà kênh nền tảng chưa sẵn sàng thì lệnh đó ném lỗi.
+  WidgetsFlutterBinding.ensureInitialized();
+  await AuthService.init();
+  runApp(const NextPleaseApp());
 }

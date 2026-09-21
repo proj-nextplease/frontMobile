@@ -1,14 +1,16 @@
-// Kiểm thử khói: app dựng được và hiện khung màn hình Cơ hội.
+// Kiểm thử khói: app dựng được và màn hình mở app hiện đúng.
 //
-// Không gọi API thật ở đây — JobsPage tự nạp dữ liệu khi khởi tạo, nên phần
-// kiểm thử chỉ xác nhận app không vỡ lúc dựng và tiêu đề đúng. Kiểm thử cho
-// tầng dữ liệu sẽ tách riêng khi có lớp inject repository.
+// Chỉ dừng ở màn hình splash. Các màn hình sau cần Supabase đã khởi tạo và
+// mạng thật, nên phần đó thuộc về kiểm thử tích hợp chứ không phải ở đây.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:nextplease_mobile/main.dart';
+import 'package:nextplease_mobile/app.dart';
 
 void main() {
-  testWidgets('App dựng được và hiện tiêu đề Cơ hội', (tester) async {
+  testWidgets('Mở app thì hiện màn hình chào với wordmark', (tester) async {
     await tester.pumpWidget(const NextPleaseApp());
-    expect(find.text('Cơ hội'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('nextplease'), findsOneWidget);
+    expect(find.text('Hồ sơ dựa trên bằng chứng'), findsOneWidget);
   });
 }
