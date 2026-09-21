@@ -29,8 +29,17 @@ class MeStore extends ChangeNotifier {
   /// dụng tự nhập nên không tin được vào cách viết hoa.
   Set<String> skills = const {};
 
-  int experiences = 0;
-  int credentials = 0;
+  String? bio;
+
+  /// Giữ NGUYÊN danh sách chứ không chỉ đếm: trang Hồ sơ năng lực cần nội
+  /// dung, còn trang chủ chỉ cần số lượng — nạp một lần dùng được cả hai.
+  List<Map<String, dynamic>> experienceList = const [];
+  List<Map<String, dynamic>> credentialList = const [];
+
+  int get experiences => experienceList.length;
+  int get credentials => credentialList.length;
+
+  /// Tên hiển thị đầy đủ. Kỹ năng, kinh nghiệm… đều đã có getter riêng.
   bool loaded = false;
 
   /// Các việc còn thiếu trong hồ sơ, theo thứ tự ảnh hưởng đến kết quả khớp.
@@ -64,8 +73,15 @@ class MeStore extends ChangeNotifier {
               .where((s) => s.isNotEmpty)
               .toSet() ??
           const {};
-      experiences = (data['experiences'] as List?)?.length ?? 0;
-      credentials = (data['credentials'] as List?)?.length ?? 0;
+      bio = _str(data['bio']);
+      experienceList = (data['experiences'] as List?)
+              ?.whereType<Map<String, dynamic>>()
+              .toList() ??
+          const [];
+      credentialList = (data['credentials'] as List?)
+              ?.whereType<Map<String, dynamic>>()
+              .toList() ??
+          const [];
       loaded = true;
       notifyListeners();
     } on ApiException {
@@ -75,11 +91,12 @@ class MeStore extends ChangeNotifier {
   }
 
   void clear() {
-    name = headline = school = avatarUrl = null;
+    name = headline = school = avatarUrl = bio = null;
     reputationScore = 0;
     openToWork = onboardingCompleted = loaded = false;
     skills = const {};
-    experiences = credentials = 0;
+    experienceList = const [];
+    credentialList = const [];
     notifyListeners();
   }
 

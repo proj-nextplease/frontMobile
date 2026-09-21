@@ -8,6 +8,7 @@ import '../jobs/opportunity.dart';
 import '../jobs/opportunity_detail_page.dart';
 import '../jobs/opportunity_labels.dart';
 import '../jobs/saved_store.dart';
+import '../profile/application_item.dart';
 import '../profile/me_store.dart';
 
 /// Trang chủ.
@@ -217,8 +218,14 @@ class _HomePageState extends State<HomePage> {
 
   // ── Lời nhắc ───────────────────────────────────────────────────────────
 
+  /// Số đơn chưa có kết luận.
+  ///
+  /// Bản trước so với chuỗi 'PENDING' — trạng thái đó KHÔNG tồn tại. Ràng buộc
+  /// ck_applications_status (migration V19) chỉ cho phép SUBMITTED, VIEWED,
+  /// SHORTLISTED, ACCEPTED, REJECTED, WITHDRAWN, COMPLETED. Nên con số luôn
+  /// bằng 0 và lời nhắc "N đơn đang chờ" không bao giờ hiện ra.
   int get _pending => _apps
-      .where((a) => '${a['status']}'.toUpperCase() == 'PENDING')
+      .where((a) => kOpenStatuses.contains('${a['status']}'.toUpperCase()))
       .length;
 
   /// Một lời nhắc duy nhất, chọn theo việc gì đang chặn người dùng nhiều nhất.
