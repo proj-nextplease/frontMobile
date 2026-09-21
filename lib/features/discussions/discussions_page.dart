@@ -81,7 +81,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
         backgroundColor: c.surfaceHi,
         child: ListView(
           padding: const EdgeInsets.fromLTRB(
-              Np.gutter, Np.s6, Np.gutter, Np.s10),
+              Np.gutter, Np.s6, Np.gutter, Np.navInset),
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             const SectionLabel('Cộng đồng'),

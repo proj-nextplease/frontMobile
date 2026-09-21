@@ -5,12 +5,28 @@ class OpportunitiesRepository {
   OpportunitiesRepository(this._api);
   final ApiClient _api;
 
+  /// Bộ nhớ đệm dùng chung cho cả phiên.
+  ///
+  /// Trang chủ, tab Cơ hội và ô tìm kiếm đều cần cùng một danh sách. Không có
+  /// đệm thì mở app gọi API ba lần cho đúng một tập dữ liệu.
+  ///
+  /// Là static vì repository được tạo mới ở từng màn hình; đặt trong thực thể
+  /// thì mỗi màn hình có một bản đệm riêng và chẳng đệm được gì.
+  static List<Opportunity>? _cache;
+
+  /// Danh sách đã nạp, hoặc null nếu chưa. Dùng cho nơi cần đọc ngay mà không
+  /// muốn gọi mạng — ví dụ ô tìm kiếm.
+  static List<Opportunity>? get cached => _cache;
+
+  static void invalidate() => _cache = null;
+
   /// Nạp tin tuyển dụng và quest, trộn thành một danh sách.
   ///
   /// Gọi song song và chịu lỗi từng phần: /quests hỏng thì vẫn hiện được tin
   /// tuyển dụng, thay vì để người dùng nhìn màn hình trắng. Chỉ khi CẢ HAI
   /// cùng hỏng mới ném lỗi ra ngoài.
-  Future<List<Opportunity>> fetchAll({int limit = 60}) async {
+  Future<List<Opportunity>> fetchAll({int limit = 60, bool force = false}) async {
+    if (!force && _cache != null) return _cache!;
     final jobs = await Future.wait([
       _tryFetch(() => _api.get('/jobs', query: {'limit': limit})),
       _tryFetch(() => _api.get('/quests')),
@@ -25,10 +41,11 @@ class OpportunitiesRepository {
       );
     }
 
-    return <Opportunity>[
+    _cache = <Opportunity>[
       ...?jobsRaw?.whereType<Map<String, dynamic>>().map(Opportunity.fromJob),
       ...?questsRaw?.whereType<Map<String, dynamic>>().map(Opportunity.fromQuest),
     ];
+    return _cache!;
   }
 
   /// Nạp chi tiết một cơ hội.

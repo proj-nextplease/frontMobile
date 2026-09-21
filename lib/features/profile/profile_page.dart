@@ -68,7 +68,7 @@ class _ProfilePageState extends State<ProfilePage> {
       bottom: false,
       child: ListView(
         padding:
-            const EdgeInsets.fromLTRB(Np.gutter, Np.s6, Np.gutter, Np.s10),
+            const EdgeInsets.fromLTRB(Np.gutter, Np.s6, Np.gutter, Np.navInset),
         children: [
           const SectionLabel('Tài khoản'),
           const SizedBox(height: Np.s4),

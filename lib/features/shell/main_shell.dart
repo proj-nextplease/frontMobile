@@ -5,6 +5,7 @@ import '../../core/theme.dart';
 import '../discussions/discussions_page.dart';
 import '../home/home_page.dart';
 import '../jobs/jobs_page.dart';
+import '../jobs/search_page.dart';
 import '../profile/profile_page.dart';
 
 /// Khung chính của app: bốn tab, thanh điều hướng dưới đáy.
@@ -55,6 +56,9 @@ class _MainShellState extends State<MainShell> {
       ),
       child: Scaffold(
         backgroundColor: c.bg,
+        // Thanh điều hướng NỔI đè lên nội dung thay vì đẩy nội dung lên. Nhờ
+        // vậy danh sách trôi qua bên dưới nó, đúng như mẫu.
+        extendBody: true,
         body: IndexedStack(
           index: _index,
           children: [
@@ -76,54 +80,103 @@ class _MainShellState extends State<MainShell> {
           index: _index,
           tabs: _tabs,
           onTap: (i) => setState(() => _index = i),
+          onSearch: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => SearchPage(
+                isGuest: widget.isGuest,
+                onSignIn: widget.onSignIn,
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
+/// Thanh điều hướng NỔI: một viên thuốc tách khỏi mép, cạnh một nút tròn
+/// riêng cho tìm kiếm.
+///
+/// Khác thanh dán sát đáy ở hai điểm, và cả hai đều có giá:
+///   - Phải chừa lề và tự cộng vùng an toàn dưới, vì nó không còn dựa vào mép
+///     màn hình nữa.
+///   - Phải có BÓNG, nếu không nó trôi lẫn vào nội dung cuộn phía dưới.
 class _BottomBar extends StatelessWidget {
   const _BottomBar({
     required this.index,
     required this.tabs,
     required this.onTap,
+    required this.onSearch,
   });
 
   final int index;
   final List<({IconData icon, IconData active, String label})> tabs;
   final ValueChanged<int> onTap;
+  final VoidCallback onSearch;
 
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: c.bg,
-        border: Border(top: BorderSide(color: c.line)),
+    // Bóng đậm hơn ở chế độ sáng. Trên nền tối, bóng đen gần như vô hình nên
+    // phải dựa vào viền sáng mờ thay thế.
+    final shadow = [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.10),
+        blurRadius: 22,
+        offset: const Offset(0, 6),
       ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
-          height: 58,
-          child: Row(
-            children: [
-              for (var i = 0; i < tabs.length; i++)
-                Expanded(
-                  child: GestureDetector(
-                    // opaque để cả ô đều bấm được, không chỉ riêng chỗ có
-                    // biểu tượng và chữ.
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => onTap(i),
-                    child: _Item(
-                      tab: tabs[i],
-                      selected: i == index,
+    ];
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        Np.s4, 0, Np.s4,
+        Np.s3 + MediaQuery.paddingOf(context).bottom,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 66,
+              decoration: BoxDecoration(
+                color: c.surface,
+                borderRadius: BorderRadius.circular(Np.rPill),
+                border: Border.all(color: c.line),
+                boxShadow: shadow,
+              ),
+              child: Row(
+                children: [
+                  for (var i = 0; i < tabs.length; i++)
+                    Expanded(
+                      child: GestureDetector(
+                        // opaque để cả ô đều bấm được, không chỉ riêng chỗ có
+                        // biểu tượng và chữ.
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => onTap(i),
+                        child: _Item(tab: tabs[i], selected: i == index),
+                      ),
                     ),
-                  ),
-                ),
-            ],
+                ],
+              ),
+            ),
           ),
-        ),
+          const SizedBox(width: Np.s3),
+          GestureDetector(
+            onTap: onSearch,
+            child: Container(
+              width: 66,
+              height: 66,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: c.acid,
+                shape: BoxShape.circle,
+                boxShadow: shadow,
+              ),
+              child: Icon(Icons.search_rounded, size: 26, color: c.onAcid),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -138,35 +191,39 @@ class _Item extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
-    // Tab đang chọn dùng màu MỰC chứ không phải acid. Acid ở đây sẽ đấu với
-    // nút chính màu acid trên cùng màn hình, và người dùng mất manh mối đâu là
-    // hành động chính.
-    final color = selected ? c.ink : c.muted;
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Gạch acid ngắn phía trên là dấu hiệu tab đang chọn — đủ nổi mà không
-        // tô cả biểu tượng thành màu.
+        // Ô bo tròn nền nhạt sau biểu tượng là dấu hiệu tab đang chọn. Nền
+        // nhạt chứ không đặc: nền đặc màu acid sẽ đấu với nút tìm kiếm ngay
+        // bên cạnh, vốn cũng màu acid.
         AnimatedContainer(
-          duration: const Duration(milliseconds: 160),
-          height: 2,
-          width: selected ? 18 : 0,
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
           decoration: BoxDecoration(
-            color: c.acidText,
-            borderRadius: BorderRadius.circular(2),
+            color: selected
+                ? c.acidText.withValues(alpha: 0.14)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(Np.rSm),
+          ),
+          child: Icon(
+            selected ? tab.active : tab.icon,
+            size: 21,
+            color: selected ? c.acidText : c.muted,
           ),
         ),
-        const SizedBox(height: 7),
-        Icon(selected ? tab.active : tab.icon, size: 22, color: color),
-        const SizedBox(height: 3),
+        const SizedBox(height: 4),
         Text(
           tab.label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: NpType.meta.copyWith(
-            fontSize: 10.5,
+            fontSize: 10,
             height: 1.1,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-            color: color,
+            color: selected ? c.acidText : c.muted,
           ),
         ),
       ],

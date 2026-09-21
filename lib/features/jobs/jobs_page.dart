@@ -48,7 +48,7 @@ class _JobsPageState extends State<JobsPage> {
       _error = null;
     });
     try {
-      final data = await _repo.fetchAll();
+      final data = await _repo.fetchAll(force: true);
       if (!mounted) return;
       setState(() {
         _items = data;
@@ -159,7 +159,7 @@ class _JobsPageState extends State<JobsPage> {
               ? const _EmptyView()
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(
-                      Np.gutter, Np.s2, Np.gutter, Np.s10),
+                      Np.gutter, Np.s2, Np.gutter, Np.navInset),
                   physics: const AlwaysScrollableScrollPhysics(),
                   // Chèn thêm một ô gợi ý đăng nhập vào giữa danh sách, nên
                   // số phần tử nhiều hơn số cơ hội đúng một.
