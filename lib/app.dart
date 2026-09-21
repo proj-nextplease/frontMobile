@@ -5,7 +5,7 @@ import 'core/env.dart';
 import 'core/theme.dart';
 import 'features/auth/auth_service.dart';
 import 'features/auth/login_page.dart';
-import 'features/jobs/jobs_page.dart';
+import 'features/shell/main_shell.dart';
 import 'features/jobs/saved_store.dart';
 import 'features/onboarding/splash_page.dart';
 
@@ -107,12 +107,13 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
             onSocialLogin: _auth.signInWithProvider,
             onSkip: () => setState(() => _stage = _Stage.home),
           ),
-        // Khách vào qua nút "Xem cơ hội trước đã" — truyền cờ để màn hình đó
-        // hiện đường quay lại đăng nhập.
+        // Khách vào qua nút "Xem cơ hội trước đã" — truyền cờ để các tab hiện
+        // đường quay lại đăng nhập.
         _Stage.home => Builder(
-            builder: (context) => JobsPage(
+            builder: (context) => MainShell(
               isGuest: !_auth.signedIn,
               onSignIn: () => _openLoginSheet(context),
+              onSignOut: _auth.signOut,
             ),
           ),
       },

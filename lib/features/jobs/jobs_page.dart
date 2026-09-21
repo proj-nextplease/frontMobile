@@ -119,33 +119,10 @@ class _JobsPageState extends State<JobsPage> {
               Text('Cơ hội', style: NpType.h1.copyWith(color: c.ink)),
             ],
           ),
-          actions: [
-            // Đường quay lại, luôn thấy được. Không dùng mũi tên back của hệ
-            // thống: ở đây không có ngăn xếp điều hướng để quay về, và nhãn
-            // chữ nói rõ bấm vào sẽ được gì.
-            if (widget.isGuest)
-              Padding(
-                padding: const EdgeInsets.only(right: Np.gutter),
-                child: GestureDetector(
-                  onTap: widget.onSignIn,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: Np.s4, vertical: Np.s2),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(Np.rPill),
-                      border: Border.all(color: c.line),
-                    ),
-                    child: Text(
-                      'Đăng nhập',
-                      style: NpType.meta.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: c.ink,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
+          // Không còn nút "Đăng nhập" ở đây: đã có tab Hồ sơ làm chỗ đó, và
+          // hai lối vào cùng một việc trên cùng màn hình là thừa. Ô gợi ý xen
+          // giữa danh sách vẫn giữ, vì nó xuất hiện đúng lúc người dùng đang
+          // xem tin chứ không phải khi họ đi tìm tài khoản.
         ),
         body: RefreshIndicator(
           onRefresh: _load,
