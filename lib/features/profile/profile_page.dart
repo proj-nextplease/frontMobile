@@ -168,32 +168,45 @@ class _ProfilePageState extends State<ProfilePage> {
             _PortfolioCard(me: _me, onTap: () => _push(const PortfolioPage())),
 
             const SizedBox(height: Np.s3),
-            Row(
-              children: [
-                Expanded(
-                  child: _Tile(
-                    icon: NpIcon.heartFill,
-                    label: 'Tin đã lưu',
-                    value: '${SavedStore.instance.count}',
-                    onTap: () => _push(const SavedListPage()),
+            // IntrinsicHeight + stretch: hai ô cao BẰNG NHAU dù một ô có dòng
+            // phụ còn ô kia không. Row thường để mỗi con tự co theo nội dung,
+            // nên chúng lệch nhau ngay khi một bên có thêm một dòng chữ.
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _Tile(
+                      icon: NpIcon.heartFill,
+                      label: 'Tin đã lưu',
+                      value: '${SavedStore.instance.count}',
+                      onTap: () => _push(const SavedListPage()),
+                    ),
                   ),
-                ),
-                const SizedBox(width: Np.s3),
-                Expanded(
-                  child: _Tile(
-                    icon: NpIcon.send,
-                    label: 'Đơn đã nộp',
-                    value: '${AppliedStore.instance.openCount}',
-                    // Chỉ tô khi CÓ đơn đang chờ. Tô cả khi bằng 0 thì màu
-                    // nhấn mất nghĩa: nó phải nói "có việc", không phải "có ô".
-                    accent: AppliedStore.instance.openCount > 0,
-                    hint: AppliedStore.instance.openCount > 0
-                        ? 'đang chờ'
-                        : 'chưa có đơn nào',
-                    onTap: () => _push(const ApplicationsPage()),
+                  const SizedBox(width: Np.s3),
+                  Expanded(
+                    child: _Tile(
+                      icon: NpIcon.send,
+                      label: 'Đơn đã nộp',
+                      // TỔNG số đơn, không phải số đang chờ. Nhãn ghi "đã nộp"
+                      // nên con số phải là số đã nộp — dùng openCount thì ba
+                      // đơn đã có kết quả vẫn hiện 0.
+                      value: '${AppliedStore.instance.total}',
+                      // Chỉ tô khi CÓ đơn đang chờ. Tô cả khi bằng 0 thì màu
+                      // nhấn mất nghĩa: nó phải nói "có việc", không phải
+                      // "có ô".
+                      accent: AppliedStore.instance.openCount > 0,
+                      // Dòng phụ chỉ xuất hiện khi nó THÊM thông tin. Viết
+                      // "chưa có đơn nào" dưới một số 0 là nói lại đúng điều
+                      // con số đã nói.
+                      hint: AppliedStore.instance.openCount > 0
+                          ? '${AppliedStore.instance.openCount} đang chờ'
+                          : null,
+                      onTap: () => _push(const ApplicationsPage()),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
 
             const SizedBox(height: Np.s8),
@@ -537,6 +550,9 @@ class _Tile extends StatelessWidget {
         decoration: Np.card(c, radius: Np.rMd),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          // Đẩy nội dung lên đầu; phần thừa do ô kia cao hơn rơi xuống dưới
+          // thay vì dồn vào giữa làm hai ô lệch nhịp.
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             NpIco(icon, size: 18, color: accent ? c.acidText : c.muted),
             const SizedBox(height: Np.s3),

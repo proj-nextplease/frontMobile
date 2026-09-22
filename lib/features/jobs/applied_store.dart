@@ -24,6 +24,12 @@ class AppliedStore extends ChangeNotifier {
   /// Số đơn chưa có kết luận. Để ở đây chứ không ở màn Hồ sơ vì cùng một lệnh
   /// gọi mạng đã lấy được — tính ở chỗ khác là gọi API lần hai cho cùng dữ liệu.
   int openCount = 0;
+
+  /// Tổng số đơn đã nộp và chưa rút.
+  ///
+  /// KHÁC openCount. Chỗ nào ghi nhãn "Đơn đã nộp" phải dùng con số này —
+  /// dùng openCount thì ba đơn đã có kết quả vẫn hiện 0, và nhãn nói sai.
+  int get total => _jobIds.length + _questIds.length;
   bool loaded = false;
 
   bool hasApplied(Opportunity o) =>
