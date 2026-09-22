@@ -77,7 +77,11 @@ class _RegisterPageState extends State<RegisterPage> {
   String? get _missing {
     if (_name.text.trim().isEmpty) return 'Chưa nhập họ và tên';
     if (!_email.text.trim().contains('@')) return 'Email đăng nhập chưa hợp lệ';
-    if (!_studentEmail.text.trim().contains('@')) {
+    // Email sinh viên là TUỲ CHỌN. Chỉ bắt lỗi khi người dùng có gõ nhưng gõ
+    // sai — bỏ trống thì không sao. Backend cũng đã bỏ @NotBlank ở trường này
+    // (migration V50), vì nó không hề được xác minh lúc đăng ký.
+    final student = _studentEmail.text.trim();
+    if (student.isNotEmpty && !student.contains('@')) {
       return 'Email sinh viên chưa hợp lệ';
     }
     if (_password.text.isEmpty) return 'Chưa nhập mật khẩu';
@@ -98,7 +102,10 @@ class _RegisterPageState extends State<RegisterPage> {
         'email': _email.text.trim().toLowerCase(),
         'password': _password.text,
         'displayName': _name.text.trim(),
-        'studentEmail': _studentEmail.text.trim().toLowerCase(),
+        // Bỏ hẳn khoá khi để trống, không gửi chuỗi rỗng: backend chuyển
+        // rỗng thành null, nhưng gửi khoá vắng mặt thì ý định rõ ràng hơn.
+        if (_studentEmail.text.trim().isNotEmpty)
+          'studentEmail': _studentEmail.text.trim().toLowerCase(),
       });
       if (!mounted) return;
       final m = d is Map<String, dynamic> ? d : const <String, dynamic>{};
@@ -215,13 +222,13 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
         _Field(
           key: const ValueKey('studentEmail'),
-          label: 'Email sinh viên',
+          label: 'Email sinh viên (không bắt buộc)',
           controller: _studentEmail,
           hint: 'ban@fpt.edu.vn',
           keyboard: TextInputType.emailAddress,
           onChanged: (_) => setState(() {}),
-          note: 'Dùng để xác minh bạn đang là sinh viên. '
-              'Có thể trùng email đăng nhập.',
+          note: 'Không bắt buộc. Điền nếu bạn muốn ghi nhận mình là sinh '
+              'viên của trường.',
         ),
         _Field(
           key: const ValueKey('password'),
