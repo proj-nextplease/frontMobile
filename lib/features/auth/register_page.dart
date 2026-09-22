@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -439,16 +441,37 @@ class _ForgotSheet extends StatefulWidget {
 }
 
 class _ForgotSheetState extends State<_ForgotSheet> {
+  /// Khoảng chờ trước khi cho gửi lại.
+  ///
+  /// 60 giây, khớp với OTP_COOLDOWN_SECONDS của backend và với mức chặn mặc
+  /// định của Supabase cho resetPasswordForEmail. Cho bấm sớm hơn thì nhà
+  /// cung cấp từ chối, và người dùng nhận một lỗi mà họ không làm gì sai.
+  static const _cooldown = 60;
+
   final _auth = AuthService();
   late final _email = TextEditingController(text: widget.initialEmail ?? '');
   bool _busy = false;
   bool _sent = false;
   String? _error;
 
+  Timer? _tick;
+  int _left = 0;
+
   @override
   void dispose() {
+    _tick?.cancel();
     _email.dispose();
     super.dispose();
+  }
+
+  void _startCooldown() {
+    _tick?.cancel();
+    setState(() => _left = _cooldown);
+    _tick = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) return t.cancel();
+      setState(() => _left--);
+      if (_left <= 0) t.cancel();
+    });
   }
 
   Future<void> _send() async {
@@ -465,6 +488,7 @@ class _ForgotSheetState extends State<_ForgotSheet> {
       _error = err;
       _sent = err == null;
     });
+    if (err == null) _startCooldown();
   }
 
   @override
@@ -510,20 +534,45 @@ class _ForgotSheetState extends State<_ForgotSheet> {
                   )),
             ),
             const SizedBox(height: Np.s4),
+            Text(
+              'Nếu địa chỉ này đã đăng ký, link đặt lại mật khẩu vừa được '
+              'gửi tới.',
+              style: NpType.body.copyWith(color: c.muted, height: 1.45),
+            ),
 
-            // Ba dòng, mỗi dòng một việc: đã gửi gì, làm gì tiếp, không thấy
-            // thì tìm ở đâu. Bản trước gộp thành hai đoạn văn, và bỏ sót hẳn
-            // chuyện email rơi vào Spam — thứ hỏng thường gặp nhất.
-            _Line(text: 'Nếu địa chỉ này đã đăng ký, link đặt lại mật khẩu '
-                'vừa được gửi tới.'),
-            _Line(text: 'Bấm link để đặt mật khẩu mới, rồi quay lại đây '
-                'đăng nhập.'),
-            _Line(text: 'Không thấy? Tìm thử trong mục Spam hoặc Quảng cáo.'),
+            if (_error != null) ...[
+              const SizedBox(height: Np.s3),
+              Text(_error!, style: NpType.meta.copyWith(color: c.danger)),
+            ],
 
             const SizedBox(height: Np.s6),
             AcidButton(
               label: 'Quay lại đăng nhập',
               onTap: () => Navigator.of(context).pop(),
+            ),
+
+            const SizedBox(height: Np.s4),
+            // Gửi lại thay cho lời khuyên "kiểm tra hộp thư rác". Nhắc người
+            // dùng đi tìm là đẩy việc về phía họ; gửi lại là làm giúp họ.
+            Center(
+              child: _left > 0
+                  ? Text('Gửi lại sau ${_left}s',
+                      style: NpType.meta
+                          .copyWith(fontSize: 13, color: c.faint))
+                  : GestureDetector(
+                      onTap: _busy ? null : _send,
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding:
+                            const EdgeInsets.symmetric(vertical: Np.s2),
+                        child: Text(_busy ? 'Đang gửi…' : 'Gửi lại link',
+                            style: NpType.meta.copyWith(
+                              fontSize: 13.5,
+                              color: c.acidText,
+                              fontWeight: FontWeight.w700,
+                            )),
+                      ),
+                    ),
             ),
           ] else ...[
             Text(
@@ -579,34 +628,3 @@ class _ForgotSheetState extends State<_ForgotSheet> {
   }
 }
 
-/// Một dòng hướng dẫn, có chấm đầu dòng nhỏ.
-///
-/// Chấm chứ không phải số thứ tự: ba dòng này không phải ba bước phải làm
-/// theo trình tự — dòng cuối chỉ cần đọc khi có sự cố.
-class _Line extends StatelessWidget {
-  const _Line({required this.text});
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Np.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Np.s3),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 4,
-            height: 4,
-            margin: const EdgeInsets.only(top: 9, right: Np.s3),
-            decoration: BoxDecoration(color: c.faint, shape: BoxShape.circle),
-          ),
-          Expanded(
-            child: Text(text,
-                style: NpType.body.copyWith(color: c.muted, height: 1.45)),
-          ),
-        ],
-      ),
-    );
-  }
-}
