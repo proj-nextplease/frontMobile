@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../discussions/discussion_widgets.dart';
+import '../companies/companies_page.dart';
+import '../companies/companies_store.dart';
 import '../credentials/credentials_page.dart';
 import '../wallet/wallet_page.dart';
 import '../wallet/wallet_store.dart';
@@ -78,6 +80,7 @@ class _ProfilePageState extends State<ProfilePage> {
         SavedStore.instance,
         GamificationStore.instance,
         WalletStore.instance,
+        CompaniesStore.instance,
       ];
 
   @override
@@ -101,6 +104,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (!old.isGuest && widget.isGuest) {
       _me.clear();
       WalletStore.instance.clear();
+      CompaniesStore.instance.clear();
       setState(() => _account = null);
     }
   }
@@ -117,6 +121,7 @@ class _ProfilePageState extends State<ProfilePage> {
     }
     await _me.hydrate();
     await WalletStore.instance.hydrate();
+    await CompaniesStore.instance.hydrate();
     await NotificationsStore.instance.hydrate();
     await AppliedStore.instance.hydrate();
     await CredentialsStore.instance.hydrate();
@@ -251,6 +256,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   ? 'Premium đang bật'
                   : 'Xem lịch sử giao dịch và các gói trả phí',
               onTap: () => _push(const WalletPage()),
+            ),
+
+            const SizedBox(height: Np.s3),
+            _WideTile(
+              icon: NpIcon.company,
+              label: 'Đối tác theo dõi',
+              value: '${CompaniesStore.instance.followed.length}',
+              hint: 'Theo dõi doanh nghiệp và CLB để thấy tin mới của họ',
+              onTap: () => _push(const CompaniesPage(followedOnly: true)),
             ),
 
             const SizedBox(height: Np.s8),

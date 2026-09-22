@@ -17,6 +17,7 @@ class Opportunity {
     required this.description,
     required this.companyName,
     required this.isClub,
+    this.companyId,
     this.companyLogo,
     this.location,
     this.isRemote = false,
@@ -40,6 +41,10 @@ class Opportunity {
   final String title;
   final String description;
   final String companyName;
+
+  /// Dùng để mở trang công ty. Có thể null với dữ liệu cũ, nên mọi nơi dùng
+  /// phải chịu được việc không có nó.
+  final String? companyId;
   final bool isClub;
   final String? companyLogo;
   final String? location;
@@ -77,6 +82,7 @@ class Opportunity {
         description: (d['description'] as String?) ?? description,
         companyName: (d['companyName'] as String?) ?? companyName,
         isClub: isClub,
+        companyId: _id(d['companyId']) ?? companyId,
         companyLogo: (d['companyLogo'] as String?) ?? companyLogo,
         location: (d['location'] as String?) ?? location,
         isRemote: d['isRemote'] == true,
@@ -105,6 +111,7 @@ class Opportunity {
         // "CLB" hay job_type là EVENT_STAFF đều KHÔNG phải bằng chứng — đây là
         // lỗi bên web từng mắc.
         isClub: j['companyType'] == 'CLUB',
+        companyId: _id(j['companyId']),
         companyLogo: j['companyLogo'] as String?,
         location: j['location'] as String?,
         isRemote: j['isRemote'] == true,
@@ -126,6 +133,7 @@ class Opportunity {
         description: (q['description'] ?? '') as String,
         companyName: (q['companyName'] ?? 'CLB / Tổ chức') as String,
         isClub: q['companyType'] == 'CLUB',
+        companyId: _id(q['companyId']),
         companyLogo: q['companyLogo'] as String?,
         location: q['location'] as String?,
         isRemote: RegExp(r'remote|từ xa', caseSensitive: false)
@@ -159,4 +167,12 @@ class Opportunity {
         .where((s) => s.isNotEmpty)
         .toList();
   }
+}
+
+/// Ép về chuỗi id, coi chuỗi rỗng là không có. '${null}' ra "null" nên không
+/// thể nội suy thẳng.
+String? _id(Object? v) {
+  if (v == null) return null;
+  final s = '$v'.trim();
+  return (s.isEmpty || s == 'null') ? null : s;
 }

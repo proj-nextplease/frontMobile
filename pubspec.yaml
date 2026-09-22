@@ -48,6 +48,10 @@ dependencies:
   shared_preferences: ^2.5.5
   image_picker: ^1.2.3
 
+  # Mở website/fanpage của đối tác ra trình duyệt ngoài. Không có nó thì các
+  # ô "Website"/"Fanpage" chỉ là chữ không bấm được — thà đừng hiện còn hơn.
+  url_launcher: ^6.3.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

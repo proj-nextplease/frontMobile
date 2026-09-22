@@ -7,6 +7,8 @@ import 'opportunities_repository.dart';
 import '../profile/gamification_store.dart';
 import 'applied_store.dart';
 import 'eligibility.dart';
+import '../companies/company.dart';
+import '../companies/company_detail_page.dart';
 import 'opportunity.dart';
 import 'opportunity_labels.dart';
 import 'save_button.dart';
@@ -304,20 +306,53 @@ class _CompanyRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
-    return Container(
+
+    // Dữ liệu cũ có thể không kèm companyId. Không có id thì KHÔNG vẽ mũi tên
+    // và không bắt cú chạm — một hàng trông bấm được mà bấm không ra gì còn
+    // tệ hơn một hàng tĩnh.
+    final id = item.companyId;
+
+    final row = Container(
       padding: const EdgeInsets.all(Np.s4),
       decoration: Np.card(c, radius: Np.rMd),
       child: Row(
         children: [
+          CompanyLogo(url: item.companyLogo, name: item.companyName, size: 34),
+          const SizedBox(width: Np.s3),
           Expanded(
             child: Text(
               item.companyName,
               style: NpType.title.copyWith(color: c.ink),
             ),
           ),
-          MetaChip(label: item.isClub ? 'CLB / Tổ chức' : 'Doanh nghiệp'),
+          if (id == null)
+            MetaChip(label: item.isClub ? 'CLB / Tổ chức' : 'Doanh nghiệp')
+          else
+            NpIco(NpIcon.arrow, size: 18, color: c.faint),
         ],
       ),
+    );
+
+    if (id == null) return row;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => CompanyDetailPage(
+          // Bản rút gọn dựng từ chính tin đang xem, để trang mở ra có tên và
+          // logo ngay; trang đó tự gọi /companies/{id} để lấy phần còn lại.
+          company: Company(
+            id: id,
+            name: item.companyName,
+            // Tin chỉ cho biết CÓ PHẢI CLB hay không, không cho biết là
+            // startup hay agency. Để null thay vì bịa một mã: trang chi tiết
+            // gọi /companies/{id} và sẽ thay bằng mã thật ngay sau đó.
+            type: item.isClub ? 'CLUB' : null,
+            logoUrl: item.companyLogo,
+          ),
+        ),
+      )),
+      child: row,
     );
   }
 }
