@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 import 'design.dart';
+import 'np_icons.dart';
 
 /// Nút chính: nền acid phẳng, chữ mực.
 ///
@@ -207,11 +208,10 @@ class CompanyLogo extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Np.of(context);
     final radius = size * 0.27;
-    final trimmed = name.trim();
-    final initials = trimmed.isEmpty
-        ? 'NP'
-        : trimmed.substring(0, trimmed.length.clamp(1, 2)).toUpperCase();
 
+    // Không có logo thì dùng biểu tượng TOÀ NHÀ, không phải chữ cái đầu.
+    // "CT" cho "CTY KT" không nói được gì, và một danh sách toàn ô hai ký tự
+    // trông như bảng mã. Hình vẽ nói ngay "đây là một tổ chức".
     Widget fallback() => Container(
           width: size,
           height: size,
@@ -221,14 +221,7 @@ class CompanyLogo extends StatelessWidget {
             borderRadius: BorderRadius.circular(radius),
             border: Border.all(color: c.line),
           ),
-          child: Text(
-            initials,
-            style: NpType.label.copyWith(
-              fontSize: size * 0.36,
-              color: c.muted,
-              letterSpacing: 0,
-            ),
-          ),
+          child: NpIco(NpIcon.company, size: size * 0.62, color: c.muted),
         );
 
     final src = url;

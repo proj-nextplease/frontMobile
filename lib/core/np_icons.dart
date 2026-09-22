@@ -13,7 +13,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 ///   - khung 24×24, phần vẽ nằm gọn trong 3..21 để các icon cân nhau
 ///   - hình học đơn giản, không chi tiết vụn: ở cỡ 22px mọi thứ nhỏ hơn 2px
 ///     đều bết lại thành vệt mờ
-enum NpIcon { home, jobs, chat, person, search, heart, heartFill, bolt, bell, flame, send, arrow }
+enum NpIcon { home, jobs, chat, person, search, heart, heartFill, bolt, bell, flame, send, arrow, company }
 
 class NpIco extends StatelessWidget {
   const NpIco(this.icon, {super.key, this.size = 22, required this.color});
@@ -69,6 +69,23 @@ String _body(NpIcon i, String c) => switch (i) {
 
       // Tia sét cho EXP.
       NpIcon.bolt => '<path stroke="$c" d="M13.4 3.2 5.6 13.4h5.3l-.9 7.4 8-10.2h-5.4z"/>',
+
+      // Toà nhà — dùng khi tổ chức không có logo.
+      //
+      // Vì sao không để chữ cái đầu: "CT" cho "CTY KT" không nói được gì, và
+      // một danh sách toàn ô chữ hai ký tự trông như bảng mã. Một hình đồ hoạ
+      // nói ngay "đây là một tổ chức", kể cả khi chưa đọc tên.
+      //
+      // Hai khối CAO THẤP khác nhau chứ không phải một hộp: hộp đơn ở cỡ 26px
+      // đọc ra là cái thùng. Chênh lệch chiều cao là thứ khiến nó thành dãy
+      // nhà. Và nó phải khác hẳn icon `home` (mái dốc + vòm cửa) vì hai thứ
+      // này có thể đứng gần nhau.
+      NpIcon.company => '<path stroke="$c" d="M5.4 20.4V7.4a1.7 1.7 0 0 1 1.7-1.7h5.1a1.7 1.7 0 0 1 1.7 1.7v13"/>'
+          '<path stroke="$c" d="M13.9 11.6h3.6a1.7 1.7 0 0 1 1.7 1.7v7.1"/>'
+          '<path stroke="$c" d="M3.4 20.4h17.2"/>'
+          '<path stroke="$c" d="M8.3 9.5h2.4"/>'
+          '<path stroke="$c" d="M8.3 13.6h2.4"/>'
+          '<path stroke="$c" d="M16 15.8h1.3"/>',
 
       // Chuông. Phải là chuông chứ không mượn lại tia sét: tia sét đã mang
       // nghĩa "điểm uy tín" ở huy hiệu ngay cạnh trên trang chủ, và hai biểu
