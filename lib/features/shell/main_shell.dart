@@ -341,10 +341,18 @@ class _ExpLine extends StatelessWidget {
         return Container(
           height: 3,
           color: c.acidText.withValues(alpha: 0.15),
-          child: FractionallySizedBox(
-            alignment: Alignment.centerLeft,
-            widthFactor: g.progress,
-            child: Container(color: c.acidText),
+          // Chạy mượt chứ không nhảy: nhận thưởng nhiệm vụ xong, vạch này bò
+          // lên trước mắt người dùng. Nhảy một phát thì EXP vừa cộng trôi qua
+          // mà không ai kịp thấy, và phần thưởng mất hẳn cảm giác.
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: g.progress),
+            duration: const Duration(milliseconds: 650),
+            curve: Curves.easeOutCubic,
+            builder: (_, value, _) => FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: value,
+              child: Container(color: c.acidText),
+            ),
           ),
         );
       },

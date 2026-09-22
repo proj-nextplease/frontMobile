@@ -376,11 +376,17 @@ class _Stats extends StatelessWidget {
             const SizedBox(height: Np.s4),
             ClipRRect(
               borderRadius: BorderRadius.circular(Np.rPill),
-              child: LinearProgressIndicator(
-                value: g.progress,
-                minHeight: 5,
-                backgroundColor: c.line,
-                valueColor: AlwaysStoppedAnimation(c.acid),
+              // Chạy mượt, cùng lý do với vạch trên thanh điều hướng.
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: g.progress),
+                duration: const Duration(milliseconds: 650),
+                curve: Curves.easeOutCubic,
+                builder: (_, value, _) => LinearProgressIndicator(
+                  value: value,
+                  minHeight: 5,
+                  backgroundColor: c.line,
+                  valueColor: AlwaysStoppedAnimation(c.acid),
+                ),
               ),
             ),
             const SizedBox(height: Np.s2),

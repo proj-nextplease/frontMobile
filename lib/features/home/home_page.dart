@@ -363,7 +363,10 @@ class _HomePageState extends State<HomePage> {
               if (!widget.isGuest &&
                   GamificationStore.instance.daily.isNotEmpty) ...[
                 const SizedBox(height: Np.s8),
-                const _Head(title: 'Nhiệm vụ hôm nay'),
+                // "Nhiệm vụ" trơn, KHÔNG phải "Nhiệm vụ hôm nay": danh sách
+                // trộn cả nhiệm vụ ngày lẫn tuần, nên chữ "hôm nay" nói sai
+                // với hai phần ba số dòng. Phạm vi ghi trên từng dòng.
+                const _Head(title: 'Nhiệm vụ'),
                 const SizedBox(height: Np.s4),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
