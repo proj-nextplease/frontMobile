@@ -4,6 +4,7 @@ import '../../core/api_client.dart';
 import '../../core/config.dart';
 import '../../core/theme.dart';
 import 'opportunities_repository.dart';
+import '../profile/notification_bell.dart';
 import 'opportunity.dart';
 import 'opportunity_filter.dart';
 import 'opportunity_card.dart';
@@ -145,6 +146,13 @@ class _JobsPageState extends State<JobsPage> {
           // hai lối vào cùng một việc trên cùng màn hình là thừa. Ô gợi ý xen
           // giữa danh sách vẫn giữ, vì nó xuất hiện đúng lúc người dùng đang
           // xem tin chứ không phải khi họ đi tìm tài khoản.
+          actions: [
+            if (!widget.isGuest)
+              const Padding(
+                padding: EdgeInsets.only(right: Np.s3),
+                child: NotificationBell(),
+              ),
+          ],
         ),
         body: RefreshIndicator(
           onRefresh: _load,

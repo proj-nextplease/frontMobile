@@ -48,6 +48,32 @@ class OpportunitiesRepository {
     return _cache!;
   }
 
+  /// Tìm một cơ hội theo id, không cần có sẵn bản tóm tắt.
+  ///
+  /// Tin tuyển dụng có endpoint riêng (GET /jobs/{id}). Quest thì KHÔNG —
+  /// backend chỉ có /organizer/quests/{id} và nó đòi quyền tổ chức — nên phải
+  /// dò trong danh sách. Danh sách quest đã mang đủ mọi trường nên không mất gì.
+  ///
+  /// Trả null khi không còn tồn tại (tin đã đóng, quest đã hết hạn), để nơi
+  /// gọi nói được câu tử tế thay vì ném lỗi kỹ thuật.
+  Future<Opportunity?> findById(String id, {required bool isQuest}) async {
+    if (!isQuest) {
+      try {
+        final d = await _api.get('/jobs/$id');
+        if (d is Map<String, dynamic>) return Opportunity.fromJob(d);
+      } on ApiException {
+        return null;
+      }
+      return null;
+    }
+
+    final all = await fetchAll();
+    for (final o in all) {
+      if (o.id == id && o.isQuest) return o;
+    }
+    return null;
+  }
+
   /// Nạp chi tiết một cơ hội.
   ///
   /// Chỉ tin tuyển dụng mới cần gọi thêm: GET /jobs/{id} trả về `capacity` và

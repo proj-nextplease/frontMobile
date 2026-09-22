@@ -21,6 +21,16 @@ class DiscussionsRepository {
     return _list(d).map(DiscussionPost.fromJson).toList();
   }
 
+  /// Một bài theo id. Cần cho việc mở bài từ thông báo — bài đó có thể nằm
+  /// ngoài trang đầu của feed, nên lọc lại danh sách là không đủ.
+  Future<DiscussionPost> fetchPost(String id) async {
+    final d = await _api.get('/discussions/posts/$id');
+    if (d is! Map<String, dynamic>) {
+      throw ApiException('Không tìm thấy bài viết này.');
+    }
+    return DiscussionPost.fromJson(d);
+  }
+
   Future<List<DiscussionComment>> comments(String postId) async {
     final d = await _api.get('/discussions/posts/$postId/comments');
     return _list(d).map(DiscussionComment.fromJson).toList();

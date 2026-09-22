@@ -11,7 +11,7 @@ import '../jobs/saved_store.dart';
 import '../profile/application_item.dart';
 import '../profile/edit_profile_page.dart';
 import '../profile/me_store.dart';
-import '../profile/notifications_page.dart';
+import '../profile/notification_bell.dart';
 import '../profile/notifications_store.dart';
 
 /// Trang chủ.
@@ -342,13 +342,7 @@ class _HomePageState extends State<HomePage> {
                   greeting: _greeting,
                   name: _firstName,
                   rs: _me.loaded ? _me.reputationScore : null,
-                  unread: widget.isGuest
-                      ? 0
-                      : NotificationsStore.instance.unread,
-                  onBell: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (_) => const NotificationsPage()),
-                  ),
+                  showBell: !widget.isGuest,
                 ),
               ),
 
@@ -460,14 +454,12 @@ class _Greeting extends StatelessWidget {
     required this.greeting,
     required this.name,
     required this.rs,
-    required this.unread,
-    required this.onBell,
+    required this.showBell,
   });
   final String greeting;
   final String? name;
   final int? rs;
-  final int unread;
-  final VoidCallback onBell;
+  final bool showBell;
 
   @override
   Widget build(BuildContext context) {
@@ -514,8 +506,10 @@ class _Greeting extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(width: Np.s2),
-        _Bell(unread: unread, onTap: onBell),
+        if (showBell) ...[
+          const SizedBox(width: Np.s1),
+          const NotificationBell(),
+        ],
       ],
     );
   }
@@ -908,61 +902,3 @@ class _StartDiscussion extends StatelessWidget {
   }
 }
 
-/// Chuông thông báo.
-///
-/// Đặt ở trang chủ vì đây là màn hình mở đầu tiên. Tab Hồ sơ cũng có lối vào,
-/// nhưng nó nằm sau một cú bấm — mà thứ cần người dùng chú ý thì không nên
-/// nằm sau cú bấm nào.
-class _Bell extends StatelessWidget {
-  const _Bell({required this.unread, required this.onTap});
-  final int unread;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Np.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 38,
-        height: 38,
-        child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            NpIco(NpIcon.bell, size: 21, color: c.ink),
-            if (unread > 0)
-              Positioned(
-                top: 2,
-                right: 2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  constraints: const BoxConstraints(minWidth: 16),
-                  height: 16,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: c.danger,
-                    borderRadius: BorderRadius.circular(Np.rPill),
-                    // Viền cùng màu nền để con số tách khỏi biểu tượng bên
-                    // dưới; thiếu nó thì hai thứ dính vào nhau thành một khối
-                    // đọc không ra.
-                    border: Border.all(color: c.bg, width: 1.5),
-                  ),
-                  child: Text(
-                    unread > 9 ? '9+' : '$unread',
-                    style: NpType.meta.copyWith(
-                      fontSize: 10,
-                      height: 1.1,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}

@@ -9,7 +9,7 @@ import 'applications_page.dart';
 import 'edit_profile_page.dart';
 import 'gamification_store.dart';
 import 'me_store.dart';
-import 'notifications_page.dart';
+import 'notification_bell.dart';
 import 'notifications_store.dart';
 import 'portfolio_page.dart';
 import 'saved_list_page.dart';
@@ -137,8 +137,6 @@ class _ProfilePageState extends State<ProfilePage> {
       );
     }
 
-    final unread = NotificationsStore.instance.unread;
-
     return SafeArea(
       bottom: false,
       child: RefreshIndicator(
@@ -153,8 +151,6 @@ class _ProfilePageState extends State<ProfilePage> {
             _Identity(
               me: _me,
               email: '${_account?['email'] ?? ''}',
-              unread: unread,
-              onBell: () => _push(const NotificationsPage()),
               onEdit: () => _push(const EditProfilePage()),
             ),
 
@@ -214,15 +210,11 @@ class _Identity extends StatelessWidget {
   const _Identity({
     required this.me,
     required this.email,
-    required this.unread,
-    required this.onBell,
     required this.onEdit,
   });
 
   final MeStore me;
   final String email;
-  final int unread;
-  final VoidCallback onBell;
   final VoidCallback onEdit;
 
   @override
@@ -293,7 +285,7 @@ class _Identity extends StatelessWidget {
                 ],
               ),
             ),
-            _Bell(unread: unread, onTap: onBell),
+            const NotificationBell(),
           ],
         ),
 
@@ -603,54 +595,6 @@ class _Ghost extends StatelessWidget {
   }
 }
 
-class _Bell extends StatelessWidget {
-  const _Bell({required this.unread, required this.onTap});
-  final int unread;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = Np.of(context);
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 40,
-        height: 40,
-        child: Stack(
-          alignment: Alignment.center,
-          clipBehavior: Clip.none,
-          children: [
-            NpIco(NpIcon.bell, size: 21, color: c.ink),
-            if (unread > 0)
-              Positioned(
-                top: 3,
-                right: 3,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  constraints: const BoxConstraints(minWidth: 16),
-                  height: 16,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: c.danger,
-                    borderRadius: BorderRadius.circular(Np.rPill),
-                    border: Border.all(color: c.bg, width: 1.5),
-                  ),
-                  child: Text(unread > 9 ? '9+' : '$unread',
-                      style: NpType.meta.copyWith(
-                        fontSize: 10,
-                        height: 1.1,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      )),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class _GuestCard extends StatelessWidget {
   const _GuestCard({required this.onSignIn});

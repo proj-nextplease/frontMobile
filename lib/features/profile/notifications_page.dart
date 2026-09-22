@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
 import '../jobs/opportunity_labels.dart';
+import 'notification_router.dart';
 import 'notifications_store.dart';
 
 class NotificationsPage extends StatefulWidget {
@@ -85,9 +86,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 itemCount: _store.items.length,
                 separatorBuilder: (_, _) => const SizedBox(height: Np.s2),
-                itemBuilder: (_, i) => _Row(
+                itemBuilder: (context, i) => _Row(
                   item: _store.items[i],
-                  onTap: () => _store.markRead(_store.items[i].id),
+                  // Router tự đánh dấu đã đọc rồi mới điều hướng.
+                  onTap: () =>
+                      NotificationRouter.open(context, _store.items[i]),
                 ),
               ),
       ),
@@ -148,6 +151,16 @@ class _Row extends StatelessWidget {
                 ],
               ),
             ),
+            // Mũi tên CHỈ hiện khi thông báo thật sự mở được nội dung. Hiện
+            // đều cho mọi dòng là hứa hẹn một việc mà nửa số dòng không làm
+            // được — POST_MODERATION và NEW_APPLICATION không mang link nào.
+            if (item.hasTarget) ...[
+              const SizedBox(width: Np.s2),
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: NpIco(NpIcon.arrow, size: 15, color: c.faint),
+              ),
+            ],
           ],
         ),
       ),

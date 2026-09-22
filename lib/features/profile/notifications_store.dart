@@ -158,6 +158,7 @@ class NotificationItem {
     required this.body,
     required this.isRead,
     this.type,
+    this.link,
     this.createdAt,
   });
 
@@ -166,18 +167,20 @@ class NotificationItem {
   final String body;
   final bool isRead;
   final String? type;
+
+  /// Đường dẫn của WEBSITE ("/discussions/…", "/jobs/…"). KHÔNG mở thẳng —
+  /// NotificationRouter dịch nó sang màn hình trong app.
+  final String? link;
+
   final DateTime? createdAt;
 
-  /// `link` cố tình KHÔNG đọc: nó là đường dẫn của WEBSITE (NotificationService
-  /// tự ghép tiền tố APP_PUBLIC_URL). Mở nó trong app sẽ đá người dùng ra
-  /// trình duyệt giữa chừng. Muốn dùng thì phải ánh xạ sang route của app —
-  /// việc đó để sau.
   factory NotificationItem.fromJson(Map<String, dynamic> m) => NotificationItem(
         id: '${m['id']}',
         title: '${m['title'] ?? ''}'.trim(),
         body: '${m['body'] ?? ''}'.trim(),
         isRead: m['isRead'] == true,
         type: (m['type'] as String?)?.trim(),
+        link: (m['link'] as String?)?.trim(),
         createdAt: m['createdAt'] == null
             ? null
             : DateTime.tryParse('${m['createdAt']}')?.toLocal(),
@@ -189,6 +192,7 @@ class NotificationItem {
         body: body,
         isRead: true,
         type: type,
+        link: link,
         createdAt: createdAt,
       );
 }
