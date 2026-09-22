@@ -6,6 +6,7 @@ import 'core/theme.dart';
 import 'features/auth/auth_service.dart';
 import 'features/auth/login_page.dart';
 import 'features/shell/main_shell.dart';
+import 'features/credentials/credentials_store.dart';
 import 'features/jobs/applied_store.dart';
 import 'features/jobs/saved_store.dart';
 import 'features/profile/gamification_store.dart';
@@ -73,6 +74,7 @@ class _NextPleaseAppState extends State<NextPleaseApp>
           GamificationStore.instance.clear();
           MeStore.instance.clear();
           AppliedStore.instance.clear();
+          CredentialsStore.instance.clear();
           NotificationsStore.instance.clear();
           _navKey.currentState?.popUntil((r) => r.isFirst);
           setState(() => _stage = _Stage.login);

@@ -6,6 +6,13 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<!-- image_picker: iOS TỪ CHỐI mở camera/thư viện nếu thiếu hai khoá này,
+	     và app bị kết thúc ngay chứ không phải trả về lỗi. Câu mô tả hiện
+	     nguyên văn trong hộp xin quyền nên phải nói đúng việc app dùng làm gì. -->
+	<key>NSCameraUsageDescription</key>
+	<string>Dùng camera để chụp ảnh minh chứng cho hoạt động bạn đã tham gia.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Chọn ảnh từ thư viện để làm minh chứng cho hoạt động bạn đã tham gia.</string>
 	<key>CFBundleDisplayName</key>
 	<string>nextplease</string>
 	<key>CFBundleExecutable</key>

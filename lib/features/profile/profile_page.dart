@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../discussions/discussion_widgets.dart';
+import '../credentials/credentials_page.dart';
+import '../credentials/credentials_store.dart';
 import '../jobs/applied_store.dart';
 import '../jobs/saved_store.dart';
 import 'applications_page.dart';
@@ -69,6 +71,7 @@ class _ProfilePageState extends State<ProfilePage> {
   List<Listenable> get _stores => [
         _me,
         AppliedStore.instance,
+        CredentialsStore.instance,
         NotificationsStore.instance,
         SavedStore.instance,
         GamificationStore.instance,
@@ -111,6 +114,7 @@ class _ProfilePageState extends State<ProfilePage> {
     await _me.hydrate();
     await NotificationsStore.instance.hydrate();
     await AppliedStore.instance.hydrate();
+    await CredentialsStore.instance.hydrate();
     await GamificationStore.instance.hydrate();
   }
 
@@ -218,6 +222,17 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ],
               ),
+            ),
+
+            const SizedBox(height: Np.s3),
+            _WideTile(
+              icon: NpIcon.bolt,
+              label: 'Minh chứng',
+              value: '${CredentialsStore.instance.items.length}',
+              hint: CredentialsStore.instance.pendingCount > 0
+                  ? '${CredentialsStore.instance.pendingCount} đang chờ duyệt'
+                  : 'Nộp hoạt động đã làm để được cộng EXP và uy tín',
+              onTap: () => _push(const CredentialsPage()),
             ),
 
             const SizedBox(height: Np.s8),
@@ -590,6 +605,73 @@ class _Tile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Ô ngang, dùng khi dòng phụ cần chỗ để nói hết câu.
+///
+/// Không nhét Minh chứng vào hàng hai ô cùng Tin đã lưu / Đơn đã nộp: câu
+/// giải thích "nộp hoạt động đã làm để được cộng EXP" không vừa nửa bề ngang,
+/// mà cắt cụt nó thì người chưa biết minh chứng là gì vẫn không hiểu.
+class _WideTile extends StatelessWidget {
+  const _WideTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.hint,
+    required this.onTap,
+  });
+
+  final NpIcon icon;
+  final String label;
+  final String value;
+  final String hint;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.all(Np.s4),
+        decoration: Np.card(c, radius: Np.rMd),
+        child: Row(
+          children: [
+            NpIco(icon, size: 19, color: c.muted),
+            const SizedBox(width: Np.s4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(label,
+                          style: NpType.body.copyWith(
+                            color: c.ink,
+                            fontWeight: FontWeight.w600,
+                          )),
+                      const SizedBox(width: Np.s2),
+                      Text(value,
+                          style: NpType.meta.copyWith(
+                              fontSize: 13, color: c.muted)),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(hint,
+                      style: NpType.meta
+                          .copyWith(fontSize: 12, color: c.faint),
+                      maxLines: 2),
+                ],
+              ),
+            ),
+            const SizedBox(width: Np.s2),
+            NpIco(NpIcon.arrow, size: 16, color: c.faint),
           ],
         ),
       ),
