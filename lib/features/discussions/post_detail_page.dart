@@ -258,7 +258,7 @@ class _CommentRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Avatar(name: comment.author, size: 30),
+        Avatar(name: comment.author, url: comment.avatarUrl, size: 30),
         const SizedBox(width: Np.s3),
         Expanded(
           child: Column(

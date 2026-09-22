@@ -1,3 +1,14 @@
+/// Lọc `avatar_url` trước khi đưa cho Image.network.
+///
+/// Cột này trong DB có thể chứa data URL base64 — bản web lưu ảnh tải lên
+/// theo kiểu đó. Image.network KHÔNG tải được `data:` và thất bại IM LẶNG,
+/// nên để nguyên thì chỗ hiển thị ra một ô trống thay vì chữ cái đầu.
+String? avatarUrlOrNull(Object? v) {
+  final s = v?.toString().trim();
+  if (s == null || s.isEmpty || s.startsWith('data:')) return null;
+  return s;
+}
+
 /// Mô hình cho tab Thảo luận.
 ///
 /// Viết tay vì backend khai báo các endpoint này trả `Map<String,Object>` thô,
@@ -80,7 +91,7 @@ class DiscussionPost {
         content: '${m['content'] ?? ''}'.trim(),
         authorName: '${m['authorName'] ?? 'Ẩn danh'}',
         authorRole: '${m['authorRole'] ?? ''}',
-        authorAvatarUrl: _url(m['authorAvatarUrl']),
+        authorAvatarUrl: avatarUrlOrNull(m['authorAvatarUrl']),
         topicName: '${m['topicName'] ?? ''}',
         topicSlug: '${m['topicSlug'] ?? ''}',
         likes: (m['likesCount'] as num?)?.toInt() ?? 0,
@@ -122,15 +133,6 @@ class DiscussionPost {
         poll: poll ?? this.poll,
         previewComments: previewComments,
       );
-
-  /// `avatar_url` trong DB có thể là data URL base64 (web lưu ảnh kiểu đó).
-  /// Image.network KHÔNG tải được `data:` và thất bại IM LẶNG, nên loại thẳng
-  /// ở đây để nơi hiển thị rơi về chữ cái đầu thay vì một ô trống.
-  static String? _url(Object? v) {
-    final s = v?.toString().trim();
-    if (s == null || s.isEmpty || s.startsWith('data:')) return null;
-    return s;
-  }
 }
 
 class DiscussionPoll {
@@ -180,6 +182,7 @@ class DiscussionComment {
     required this.author,
     required this.role,
     required this.content,
+    this.avatarUrl,
     this.createdAt,
   });
 
@@ -187,6 +190,12 @@ class DiscussionComment {
   final String author;
   final String role;
   final String content;
+
+  /// Cả GET /posts/{id}/comments lẫn POST .../comments đều trả trường này
+  /// (xem DiscussionService.getComments và addComment) — bản trước đơn giản
+  /// là không đọc, nên mọi bình luận đều rơi về chữ cái đầu.
+  final String? avatarUrl;
+
   final DateTime? createdAt;
 
   factory DiscussionComment.fromJson(Map<String, dynamic> m) =>
@@ -195,6 +204,7 @@ class DiscussionComment {
         author: '${m['author'] ?? 'Ẩn danh'}',
         role: '${m['role'] ?? ''}',
         content: '${m['content'] ?? ''}'.trim(),
+        avatarUrl: avatarUrlOrNull(m['authorAvatarUrl']),
         createdAt: m['createdAt'] == null
             ? null
             : DateTime.tryParse('${m['createdAt']}')?.toLocal(),
