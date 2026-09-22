@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/theme.dart';
 import 'social_mark.dart';
+import 'register_page.dart';
 
 /// Nhà cung cấp đăng nhập mạng xã hội.
 ///
@@ -232,7 +233,33 @@ class _LoginPageState extends State<LoginPage> {
                 icon: Icons.arrow_forward_rounded,
               ),
 
-              const SizedBox(height: Np.s8),
+              const SizedBox(height: Np.s5),
+              Center(
+                child: GestureDetector(
+                  onTap: _busy ? null : _openRegister,
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: Np.s2),
+                    child: RichText(
+                      text: TextSpan(
+                        style: NpType.meta.copyWith(color: c.muted),
+                        children: [
+                          const TextSpan(text: 'Chưa có tài khoản? '),
+                          TextSpan(
+                            text: 'Đăng ký',
+                            style: NpType.meta.copyWith(
+                              color: c.acidText,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: Np.s6),
               const _OrRow(),
               const SizedBox(height: Np.s5),
 
@@ -279,25 +306,42 @@ class _LoginPageState extends State<LoginPage> {
 
   // Luồng này chưa dựng. Nói thẳng ra thay vì để nút bấm vào không có gì xảy
   // ra — người dùng sẽ tưởng app hỏng.
-  void _forgotPassword() => _notYet('Đặt lại mật khẩu');
+  /// Mang sẵn email đang gõ sang tấm trượt — người bấm "quên mật khẩu" gần
+  /// như luôn vừa gõ email ở ngay trên, bắt gõ lại là thừa.
+  void _forgotPassword() =>
+      showForgotPasswordSheet(context, initialEmail: _email.text.trim());
 
-  void _notYet(String what) {
-    final c = Np.of(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: c.surfaceHi,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Np.rSm),
-          side: BorderSide(color: c.line),
-        ),
-        content: Text(
-          '$what chưa có trong app. Tạm thời dùng trên website nhé.',
-          style: NpType.body.copyWith(fontSize: 14),
+  Future<void> _openRegister() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => RegisterPage(
+          onDone: (email) {
+            // Đóng màn đăng ký rồi ĐIỀN SẴN email vừa tạo. Không tự đăng nhập
+            // luôn vì backend chỉ trả hồ sơ, không trả phiên — muốn tự đăng
+            // nhập thì phải giữ mật khẩu ở đây lâu hơn mức cần thiết.
+            Navigator.of(context).pop();
+            setState(() {
+              _email.text = email;
+              _error = null;
+            });
+            final c = Np.of(context);
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              backgroundColor: c.surfaceHi,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(Np.rSm),
+                side: BorderSide(color: c.line),
+              ),
+              content: Text('Đã tạo tài khoản. Đăng nhập để bắt đầu.',
+                  style: NpType.body.copyWith(fontSize: 14, color: c.ink)),
+            ));
+          },
         ),
       ),
     );
   }
+
 }
 
 /// Ô nhập kiểu "gạch chân", không phải hộp.

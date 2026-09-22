@@ -1,4 +1,5 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/api_client.dart';
@@ -121,6 +122,32 @@ class AuthService {
     } catch (_) {
       return 'Không mở được trang đăng nhập ${provider.name}.';
     }
+  }
+
+  /// Gửi email đặt lại mật khẩu.
+  ///
+  /// LUÔN báo thành công, kể cả khi email không tồn tại. Nói "email này chưa
+  /// đăng ký" là biến màn quên mật khẩu thành công cụ dò xem ai có tài khoản
+  /// trên hệ thống. Web đã xử lý đúng như vậy (xem authApi.requestPasswordReset),
+  /// nên mobile giữ y nguyên hành vi.
+  ///
+  /// Chỉ trả lỗi khi chính app cấu hình sai — đó là lỗi của mình, không phải
+  /// thông tin về người dùng.
+  Future<String?> sendPasswordReset(String email) async {
+    if (!Env.hasSupabase) return _missingConfig;
+    try {
+      await _auth.resetPasswordForEmail(
+        email.trim().toLowerCase(),
+        redirectTo: Env.resetPasswordUrl,
+      );
+    } on AuthException catch (e) {
+      // Nuốt lỗi từ nhà cung cấp để không lộ email nào đã đăng ký. Vẫn ghi ra
+      // để người phát triển thấy khi cấu hình sai thật.
+      debugPrint('[auth] resetPasswordForEmail: ${e.message}');
+    } catch (_) {
+      return 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.';
+    }
+    return null;
   }
 
   Future<void> signOut() async {
