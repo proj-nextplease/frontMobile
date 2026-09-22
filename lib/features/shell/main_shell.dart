@@ -41,7 +41,7 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _index = 1;   // mở vào tab Cơ hội, không phải Trang chủ
+  int _index = 0;   // mở vào Trang chủ
 
   /// Thanh trượt đi khi cuộn xuống, về khi cuộn lên. Trả lại ~110px chiều cao
   /// cho danh sách ở đúng lúc người dùng đang đọc.
@@ -51,9 +51,10 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     SeenStore.instance.load();
-    // Mở app vào thẳng tab Cơ hội nên phải đánh dấu đã xem ngay, nếu không
-    // chấm báo sẽ hiện trên chính tab người dùng đang đứng.
-    SeenStore.instance.markSeen();
+    // KHÔNG markSeen ở đây nữa. App mở vào Trang chủ, nên tab Cơ hội là một
+    // tab người dùng chưa nhìn — chấm báo tin mới trên đó là đúng, và xoá nó
+    // ngay lúc khởi động sẽ làm chấm không bao giờ xuất hiện.
+    // markSeen chỉ chạy khi người dùng thật sự mở tab đó, trong _onTab.
   }
 
   void _onTab(int i) {
