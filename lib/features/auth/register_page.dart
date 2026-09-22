@@ -486,7 +486,11 @@ class _ForgotSheetState extends State<_ForgotSheet> {
     setState(() {
       _busy = false;
       _error = err;
-      _sent = err == null;
+      // Đã sang màn "Kiểm tra hộp thư" rồi thì KHÔNG quay ngược lại. Bản
+      // trước gán `_sent = err == null`, nên một lần gửi lại thất bại sẽ ném
+      // người dùng về ô nhập email — mất luôn ngữ cảnh, và trông như thao tác
+      // trước đó cũng hỏng nốt.
+      if (err == null) _sent = true;
     });
     if (err == null) _startCooldown();
   }

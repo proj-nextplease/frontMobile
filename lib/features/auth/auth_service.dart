@@ -126,13 +126,15 @@ class AuthService {
 
   /// Gửi email đặt lại mật khẩu.
   ///
-  /// LUÔN báo thành công, kể cả khi email không tồn tại. Nói "email này chưa
-  /// đăng ký" là biến màn quên mật khẩu thành công cụ dò xem ai có tài khoản
-  /// trên hệ thống. Web đã xử lý đúng như vậy (xem authApi.requestPasswordReset),
-  /// nên mobile giữ y nguyên hành vi.
+  /// ─── Lỗi nào giấu, lỗi nào nói ───────────────────────────────────────
+  /// GIẤU những lỗi tiết lộ email đó có tài khoản hay không ("user not
+  /// found"…). Nói ra là biến màn quên mật khẩu thành công cụ dò xem ai có
+  /// tài khoản trên hệ thống.
   ///
-  /// Chỉ trả lỗi khi chính app cấu hình sai — đó là lỗi của mình, không phải
-  /// thông tin về người dùng.
+  /// NÓI những lỗi thuộc về hệ thống. Bản trước nuốt sạch mọi AuthException,
+  /// nên khi Supabase trả 429 over_email_send_rate_limit thì app vẫn báo "đã
+  /// gửi" — người dùng ngồi chờ một email không bao giờ tới. Giới hạn gửi là
+  /// chuyện của dự án, không phải thông tin về người dùng nào cả.
   Future<String?> sendPasswordReset(String email) async {
     if (!Env.hasSupabase) return _missingConfig;
     try {
@@ -141,9 +143,15 @@ class AuthService {
         redirectTo: Env.resetPasswordUrl,
       );
     } on AuthException catch (e) {
-      // Nuốt lỗi từ nhà cung cấp để không lộ email nào đã đăng ký. Vẫn ghi ra
-      // để người phát triển thấy khi cấu hình sai thật.
-      debugPrint('[auth] resetPasswordForEmail: ${e.message}');
+      debugPrint('[auth] resetPasswordForEmail: ${e.statusCode} ${e.code} '
+          '${e.message}');
+
+      final code = e.code ?? '';
+      if (e.statusCode == '429' || code.contains('rate_limit')) {
+        return 'Hệ thống đã gửi quá nhiều email trong thời gian ngắn. '
+            'Chờ khoảng 15 phút rồi thử lại.';
+      }
+      // Còn lại thì im lặng: có thể là "email không tồn tại", và nói ra là lộ.
     } catch (_) {
       return 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.';
     }
