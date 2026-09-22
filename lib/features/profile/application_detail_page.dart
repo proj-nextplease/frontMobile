@@ -4,6 +4,7 @@ import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../jobs/applied_store.dart';
 import '../jobs/opportunity_labels.dart';
+import '../wallet/wallet_store.dart';
 import 'application_item.dart';
 
 /// Chi tiết một đơn đã nộp.
@@ -28,6 +29,11 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
   final _api = ApiClient();
   late ApplicationItem _item = widget.item;
   bool _busy = false;
+
+  /// Chỉ là trạng thái TRONG PHIÊN. /me/applications không trả về cờ đã-boost
+  /// nên mở lại màn này sau đó, nút sẽ hiện lại. Sửa đúng phải làm ở backend;
+  /// tới lúc đó thì ít nhất không mời người dùng trả tiền hai lần liên tiếp.
+  bool _boosted = false;
 
   Future<void> _withdraw() async {
     final ok = await showDialog<bool>(
@@ -70,6 +76,69 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
             )),
       ),
     );
+  }
+
+  Future<void> _boost() async {
+    final w = WalletStore.instance;
+    final price = w.prices['boostPriceNp'] ?? 0;
+
+    if (w.balance < price) {
+      _toast('Bạn còn thiếu ${price - w.balance} NP để đẩy đơn này.',
+          ok: false);
+      return;
+    }
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final c = Np.of(ctx);
+        return AlertDialog(
+          backgroundColor: c.surface,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(Np.rLg)),
+          title: Text('Đẩy đơn này?',
+              style: NpType.title.copyWith(color: c.ink)),
+          content: Text(
+              'Đơn của bạn sẽ được xếp lên đầu danh sách của nhà tuyển dụng '
+              'trong ${w.prices['boostDurationHours'] ?? '—'} giờ. Trừ $price NP.',
+              style: NpType.body.copyWith(color: c.muted)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child:
+                  Text('Huỷ', style: NpType.button.copyWith(color: c.muted)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text('Đẩy đơn',
+                  style: NpType.button.copyWith(color: c.acidText)),
+            ),
+          ],
+        );
+      },
+    );
+    if (ok != true || !mounted) return;
+
+    setState(() => _busy = true);
+    final err = await w.boost(_item.id, isQuest: _item.isQuest);
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _boosted = err == null;
+    });
+    _toast(err ?? 'Đã đẩy đơn lên đầu danh sách.', ok: err == null);
+  }
+
+  void _toast(String msg, {required bool ok}) {
+    final c = Np.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor: ok ? c.surfaceHi : c.danger,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Np.rSm)),
+      content: Text(msg,
+          style: NpType.body
+              .copyWith(fontSize: 14, color: ok ? c.ink : Colors.white)),
+    ));
   }
 
   @override
@@ -148,6 +217,15 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
             ),
           ],
 
+
+          if (_item.canWithdraw) ...[
+            const SizedBox(height: Np.s6),
+            _BoostCard(
+              boosted: _boosted,
+              busy: _busy,
+              onBoost: _boost,
+            ),
+          ],
           if (_item.canWithdraw) ...[
             const SizedBox(height: Np.s8),
             GestureDetector(
@@ -282,6 +360,74 @@ class _ConfirmDialog extends StatelessWidget {
           child: Text('Rút đơn', style: NpType.button.copyWith(color: c.danger)),
         ),
       ],
+    );
+  }
+}
+
+
+/// Mời đẩy đơn — chỉ hiện với đơn còn mở, vì đẩy một đơn đã bị từ chối lên
+/// đầu danh sách không giúp được gì.
+class _BoostCard extends StatelessWidget {
+  const _BoostCard({
+    required this.boosted,
+    required this.busy,
+    required this.onBoost,
+  });
+
+  final bool boosted;
+  final bool busy;
+  final VoidCallback onBoost;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final price = WalletStore.instance.prices['boostPriceNp'];
+
+    return Container(
+      padding: const EdgeInsets.all(Np.s4),
+      decoration: Np.card(c, hi: true),
+      child: Row(
+        children: [
+          NpIco(NpIcon.bolt, size: 20, color: boosted ? c.acidText : c.ink),
+          const SizedBox(width: Np.s3),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(boosted ? 'Đơn đang được đẩy' : 'Đẩy đơn lên đầu',
+                    style: NpType.body.copyWith(
+                        color: c.ink, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 2),
+                Text(
+                  boosted
+                      ? 'Nhà tuyển dụng sẽ thấy đơn của bạn trước.'
+                      : 'Nhà tuyển dụng thấy đơn của bạn trước các đơn khác.',
+                  style: NpType.meta.copyWith(color: c.muted),
+                ),
+              ],
+            ),
+          ),
+          if (!boosted) ...[
+            const SizedBox(width: Np.s3),
+            GestureDetector(
+              onTap: busy ? null : onBoost,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: Np.s4, vertical: Np.s2 + 2),
+                decoration: BoxDecoration(
+                  color: c.acid,
+                  borderRadius: BorderRadius.circular(Np.rPill),
+                ),
+                child: Text(
+                  busy ? '…' : (price == null ? 'Đẩy' : '$price NP'),
+                  style: NpType.button.copyWith(fontSize: 14, color: c.onAcid),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

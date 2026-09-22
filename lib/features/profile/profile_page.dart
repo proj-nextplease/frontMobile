@@ -4,6 +4,8 @@ import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../discussions/discussion_widgets.dart';
 import '../credentials/credentials_page.dart';
+import '../wallet/wallet_page.dart';
+import '../wallet/wallet_store.dart';
 import '../credentials/credentials_store.dart';
 import '../jobs/applied_store.dart';
 import '../jobs/saved_store.dart';
@@ -75,6 +77,7 @@ class _ProfilePageState extends State<ProfilePage> {
         NotificationsStore.instance,
         SavedStore.instance,
         GamificationStore.instance,
+        WalletStore.instance,
       ];
 
   @override
@@ -97,6 +100,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (old.isGuest && !widget.isGuest) _load();
     if (!old.isGuest && widget.isGuest) {
       _me.clear();
+      WalletStore.instance.clear();
       setState(() => _account = null);
     }
   }
@@ -112,6 +116,7 @@ class _ProfilePageState extends State<ProfilePage> {
       // dùng lo mà không giúp được gì.
     }
     await _me.hydrate();
+    await WalletStore.instance.hydrate();
     await NotificationsStore.instance.hydrate();
     await AppliedStore.instance.hydrate();
     await CredentialsStore.instance.hydrate();
@@ -233,6 +238,19 @@ class _ProfilePageState extends State<ProfilePage> {
                   ? '${CredentialsStore.instance.pendingCount} đang chờ duyệt'
                   : 'Nộp hoạt động đã làm để được cộng EXP và uy tín',
               onTap: () => _push(const CredentialsPage()),
+            ),
+
+            const SizedBox(height: Np.s3),
+            _WideTile(
+              icon: NpIcon.wallet,
+              label: 'Ví NP',
+              // Ưu tiên số của ví vì nó vừa được nạp lại sau mỗi lần chi;
+              // /profiles/me chỉ nạp khi mở tab nên có thể đã cũ.
+              value: '${WalletStore.instance.loaded ? WalletStore.instance.balance : _me.npBalance}',
+              hint: WalletStore.instance.isPremium
+                  ? 'Premium đang bật'
+                  : 'Xem lịch sử giao dịch và các gói trả phí',
+              onTap: () => _push(const WalletPage()),
             ),
 
             const SizedBox(height: Np.s8),

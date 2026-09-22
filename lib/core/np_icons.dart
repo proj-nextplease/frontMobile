@@ -13,7 +13,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 ///   - khung 24×24, phần vẽ nằm gọn trong 3..21 để các icon cân nhau
 ///   - hình học đơn giản, không chi tiết vụn: ở cỡ 22px mọi thứ nhỏ hơn 2px
 ///     đều bết lại thành vệt mờ
-enum NpIcon { home, jobs, chat, person, search, heart, heartFill, bolt, bell, flame, send, arrow, company }
+enum NpIcon { home, jobs, chat, person, search, heart, heartFill, bolt, bell, flame, send, arrow, company, wallet, crown }
 
 class NpIco extends StatelessWidget {
   const NpIco(this.icon, {super.key, this.size = 22, required this.color});
@@ -106,6 +106,16 @@ String _body(NpIcon i, String c) => switch (i) {
 
       NpIcon.send => '<path stroke="$c" d="M20.6 3.6 10.9 13.3"/>'
           '<path stroke="$c" d="M20.6 3.6 14.4 20.6l-3.5-7.3-7.3-3.5z"/>',
+
+      // Ví: thân ví cộng một nắp gập và chấm khoá bên phải. Chấm lệch phải là
+      // chi tiết duy nhất tách nó khỏi một hộp bo góc thường.
+      NpIcon.wallet => '<path stroke="$c" d="M3.6 8.6a2.2 2.2 0 0 1 2.2-2.2h10.9a2.2 2.2 0 0 1 2.2 2.2v.9"/>'
+          '<rect stroke="$c" x="3.6" y="8.6" width="16.8" height="11.1" rx="2.4"/>'
+          '<path stroke="$c" d="M20.4 12.6h-3.3a1.8 1.8 0 0 0 0 3.6h3.3"/>',
+
+      // Vương miện cho Premium. Ba đỉnh chứ không phải năm: ở cỡ 22px năm
+      // đỉnh bết thành một đường răng cưa.
+      NpIcon.crown => '<path stroke="$c" d="M3.9 7.4 7.6 11l4.4-5.6L16.4 11l3.7-3.6-1.5 10.1a1.7 1.7 0 0 1-1.7 1.4H7.1a1.7 1.7 0 0 1-1.7-1.4z"/>',
 
       NpIcon.arrow => '<path stroke="$c" d="M4.5 12h15"/>'
           '<path stroke="$c" d="m13.4 5.9 6.1 6.1-6.1 6.1"/>',
