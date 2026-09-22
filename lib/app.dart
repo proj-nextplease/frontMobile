@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/env.dart';
@@ -153,6 +154,20 @@ class _NextPleaseAppState extends State<NextPleaseApp>
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'nextplease',
+
+      // App chỉ có tiếng Việt, nên ĐẶT CỨNG locale thay vì theo máy: người
+      // dùng để máy tiếng Anh vẫn phải thấy hộp chọn ngày bằng tiếng Việt,
+      // không thì một nửa giao diện nói một thứ tiếng.
+      locale: const Locale('vi'),
+      supportedLocales: const [Locale('vi'), Locale('en')],
+      // Thiếu ba delegate này thì showDatePicker ném
+      // "No MaterialLocalizations found" ngay khi mở, và menu cắt/dán khi giữ
+      // lâu trên ô nhập nói tiếng Anh.
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       debugShowCheckedModeBanner: false,
       navigatorKey: _navKey,
       // Banner bọc NGOÀI Navigator để nó phủ lên cả những màn được đẩy lên.

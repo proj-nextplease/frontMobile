@@ -68,7 +68,9 @@ class _SubmitCredentialPageState extends State<SubmitCredentialPage> {
       // Không cho chọn ngày TƯƠNG LAI cho mốc bắt đầu: minh chứng là việc đã
       // làm, không phải kế hoạch.
       lastDate: now,
-      locale: const Locale('vi'),
+      // KHÔNG truyền locale ở đây: MaterialApp đã đặt tiếng Việt cho cả app.
+      // Ép locale tại chỗ trong khi app chưa khai báo delegate chính là cách
+      // gây ra "No MaterialLocalizations found".
     );
     if (picked == null) return;
     setState(() => start ? _from = picked : _to = picked);
