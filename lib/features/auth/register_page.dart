@@ -451,20 +451,46 @@ class _ForgotSheetState extends State<_ForgotSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Quên mật khẩu', style: NpType.h1.copyWith(color: c.ink)),
+          // Tiêu đề đổi theo bước. Sau khi gửi xong, lặp lại "Quên mật khẩu"
+          // là nói về việc đã qua; điều người dùng cần biết lúc đó là phải
+          // làm gì tiếp.
+          Text(_sent ? 'Kiểm tra hộp thư' : 'Quên mật khẩu',
+              style: NpType.h1.copyWith(color: c.ink)),
           const SizedBox(height: Np.s2),
 
           if (_sent) ...[
-            Text(
-              'Nếu ${_email.text.trim()} đã có tài khoản, một email đặt lại '
-              'mật khẩu vừa được gửi tới đó.\n\n'
-              'Bấm link trong email để đổi mật khẩu trên website, rồi quay lại '
-              'đây đăng nhập.',
-              style: NpType.body.copyWith(color: c.muted, height: 1.5),
+            const SizedBox(height: Np.s2),
+            // Địa chỉ đứng riêng một dòng chứ không nhét giữa câu: người dùng
+            // cần LIẾC là thấy mình gõ đúng email chưa, không phải đọc hết câu.
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                  horizontal: Np.s4, vertical: Np.s3),
+              decoration: BoxDecoration(
+                color: c.surface,
+                borderRadius: BorderRadius.circular(Np.rMd),
+                border: Border.all(color: c.line),
+              ),
+              child: Text(_email.text.trim(),
+                  style: NpType.body.copyWith(
+                    color: c.ink,
+                    fontWeight: FontWeight.w600,
+                  )),
             ),
+            const SizedBox(height: Np.s4),
+
+            // Ba dòng, mỗi dòng một việc: đã gửi gì, làm gì tiếp, không thấy
+            // thì tìm ở đâu. Bản trước gộp thành hai đoạn văn, và bỏ sót hẳn
+            // chuyện email rơi vào Spam — thứ hỏng thường gặp nhất.
+            _Line(text: 'Nếu địa chỉ này đã đăng ký, link đặt lại mật khẩu '
+                'vừa được gửi tới.'),
+            _Line(text: 'Bấm link để đặt mật khẩu mới, rồi quay lại đây '
+                'đăng nhập.'),
+            _Line(text: 'Không thấy? Tìm thử trong mục Spam hoặc Quảng cáo.'),
+
             const SizedBox(height: Np.s6),
             AcidButton(
-              label: 'Đã hiểu',
+              label: 'Quay lại đăng nhập',
               onTap: () => Navigator.of(context).pop(),
             ),
           ] else ...[
@@ -514,6 +540,38 @@ class _ForgotSheetState extends State<_ForgotSheet> {
               onTap: _send,
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Một dòng hướng dẫn, có chấm đầu dòng nhỏ.
+///
+/// Chấm chứ không phải số thứ tự: ba dòng này không phải ba bước phải làm
+/// theo trình tự — dòng cuối chỉ cần đọc khi có sự cố.
+class _Line extends StatelessWidget {
+  const _Line({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Np.s3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 4,
+            height: 4,
+            margin: const EdgeInsets.only(top: 9, right: Np.s3),
+            decoration: BoxDecoration(color: c.faint, shape: BoxShape.circle),
+          ),
+          Expanded(
+            child: Text(text,
+                style: NpType.body.copyWith(color: c.muted, height: 1.45)),
+          ),
         ],
       ),
     );
