@@ -25,11 +25,37 @@ class MeStore extends ChangeNotifier {
   bool openToWork = false;
   bool onboardingCompleted = false;
 
-  /// Đã hạ về chữ thường để so khớp. Tên kỹ năng do người dùng và nhà tuyển
+  /// Đã hạ về chữ thường để SO KHỚP. Tên kỹ năng do người dùng và nhà tuyển
   /// dụng tự nhập nên không tin được vào cách viết hoa.
+  ///
+  /// CHỈ dùng để so khớp. Muốn HIỂN THỊ thì lấy `skillLabels` — in ra bản
+  /// thường hoá sẽ biến "JavaScript" thành "Javascript" và "SQL" thành "Sql".
   Set<String> skills = const {};
 
+  /// Kỹ năng đúng cách viết người dùng đã nhập, để hiển thị.
+  List<String> get skillLabels {
+    final v = raw['skills'];
+    if (v is! List) return const [];
+    return v
+        .whereType<String>()
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+  }
+
   String? bio;
+  String? location;
+
+  /// Bản gốc nguyên vẹn của phản hồi /profiles/me.
+  ///
+  /// BẮT BUỘC phải giữ. `PUT /profiles/me` nhận trọn bộ PortfolioRequest và
+  /// GHI ĐÈ tất cả — gửi thiếu `experiences` là xoá sạch kinh nghiệm, thiếu
+  /// `avatar` là mất ảnh. Màn sửa hồ sơ chỉ đụng vài trường, nên nó phải dựng
+  /// payload TỪ bản gốc này rồi mới chèn phần đã sửa lên.
+  ///
+  /// Đây đúng là lỗi đã xảy ra một lần ở trang doanh nghiệp bên web: handleSave
+  /// bỏ sót logoUrl/schoolId/advisorContact nên mỗi lần lưu là xoá chúng.
+  Map<String, dynamic> raw = const {};
 
   /// Giữ NGUYÊN danh sách chứ không chỉ đếm: trang Hồ sơ năng lực cần nội
   /// dung, còn trang chủ chỉ cần số lượng — nạp một lần dùng được cả hai.
@@ -60,7 +86,9 @@ class MeStore extends ChangeNotifier {
     try {
       final data = await _api.get('/profiles/me');
       if (data is! Map) return;
+      raw = Map<String, dynamic>.from(data);
       name = _str(data['name']);
+      location = _str(data['location']);
       headline = _str(data['headline']);
       school = _str(data['school']);
       avatarUrl = _str(data['avatarUrl']);
@@ -91,7 +119,8 @@ class MeStore extends ChangeNotifier {
   }
 
   void clear() {
-    name = headline = school = avatarUrl = bio = null;
+    name = headline = school = avatarUrl = bio = location = null;
+    raw = const {};
     reputationScore = 0;
     openToWork = onboardingCompleted = loaded = false;
     skills = const {};

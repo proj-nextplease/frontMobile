@@ -62,6 +62,13 @@ class ApiClient {
     );
   }
 
+  Future<dynamic> put(String path, {Object? body}) async {
+    final uri = Uri.parse('${AppConfig.apiUrl}$path');
+    return _send(
+      () => _client.put(uri, headers: _headers, body: jsonEncode(body ?? {})),
+    );
+  }
+
   /// PATCH. Backend dùng động từ này cho các thao tác đổi MỘT phần trạng thái
   /// (rút đơn, đánh dấu đã đọc), nên không thay bằng post được — Spring định
   /// tuyến theo động từ và POST vào cùng đường dẫn sẽ trả 405.

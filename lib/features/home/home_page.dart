@@ -9,6 +9,7 @@ import '../jobs/opportunity_detail_page.dart';
 import '../jobs/opportunity_labels.dart';
 import '../jobs/saved_store.dart';
 import '../profile/application_item.dart';
+import '../profile/edit_profile_page.dart';
 import '../profile/me_store.dart';
 import '../profile/notifications_page.dart';
 import '../profile/notifications_store.dart';
@@ -254,7 +255,10 @@ class _HomePageState extends State<HomePage> {
         icon: NpIcon.bolt,
         text: 'Thêm kỹ năng vào hồ sơ để được gợi ý đúng việc hơn',
         action: 'Cập nhật',
-        onTap: widget.onOpenProfile,
+        // Mở THẲNG màn sửa, không phải tab Hồ sơ. Lời nhắc nói rõ việc cần
+        // làm thì nó phải dẫn tới đúng chỗ làm việc đó, không bắt người dùng
+        // tự dò thêm hai lớp nữa.
+        onTap: _openEdit,
       );
     }
     if (_pending > 0) {
@@ -280,13 +284,17 @@ class _HomePageState extends State<HomePage> {
         icon: NpIcon.person,
         text: 'Hồ sơ còn thiếu ${missing.first}',
         action: 'Bổ sung',
-        onTap: widget.onOpenProfile,
+        onTap: _openEdit,
       );
     }
     return null;
   }
 
   // ── Dựng giao diện ─────────────────────────────────────────────────────
+
+  void _openEdit() => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const EditProfilePage()),
+      );
 
   void _open(Opportunity o) => Navigator.of(context).push(
         MaterialPageRoute(

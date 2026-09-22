@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
+import 'edit_profile_page.dart';
 import 'me_store.dart';
 
 /// Hồ sơ năng lực — CHỈ ĐỌC.
@@ -37,6 +38,14 @@ class _PortfolioPageState extends State<PortfolioPage> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _edit() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const EditProfilePage()),
+    );
+    // EditProfilePage đã gọi hydrate() sau khi lưu, và kho báo qua listener.
+    // Không cần nạp lại ở đây — làm vậy chỉ thêm một lượt gọi mạng thừa.
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
@@ -47,6 +56,20 @@ class _PortfolioPageState extends State<PortfolioPage> {
       appBar: AppBar(
         titleSpacing: Np.gutter,
         title: Text('Hồ sơ năng lực', style: NpType.h1.copyWith(color: c.ink)),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: Np.gutter),
+            child: GestureDetector(
+              onTap: _edit,
+              behavior: HitTestBehavior.opaque,
+              child: Center(
+                child: Text('Sửa',
+                    style: NpType.button
+                        .copyWith(fontSize: 15, color: c.acidText)),
+              ),
+            ),
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _me.hydrate,
@@ -89,13 +112,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
                 spacing: Np.s2,
                 runSpacing: Np.s2,
                 children: [
-                  // Kho lưu kỹ năng ở dạng chữ thường để so khớp. Viết hoa lại
-                  // chữ đầu khi hiện ra, không thì hồ sơ trông như tin nhắn
-                  // gõ vội.
-                  for (final s in _me.skills)
-                    _Chip(label: s.isEmpty
-                        ? s
-                        : s[0].toUpperCase() + s.substring(1)),
+                  // skillLabels giữ ĐÚNG chữ người dùng đã nhập. Bản trước lấy
+                  // từ `skills` (đã hạ chữ thường để so khớp) rồi viết hoa lại
+                  // chữ đầu, nên "JavaScript" ra "Javascript" và "SQL" ra
+                  // "Sql" — sai tên riêng của chính công nghệ đó.
+                  for (final s in _me.skillLabels) _Chip(label: s),
                 ],
               ),
             const SizedBox(height: Np.s6),
@@ -121,8 +142,8 @@ class _PortfolioPageState extends State<PortfolioPage> {
 
             const SizedBox(height: Np.s8),
             _Hint(
-              text: 'Phần chỉnh sửa hồ sơ hiện chỉ có trên website '
-                  'nextplease. App sẽ bổ sung sau.',
+              text: 'Kinh nghiệm và chứng chỉ vẫn sửa trên website — chúng cần '
+                  'tải ảnh minh chứng và đi qua bước xác thực.',
             ),
           ],
         ),
