@@ -10,6 +10,7 @@ import 'features/jobs/applied_store.dart';
 import 'features/jobs/saved_store.dart';
 import 'features/profile/gamification_store.dart';
 import 'features/profile/me_store.dart';
+import 'features/profile/notification_banner.dart';
 import 'features/profile/notifications_store.dart';
 import 'features/onboarding/splash_page.dart';
 
@@ -26,7 +27,8 @@ class NextPleaseApp extends StatefulWidget {
   State<NextPleaseApp> createState() => _NextPleaseAppState();
 }
 
-class _NextPleaseAppState extends State<NextPleaseApp> {
+class _NextPleaseAppState extends State<NextPleaseApp>
+    with WidgetsBindingObserver {
   final _auth = AuthService();
   _Stage _stage = _Stage.splash;
 
@@ -36,6 +38,7 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     /* Đăng nhập mạng xã hội KHÔNG trả kết quả về chỗ bấm nút: trình duyệt mở
        ra, người dùng thao tác ở đó, rồi hệ điều hành đánh thức app qua deep
@@ -55,6 +58,7 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
           MeStore.instance.hydrate();
           AppliedStore.instance.hydrate();
           NotificationsStore.instance.hydrate();
+          NotificationsStore.instance.startPolling();
           // Đóng màn hình đăng nhập nếu nó đang được đẩy lên trên danh sách.
           // Không có gì để đóng thì popUntil trả về ngay.
           _navKey.currentState?.popUntil((r) => r.isFirst);
@@ -74,6 +78,30 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
     }
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    NotificationsStore.instance.stopPolling();
+    super.dispose();
+  }
+
+  /// App xuống nền thì NGỪNG hỏi máy chủ. Không có chỗ này thì app vẫn gọi
+  /// mạng mỗi 45 giây suốt lúc nằm trong túi, và người dùng chỉ thấy pin tụt.
+  ///
+  /// Quay lại thì hỏi NGAY một lần rồi mới chạy lại vòng, vì trong lúc ở nền
+  /// có thể đã có phản hồi mới và bắt họ chờ thêm 45 giây là vô lý.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_auth.signedIn) return;
+    if (state == AppLifecycleState.resumed) {
+      NotificationsStore.instance.hydrate();
+      NotificationsStore.instance.startPolling();
+    } else if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      NotificationsStore.instance.stopPolling();
+    }
+  }
+
   void _afterSplash() {
     // Phiên khôi phục từ Keychain lúc mở app KHÔNG bắn sự kiện signedIn —
     // nó đã đăng nhập sẵn từ trước. Nên phải nạp tay ở đây, nếu không người
@@ -84,6 +112,7 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
       MeStore.instance.hydrate();
       AppliedStore.instance.hydrate();
       NotificationsStore.instance.hydrate();
+      NotificationsStore.instance.startPolling();
     }
     setState(() => _stage = _auth.signedIn ? _Stage.home : _Stage.login);
   }
@@ -130,11 +159,15 @@ class _NextPleaseAppState extends State<NextPleaseApp> {
           ),
         // Khách vào qua nút "Xem cơ hội trước đã" — truyền cờ để các tab hiện
         // đường quay lại đăng nhập.
+        // Banner bọc NGOÀI MainShell chứ không nằm trong một tab: thông báo
+        // phải hiện được dù người dùng đang ở tab nào.
         _Stage.home => Builder(
-            builder: (context) => MainShell(
-              isGuest: !_auth.signedIn,
-              onSignIn: () => _openLoginSheet(context),
-              onSignOut: _auth.signOut,
+            builder: (context) => NotificationBannerHost(
+              child: MainShell(
+                isGuest: !_auth.signedIn,
+                onSignIn: () => _openLoginSheet(context),
+                onSignOut: _auth.signOut,
+              ),
             ),
           ),
       },

@@ -10,6 +10,8 @@ import '../jobs/opportunity_labels.dart';
 import '../jobs/saved_store.dart';
 import '../profile/application_item.dart';
 import '../profile/me_store.dart';
+import '../profile/notifications_page.dart';
+import '../profile/notifications_store.dart';
 
 /// Trang chủ.
 ///
@@ -70,6 +72,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _me.addListener(_onMe);
+    NotificationsStore.instance.addListener(_onMe);
     SavedStore.instance.addListener(_onMe);
     _load();
   }
@@ -81,6 +84,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _me.removeListener(_onMe);
+    NotificationsStore.instance.removeListener(_onMe);
     SavedStore.instance.removeListener(_onMe);
     super.dispose();
   }
@@ -330,6 +334,13 @@ class _HomePageState extends State<HomePage> {
                   greeting: _greeting,
                   name: _firstName,
                   rs: _me.loaded ? _me.reputationScore : null,
+                  unread: widget.isGuest
+                      ? 0
+                      : NotificationsStore.instance.unread,
+                  onBell: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (_) => const NotificationsPage()),
+                  ),
                 ),
               ),
 
@@ -437,10 +448,18 @@ class _Nudge {
 /// Dòng chào. Cỡ chữ vừa phải — người dùng đã biết tên mình, nó không cần to
 /// bằng nửa màn hình như bản trước.
 class _Greeting extends StatelessWidget {
-  const _Greeting({required this.greeting, required this.name, required this.rs});
+  const _Greeting({
+    required this.greeting,
+    required this.name,
+    required this.rs,
+    required this.unread,
+    required this.onBell,
+  });
   final String greeting;
   final String? name;
   final int? rs;
+  final int unread;
+  final VoidCallback onBell;
 
   @override
   Widget build(BuildContext context) {
@@ -487,6 +506,8 @@ class _Greeting extends StatelessWidget {
             ),
           ),
         ],
+        const SizedBox(width: Np.s2),
+        _Bell(unread: unread, onTap: onBell),
       ],
     );
   }
@@ -872,6 +893,65 @@ class _StartDiscussion extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Chuông thông báo.
+///
+/// Đặt ở trang chủ vì đây là màn hình mở đầu tiên. Tab Hồ sơ cũng có lối vào,
+/// nhưng nó nằm sau một cú bấm — mà thứ cần người dùng chú ý thì không nên
+/// nằm sau cú bấm nào.
+class _Bell extends StatelessWidget {
+  const _Bell({required this.unread, required this.onTap});
+  final int unread;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 38,
+        height: 38,
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            NpIco(NpIcon.bell, size: 21, color: c.ink),
+            if (unread > 0)
+              Positioned(
+                top: 2,
+                right: 2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  constraints: const BoxConstraints(minWidth: 16),
+                  height: 16,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: c.danger,
+                    borderRadius: BorderRadius.circular(Np.rPill),
+                    // Viền cùng màu nền để con số tách khỏi biểu tượng bên
+                    // dưới; thiếu nó thì hai thứ dính vào nhau thành một khối
+                    // đọc không ra.
+                    border: Border.all(color: c.bg, width: 1.5),
+                  ),
+                  child: Text(
+                    unread > 9 ? '9+' : '$unread',
+                    style: NpType.meta.copyWith(
+                      fontSize: 10,
+                      height: 1.1,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

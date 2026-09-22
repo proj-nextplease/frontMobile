@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/api_client.dart';
@@ -18,18 +20,65 @@ class NotificationsStore extends ChangeNotifier {
   int unread = 0;
   bool loaded = false;
 
+  /// Thông báo VỪA xuất hiện, để chỗ nào đó trong app hiện banner.
+  ///
+  /// Dùng stream broadcast chứ không phải notifyListeners: một thông báo mới
+  /// là một SỰ KIỆN xảy ra một lần, còn listener thì chạy lại mỗi lần bất kỳ
+  /// thứ gì trong kho đổi — kể cả lúc người dùng bấm "đã đọc". Trộn hai thứ
+  /// đó lại là cách chắc chắn để banner hiện lại lúc không ai mong.
+  final _incoming = StreamController<NotificationItem>.broadcast();
+  Stream<NotificationItem> get incoming => _incoming.stream;
+
+  /// Id đã từng thấy. Chỉ dùng để phân biệt "mới đến" với "đã có từ trước".
+  final Set<String> _seenIds = {};
+
+  Timer? _poll;
+
+  /// Bắt đầu hỏi máy chủ định kỳ. Gọi khi có phiên và app đang ở tiền cảnh.
+  ///
+  /// 45 giây: đủ nhanh để người đang mở app thấy phản hồi của nhà tuyển dụng
+  /// gần như ngay, đủ chậm để không thành một vòng lặp gọi mạng. Không có
+  /// push hệ điều hành thì hỏi vòng là cách duy nhất, nên nó phải tiết chế.
+  void startPolling() {
+    _poll?.cancel();
+    _poll = Timer.periodic(const Duration(seconds: 45), (_) => hydrate());
+  }
+
+  /// Dừng khi app xuống nền hoặc đăng xuất. Thiếu chỗ này thì app vẫn gọi
+  /// mạng mỗi 45 giây trong lúc nằm trong túi.
+  void stopPolling() {
+    _poll?.cancel();
+    _poll = null;
+  }
+
   Future<void> hydrate() async {
     try {
       final data = await _api.get('/me/notifications');
       if (data is! Map) return;
-      items = (data['items'] as List?)
+      final next = (data['items'] as List?)
               ?.whereType<Map<String, dynamic>>()
               .map(NotificationItem.fromJson)
               .toList() ??
-          const [];
+          const <NotificationItem>[];
+
+      // Lần nạp ĐẦU TIÊN chỉ ghi nhận, không bắn sự kiện: không thì vừa đăng
+      // nhập là ba mươi banner đổ xuống cùng lúc.
+      final first = !loaded;
+      final fresh = <NotificationItem>[];
+      for (final n in next) {
+        if (_seenIds.add(n.id) && !first && !n.isRead) fresh.add(n);
+      }
+
+      items = next;
       unread = (data['unreadCount'] as num?)?.toInt() ?? 0;
       loaded = true;
       notifyListeners();
+
+      // Cũ trước mới sau, và chỉ lấy ba cái gần nhất. Nhiều hơn thì banner
+      // xếp hàng chờ nhau và cái cuối hiện ra khi đã hết liên quan.
+      for (final n in fresh.reversed.take(3).toList().reversed) {
+        _incoming.add(n);
+      }
     } on ApiException {
       // Khách hoặc endpoint hỏng: chuông đơn giản là không có số.
     }
@@ -74,10 +123,22 @@ class NotificationsStore extends ChangeNotifier {
     }
   }
 
+  /// Chỉ dành cho kiểm thử: bắn một thông báo vào luồng mà không cần mạng.
+  ///
+  /// Có mặt ở đây thay vì để test tự dựng một kho giả, vì thứ đáng kiểm là
+  /// ĐÚNG luồng mà app dùng thật, không phải một bản sao của nó.
+  @visibleForTesting
+  void debugEmit(NotificationItem item) => _incoming.add(item);
+
   void clear() {
+    stopPolling();
     items = const [];
     unread = 0;
     loaded = false;
+    // Xoá cả id đã thấy: người tiếp theo đăng nhập trên cùng thiết bị phải
+    // được coi như chưa thấy gì, không thì thông báo của họ bị nuốt vì trùng
+    // id với phiên trước.
+    _seenIds.clear();
     notifyListeners();
   }
 }

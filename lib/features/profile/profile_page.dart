@@ -125,7 +125,7 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: Np.s5),
 
             _NavRow(
-              icon: NpIcon.bolt,
+              icon: NpIcon.bell,
               label: 'Thông báo',
               trailing: NotificationsStore.instance.unread > 0
                   ? '${NotificationsStore.instance.unread} mới'

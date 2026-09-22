@@ -13,7 +13,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 ///   - khung 24×24, phần vẽ nằm gọn trong 3..21 để các icon cân nhau
 ///   - hình học đơn giản, không chi tiết vụn: ở cỡ 22px mọi thứ nhỏ hơn 2px
 ///     đều bết lại thành vệt mờ
-enum NpIcon { home, jobs, chat, person, search, heart, heartFill, bolt, flame, send, arrow }
+enum NpIcon { home, jobs, chat, person, search, heart, heartFill, bolt, bell, flame, send, arrow }
 
 class NpIco extends StatelessWidget {
   const NpIco(this.icon, {super.key, this.size = 22, required this.color});
@@ -69,6 +69,18 @@ String _body(NpIcon i, String c) => switch (i) {
 
       // Tia sét cho EXP.
       NpIcon.bolt => '<path stroke="$c" d="M13.4 3.2 5.6 13.4h5.3l-.9 7.4 8-10.2h-5.4z"/>',
+
+      // Chuông. Phải là chuông chứ không mượn lại tia sét: tia sét đã mang
+      // nghĩa "điểm uy tín" ở huy hiệu ngay cạnh trên trang chủ, và hai biểu
+      // tượng giống hệt nhau đứng sát nhau với hai nghĩa khác nhau thì không
+      // biểu tượng nào còn nghĩa gì.
+      //
+      // Thân chuông vẽ bằng hai cung nối vai thay vì một hình thang bo góc —
+      // hình thang ở cỡ 21px trông như cái cốc úp ngược.
+      NpIcon.bell => '<path stroke="$c" d="M6.4 16.6V11a5.6 5.6 0 0 1 11.2 0v5.6"/>'
+          '<path stroke="$c" d="M4.9 16.6h14.2"/>'
+          '<path stroke="$c" d="M10.2 19.6a2 2 0 0 0 3.6 0"/>'
+          '<path stroke="$c" d="M12 5.4V3.6"/>',
 
       // Ngọn lửa cho chuỗi ngày — thay cho emoji 🔥, vốn là dấu hiệu rõ nhất
       // của giao diện dựng vội.
