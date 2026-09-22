@@ -15,6 +15,7 @@ class AcidButton extends StatefulWidget {
     this.busy = false,
     this.icon,
     this.expand = true,
+    this.enabled = true,
   });
 
   final String label;
@@ -22,6 +23,13 @@ class AcidButton extends StatefulWidget {
   final bool busy;
   final IconData? icon;
   final bool expand;
+
+  /// Tắt thì nút XÁM và không ăn cú chạm.
+  ///
+  /// Phải có thật, không được giả bằng cách truyền `onTap: () {}`: nút vẫn
+  /// xanh, vẫn lún xuống khi bấm, nhưng không xảy ra gì — người dùng bấm vài
+  /// lần rồi kết luận app hỏng. Đúng lỗi đã xảy ra ở màn đăng ký.
+  final bool enabled;
 
   @override
   State<AcidButton> createState() => _AcidButtonState();
@@ -34,15 +42,18 @@ class _AcidButtonState extends State<AcidButton> {
   Widget build(BuildContext context) {
     final c = Np.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final pressed = _down && !widget.busy;
+    final live = widget.enabled && !widget.busy;
+    final pressed = _down && live;
 
     return GestureDetector(
-      onTapDown: (_) => setState(() => _down = true),
-      onTapCancel: () => setState(() => _down = false),
-      onTapUp: (_) {
-        setState(() => _down = false);
-        if (!widget.busy) widget.onTap();
-      },
+      onTapDown: live ? (_) => setState(() => _down = true) : null,
+      onTapCancel: live ? () => setState(() => _down = false) : null,
+      onTapUp: live
+          ? (_) {
+              setState(() => _down = false);
+              widget.onTap();
+            }
+          : null,
       child: AnimatedScale(
         scale: pressed ? 0.975 : 1,
         duration: const Duration(milliseconds: 110),
@@ -56,10 +67,11 @@ class _AcidButtonState extends State<AcidButton> {
               : const EdgeInsets.symmetric(horizontal: Np.s6),
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: c.acid,
+            color: widget.enabled ? c.acid : c.surface,
             borderRadius: BorderRadius.circular(Np.rMd),
+            border: widget.enabled ? null : Border.all(color: c.line),
             // Quầng sáng tắt lúc bấm — nút "áp xuống mặt phẳng".
-            boxShadow: pressed || widget.busy
+            boxShadow: pressed || widget.busy || !widget.enabled
                 ? null
                 : Np.glow(c, isDark: isDark),
           ),
@@ -74,10 +86,13 @@ class _AcidButtonState extends State<AcidButton> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(widget.label,
-                        style: NpType.button.copyWith(color: c.onAcid)),
+                        style: NpType.button.copyWith(
+                            color: widget.enabled ? c.onAcid : c.faint)),
                     if (widget.icon != null) ...[
                       const SizedBox(width: Np.s2),
-                      Icon(widget.icon, color: c.onAcid, size: 18),
+                      Icon(widget.icon,
+                          color: widget.enabled ? c.onAcid : c.faint,
+                          size: 18),
                     ],
                   ],
                 ),

@@ -69,13 +69,22 @@ class _RegisterPageState extends State<RegisterPage> {
     return null;
   }
 
-  bool get _canRequest =>
-      !_busy &&
-      _name.text.trim().isNotEmpty &&
-      _email.text.trim().contains('@') &&
-      _studentEmail.text.trim().contains('@') &&
-      _password.text.isNotEmpty &&
-      _passwordProblem == null;
+  /// Còn thiếu gì để gửi được mã. Trả null khi đã đủ.
+  ///
+  /// Trả về CÂU CHỮ chứ không phải bool: nút xám mà không nói vì sao vẫn bắt
+  /// người dùng tự đoán mình quên ô nào. Trước đây tệ hơn nữa — nút vẫn xanh
+  /// và bấm không ra gì.
+  String? get _missing {
+    if (_name.text.trim().isEmpty) return 'Chưa nhập họ và tên';
+    if (!_email.text.trim().contains('@')) return 'Email đăng nhập chưa hợp lệ';
+    if (!_studentEmail.text.trim().contains('@')) {
+      return 'Email sinh viên chưa hợp lệ';
+    }
+    if (_password.text.isEmpty) return 'Chưa nhập mật khẩu';
+    return _passwordProblem;
+  }
+
+  bool get _canRequest => !_busy && _missing == null;
 
   Future<void> _requestOtp() async {
     if (!_canRequest) return;
@@ -240,8 +249,16 @@ class _RegisterPageState extends State<RegisterPage> {
         AcidButton(
           label: _busy ? 'Đang gửi mã…' : 'Gửi mã xác nhận',
           busy: _busy,
-          onTap: _canRequest ? _requestOtp : () {},
+          enabled: _canRequest,
+          onTap: _requestOtp,
         ),
+        if (_missing != null && !_busy) ...[
+          const SizedBox(height: Np.s3),
+          Center(
+            child: Text(_missing!,
+                style: NpType.meta.copyWith(fontSize: 12.5, color: c.muted)),
+          ),
+        ],
       ];
 
   List<Widget> _otpStep(NpColors c) => [
@@ -273,8 +290,16 @@ class _RegisterPageState extends State<RegisterPage> {
         AcidButton(
           label: _busy ? 'Đang tạo tài khoản…' : 'Xác nhận',
           busy: _busy,
-          onTap: _otp.text.trim().length == 6 ? _verify : () {},
+          enabled: _otp.text.trim().length == 6,
+          onTap: _verify,
         ),
+        if (_otp.text.trim().length != 6 && !_busy) ...[
+          const SizedBox(height: Np.s3),
+          Center(
+            child: Text('Mã gồm 6 chữ số',
+                style: NpType.meta.copyWith(fontSize: 12.5, color: c.muted)),
+          ),
+        ],
         const SizedBox(height: Np.s4),
         Center(
           child: GestureDetector(
@@ -537,6 +562,7 @@ class _ForgotSheetState extends State<_ForgotSheet> {
             AcidButton(
               label: _busy ? 'Đang gửi…' : 'Gửi link đặt lại',
               busy: _busy,
+              enabled: _email.text.trim().contains('@'),
               onTap: _send,
             ),
           ],
