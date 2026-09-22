@@ -86,10 +86,10 @@ class _NextPleaseAppState extends State<NextPleaseApp>
   }
 
   /// App xuống nền thì NGỪNG hỏi máy chủ. Không có chỗ này thì app vẫn gọi
-  /// mạng mỗi 45 giây suốt lúc nằm trong túi, và người dùng chỉ thấy pin tụt.
+  /// mạng đều đặn suốt lúc nằm trong túi, và người dùng chỉ thấy pin tụt.
   ///
   /// Quay lại thì hỏi NGAY một lần rồi mới chạy lại vòng, vì trong lúc ở nền
-  /// có thể đã có phản hồi mới và bắt họ chờ thêm 45 giây là vô lý.
+  /// có thể đã có phản hồi mới, và bắt họ chờ hết một nhịp nữa là vô lý.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!_auth.signedIn) return;

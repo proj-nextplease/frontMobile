@@ -34,18 +34,26 @@ class NotificationsStore extends ChangeNotifier {
 
   Timer? _poll;
 
-  /// Bắt đầu hỏi máy chủ định kỳ. Gọi khi có phiên và app đang ở tiền cảnh.
+  /// Khoảng cách giữa hai lần hỏi máy chủ.
   ///
-  /// 45 giây: đủ nhanh để người đang mở app thấy phản hồi của nhà tuyển dụng
-  /// gần như ngay, đủ chậm để không thành một vòng lặp gọi mạng. Không có
-  /// push hệ điều hành thì hỏi vòng là cách duy nhất, nên nó phải tiết chế.
+  /// 15 giây. Không có push hệ điều hành thì hỏi vòng là cách duy nhất, nên
+  /// con số này là một đánh đổi chứ không phải hằng số tuỳ ý: mỗi giờ app mở
+  /// là khoảng 240 lượt gọi `/me/notifications`, gấp ba so với 45 giây.
+  ///
+  /// Chấp nhận được vì vòng lặp CHỈ chạy khi app ở tiền cảnh và đã đăng nhập
+  /// (xem stopPolling và didChangeAppLifecycleState trong app.dart) — app nằm
+  /// trong túi thì không gọi lần nào. Nếu sau này số người dùng lớn lên và
+  /// endpoint này thành điểm nóng, đây là chỗ đầu tiên cần nhìn lại.
+  static const _interval = Duration(seconds: 15);
+
+  /// Bắt đầu hỏi máy chủ định kỳ. Gọi khi có phiên và app đang ở tiền cảnh.
   void startPolling() {
     _poll?.cancel();
-    _poll = Timer.periodic(const Duration(seconds: 45), (_) => hydrate());
+    _poll = Timer.periodic(_interval, (_) => hydrate());
   }
 
   /// Dừng khi app xuống nền hoặc đăng xuất. Thiếu chỗ này thì app vẫn gọi
-  /// mạng mỗi 45 giây trong lúc nằm trong túi.
+  /// mạng đều đặn trong lúc nằm trong túi.
   void stopPolling() {
     _poll?.cancel();
     _poll = null;
