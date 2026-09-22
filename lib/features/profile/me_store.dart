@@ -32,6 +32,20 @@ class MeStore extends ChangeNotifier {
   /// thường hoá sẽ biến "JavaScript" thành "Javascript" và "SQL" thành "Sql".
   Set<String> skills = const {};
 
+  /// Số dư NP. Đọc từ bản gốc chứ không nhân đôi thành trường riêng —
+  /// /profiles/me đã trả sẵn, và một trường nữa là một chỗ nữa có thể quên
+  /// cập nhật trong clear().
+  int get npBalance => _int(raw['npBalance']);
+
+  /// Cấp độ và tổng EXP theo hồ sơ. GamificationStore cũng có cấp độ, nhưng
+  /// nó lấy từ /me/gamification và có thể chưa nạp; hai nguồn này luôn khớp
+  /// vì cùng tính từ tổng EXP.
+  int get currentLevel => _int(raw['currentLevel']);
+  int get totalExp => _int(raw['totalExp']);
+
+  /// Đường dẫn hồ sơ công khai, null nếu người dùng chưa đặt.
+  String? get publicSlug => _str(raw['publicSlug']);
+
   /// Kỹ năng đúng cách viết người dùng đã nhập, để hiển thị.
   List<String> get skillLabels {
     final v = raw['skills'];
