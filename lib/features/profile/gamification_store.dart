@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/api_client.dart';
+import '../../core/app_banner.dart';
+import '../../core/np_icons.dart';
 
 /// Tiến trình của người dùng: cấp, EXP, chuỗi ngày, và nhiệm vụ ngày/tuần.
 ///
@@ -27,6 +31,15 @@ class GamificationStore extends ChangeNotifier {
   List<DailyQuest> daily = const [];
   List<DailyQuest> weekly = const [];
   bool loaded = false;
+
+  /// Nhiệm vụ VỪA chuyển sang hoàn thành, để nơi nào đó hiện banner.
+  ///
+  /// Stream chứ không phải notifyListeners: hoàn thành là một SỰ KIỆN xảy ra
+  /// một lần, còn listener thì chạy lại mỗi lần bất kỳ thứ gì trong kho đổi —
+  /// kể cả lúc người dùng bấm Nhận. Trộn hai thứ đó là cách chắc chắn để
+  /// banner hiện lại lúc không ai mong.
+  final _banners = StreamController<AppBanner>.broadcast();
+  Stream<AppBanner> get banners => _banners.stream;
 
   /// Nhiệm vụ đã xong mà CHƯA nhận thưởng — thứ đáng nhắc người dùng nhất.
   List<DailyQuest> get claimable =>
@@ -100,6 +113,16 @@ class GamificationStore extends ChangeNotifier {
 
   void _apply(Object? data) {
     if (data is! Map) return;
+
+    // Ghi lại nhiệm vụ nào ĐÃ hoàn thành trước lần cập nhật này, để chỉ bắn
+    // banner cho cái vừa mới xong. Lần nạp đầu tiên không bắn gì: vừa mở app
+    // mà đổ xuống ba banner cho việc làm từ hôm qua là vô nghĩa.
+    final wasLoaded = loaded;
+    final before = {
+      for (final q in [...daily, ...weekly])
+        if (q.completed) q.key,
+    };
+
     level = _int(data['level']);
     expIntoLevel = _int(data['expIntoLevel']);
     expForNextLevel = _int(data['expForNextLevel']);
@@ -110,11 +133,31 @@ class GamificationStore extends ChangeNotifier {
     weekly = _quests(data['weeklyQuests']);
     loaded = true;
     notifyListeners();
+
+    if (!wasLoaded) return;
+    for (final q in [...daily, ...weekly]) {
+      if (!q.completed || before.contains(q.key)) continue;
+      _banners.add(AppBanner(
+        id: 'quest-${q.key}',
+        title: 'Xong nhiệm vụ: ${q.title}',
+        // Nói rõ phải BẤM NHẬN mới có EXP. Viết "+30 EXP" trơn thì người dùng
+        // tưởng đã cộng rồi và không bao giờ quay lại lấy.
+        body: 'Nhận +${q.exp} EXP ở trang chủ',
+        icon: NpIcon.flame,
+      ));
+    }
   }
 
   List<DailyQuest> _quests(Object? v) => (v is List)
       ? v.whereType<Map<String, dynamic>>().map(DailyQuest.fromJson).toList()
       : const [];
+
+  /// Chỉ dành cho kiểm thử: nạp một trạng thái mà không cần mạng.
+  ///
+  /// Có mặt ở đây thay vì để test tự dựng kho giả, vì thứ đáng kiểm là ĐÚNG
+  /// đường mà app dùng thật, không phải một bản sao của nó.
+  @visibleForTesting
+  void debugApply(Object? data) => _apply(data);
 
   void clear() {
     level = expIntoLevel = expForNextLevel = 0;

@@ -428,6 +428,19 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (slot == 0) {
+      // Nhiệm vụ đã XONG mà chưa bấm Nhận. Đúng nghĩa của huy hiệu trên thanh
+      // điều hướng: "có việc cần bạn", và nó tự tắt ngay khi nhận xong.
+      //
+      // KHÔNG đếm nhiệm vụ đang dở: một nhiệm vụ 1/3 không cần người dùng làm
+      // gì ngay lúc này, và chấm nằm đó cả ngày thì họ học được cách phớt lờ.
+      return ListenableBuilder(
+        listenable: GamificationStore.instance,
+        builder: (context, _) => _dot(
+            context, GamificationStore.instance.claimable.length,
+            showNumber: false),
+      );
+    }
     if (slot == 1) {
       return ListenableBuilder(
         listenable: SeenStore.instance,

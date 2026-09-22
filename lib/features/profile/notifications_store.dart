@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../core/api_client.dart';
+import '../../core/app_banner.dart';
+import '../../core/np_icons.dart';
 
 /// Thông báo của người dùng.
 ///
@@ -26,8 +28,17 @@ class NotificationsStore extends ChangeNotifier {
   /// là một SỰ KIỆN xảy ra một lần, còn listener thì chạy lại mỗi lần bất kỳ
   /// thứ gì trong kho đổi — kể cả lúc người dùng bấm "đã đọc". Trộn hai thứ
   /// đó lại là cách chắc chắn để banner hiện lại lúc không ai mong.
-  final _incoming = StreamController<NotificationItem>.broadcast();
-  Stream<NotificationItem> get incoming => _incoming.stream;
+  final _incoming = StreamController<AppBanner>.broadcast();
+  Stream<AppBanner> get incoming => _incoming.stream;
+
+  /// Cần cho nơi dựng banner: nó chỉ nhận được AppBanner, nhưng khi người
+  /// dùng bấm thì phải tìm lại bản gốc để biết mở đi đâu.
+  NotificationItem? byId(String id) {
+    for (final n in items) {
+      if (n.id == id) return n;
+    }
+    return null;
+  }
 
   /// Id đã từng thấy. Chỉ dùng để phân biệt "mới đến" với "đã có từ trước".
   final Set<String> _seenIds = {};
@@ -85,7 +96,12 @@ class NotificationsStore extends ChangeNotifier {
       // Cũ trước mới sau, và chỉ lấy ba cái gần nhất. Nhiều hơn thì banner
       // xếp hàng chờ nhau và cái cuối hiện ra khi đã hết liên quan.
       for (final n in fresh.reversed.take(3).toList().reversed) {
-        _incoming.add(n);
+        _incoming.add(AppBanner(
+          id: n.id,
+          title: n.title.isEmpty ? 'Thông báo mới' : n.title,
+          body: n.body,
+          icon: NpIcon.bell,
+        ));
       }
     } on ApiException {
       // Khách hoặc endpoint hỏng: chuông đơn giản là không có số.
@@ -136,7 +152,12 @@ class NotificationsStore extends ChangeNotifier {
   /// Có mặt ở đây thay vì để test tự dựng một kho giả, vì thứ đáng kiểm là
   /// ĐÚNG luồng mà app dùng thật, không phải một bản sao của nó.
   @visibleForTesting
-  void debugEmit(NotificationItem item) => _incoming.add(item);
+  void debugEmit(NotificationItem item) => _incoming.add(AppBanner(
+        id: item.id,
+        title: item.title.isEmpty ? 'Thông báo mới' : item.title,
+        body: item.body,
+        icon: NpIcon.bell,
+      ));
 
   void clear() {
     stopPolling();

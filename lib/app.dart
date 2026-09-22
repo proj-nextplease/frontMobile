@@ -153,6 +153,13 @@ class _NextPleaseAppState extends State<NextPleaseApp>
       title: 'nextplease',
       debugShowCheckedModeBanner: false,
       navigatorKey: _navKey,
+      // Banner bọc NGOÀI Navigator để nó phủ lên cả những màn được đẩy lên.
+      // Đặt trong `home:` thì mọi route mới sẽ che mất nó.
+      builder: (context, child) => NotificationBannerHost(
+        navigatorKey: _navKey,
+        enabled: _stage == _Stage.home,
+        child: child ?? const SizedBox.shrink(),
+      ),
       // Hai bộ theme, MaterialApp tự chọn theo cài đặt sáng/tối của máy.
       // themeMode mặc định là ThemeMode.system nên không cần khai báo.
       theme: buildNpTheme(Brightness.light),
@@ -166,15 +173,11 @@ class _NextPleaseAppState extends State<NextPleaseApp>
           ),
         // Khách vào qua nút "Xem cơ hội trước đã" — truyền cờ để các tab hiện
         // đường quay lại đăng nhập.
-        // Banner bọc NGOÀI MainShell chứ không nằm trong một tab: thông báo
-        // phải hiện được dù người dùng đang ở tab nào.
         _Stage.home => Builder(
-            builder: (context) => NotificationBannerHost(
-              child: MainShell(
-                isGuest: !_auth.signedIn,
-                onSignIn: () => _openLoginSheet(context),
-                onSignOut: _auth.signOut,
-              ),
+            builder: (context) => MainShell(
+              isGuest: !_auth.signedIn,
+              onSignIn: () => _openLoginSheet(context),
+              onSignOut: _auth.signOut,
             ),
           ),
       },

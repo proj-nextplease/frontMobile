@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../core/app_banner.dart';
 import '../../core/theme.dart';
-import 'notifications_page.dart';
+import 'gamification_store.dart';
+import 'notification_router.dart';
 import 'notifications_store.dart';
 
 /// Banner nhắc trong app.
@@ -16,35 +18,63 @@ import 'notifications_store.dart';
 /// hệ điều hành sẽ rơi xuống nếu sau này bật push thật.
 ///
 /// Đây là NHẮC TRONG APP, không phải push: app đóng lại thì không có gì.
+///
+/// ─── Phải nằm TRÊN Navigator ─────────────────────────────────────────────
+/// Trước đây nó bọc MainShell bên trong `home:`, tức là nằm trong route đầu
+/// tiên. Mọi màn được đẩy lên — chi tiết tin, bài viết, danh sách thông báo —
+/// đều che mất nó. Mà nhiệm vụ thì thường hoàn thành đúng lúc đang mở chi
+/// tiết tin, và thông báo thì đến bất cứ lúc nào. Nói cách khác banner hỏng
+/// đúng ở những lúc cần nhất.
+///
+/// Giờ nó nằm ở MaterialApp.builder nên phủ lên cả Navigator. Đổi lại,
+/// context ở đây nằm NGOÀI Navigator: mọi thao tác điều hướng và SnackBar
+/// phải đi qua navigatorKey chứ không dùng được context của chính nó.
 class NotificationBannerHost extends StatefulWidget {
-  const NotificationBannerHost({super.key, required this.child});
+  const NotificationBannerHost({
+    super.key,
+    required this.child,
+    this.navigatorKey,
+    this.enabled = true,
+  });
+
   final Widget child;
+  final GlobalKey<NavigatorState>? navigatorKey;
+
+  /// Tắt khi đang ở splash hoặc màn đăng nhập — banner rơi xuống giữa lúc
+  /// người dùng chưa vào app thì không có ngữ cảnh nào để hiểu nó.
+  final bool enabled;
 
   @override
   State<NotificationBannerHost> createState() => _NotificationBannerHostState();
 }
 
 class _NotificationBannerHostState extends State<NotificationBannerHost> {
-  StreamSubscription<NotificationItem>? _sub;
+  final _subs = <StreamSubscription<AppBanner>>[];
   Timer? _hide;
 
-  NotificationItem? _current;
+  AppBanner? _current;
 
   @override
   void initState() {
     super.initState();
-    _sub = NotificationsStore.instance.incoming.listen(_show);
+    // HAI nguồn: thông báo từ máy chủ, và nhiệm vụ vừa hoàn thành ngay trong
+    // máy. Cả hai đều là "vừa có chuyện gì đó xảy ra", nên dùng chung một chỗ
+    // hiện thay vì dựng hai lớp nổi chồng lên nhau.
+    _subs.add(NotificationsStore.instance.incoming.listen(_show));
+    _subs.add(GamificationStore.instance.banners.listen(_show));
   }
 
   @override
   void dispose() {
-    _sub?.cancel();
+    for (final s in _subs) {
+      s.cancel();
+    }
     _hide?.cancel();
     super.dispose();
   }
 
-  void _show(NotificationItem n) {
-    if (!mounted) return;
+  void _show(AppBanner n) {
+    if (!mounted || !widget.enabled) return;
     // Cái mới ĐÈ cái đang hiện thay vì xếp hàng. Xếp hàng thì thông báo thứ ba
     // hiện ra sau gần mười giây, lúc đó nó đã không còn là tin mới nữa.
     _hide?.cancel();
@@ -63,10 +93,19 @@ class _NotificationBannerHostState extends State<NotificationBannerHost> {
     final n = _current;
     _dismiss();
     if (n == null) return;
-    NotificationsStore.instance.markRead(n.id);
-    Navigator.of(context, rootNavigator: true).push(
-      MaterialPageRoute(builder: (_) => const NotificationsPage()),
-    );
+
+    // Banner tự mang hành động của nó (nhiệm vụ thì không đi đâu cả). Chỉ khi
+    // không có mới tra ngược về thông báo gốc để điều hướng.
+    if (n.onTap != null) return n.onTap!();
+
+    // Context của chính widget này nằm NGOÀI Navigator, nên điều hướng phải
+    // mượn context bên dưới. Không có key thì đành thôi — thà không đi đâu
+    // còn hơn ném lỗi ra giữa màn hình.
+    final navContext = widget.navigatorKey?.currentContext;
+    if (navContext == null) return;
+
+    final item = NotificationsStore.instance.byId(n.id);
+    if (item != null) NotificationRouter.open(navContext, item);
   }
 
   @override
@@ -74,6 +113,9 @@ class _NotificationBannerHostState extends State<NotificationBannerHost> {
     final n = _current;
 
     return Stack(
+      // Banner nằm trên Navigator nên Stack này KHÔNG có Directionality hay
+      // MediaQuery mặc định của route; MaterialApp.builder đã cung cấp cả hai
+      // từ bên trên nên không cần dựng lại.
       children: [
         widget.child,
         // IgnorePointer khi không có banner: Stack phủ toàn màn hình, không
@@ -94,7 +136,7 @@ class _NotificationBannerHostState extends State<NotificationBannerHost> {
                 ? const SizedBox.shrink(key: ValueKey('none'))
                 : _Banner(
                     key: ValueKey(n.id),
-                    item: n,
+                    banner: n,
                     onTap: _open,
                     onDismiss: _dismiss,
                   ),
@@ -108,12 +150,12 @@ class _NotificationBannerHostState extends State<NotificationBannerHost> {
 class _Banner extends StatelessWidget {
   const _Banner({
     super.key,
-    required this.item,
+    required this.banner,
     required this.onTap,
     required this.onDismiss,
   });
 
-  final NotificationItem item;
+  final AppBanner banner;
   final VoidCallback onTap;
   final VoidCallback onDismiss;
 
@@ -127,7 +169,7 @@ class _Banner extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.fromLTRB(Np.s3, top + Np.s2, Np.s3, 0),
         child: Dismissible(
-          key: ValueKey('dismiss-${item.id}'),
+          key: ValueKey('dismiss-${banner.id}'),
           direction: DismissDirection.up,
           onDismissed: (_) => onDismiss(),
           child: GestureDetector(
@@ -166,7 +208,7 @@ class _Banner extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          item.title.isEmpty ? 'Thông báo mới' : item.title,
+                          banner.title,
                           style: NpType.body.copyWith(
                             fontSize: 14,
                             color: c.onBand,
@@ -175,10 +217,10 @@ class _Banner extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (item.body.isNotEmpty) ...[
+                        if (banner.body.isNotEmpty) ...[
                           const SizedBox(height: 2),
                           Text(
-                            item.body,
+                            banner.body,
                             style: NpType.meta.copyWith(
                               fontSize: 12.5,
                               color: c.onBand.withValues(alpha: 0.7),

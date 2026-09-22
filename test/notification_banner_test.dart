@@ -10,11 +10,17 @@ import 'package:nextplease_mobile/core/theme.dart';
 import 'package:nextplease_mobile/features/profile/notification_banner.dart';
 import 'package:nextplease_mobile/features/profile/notifications_store.dart';
 
-Widget _host() => MaterialApp(
+/// Dựng đúng cách app thật dùng: host nằm ở MaterialApp.builder, tức là TRÊN
+/// Navigator. Dựng bằng `home:` thì test sẽ xanh trong khi app thật hỏng —
+/// đúng lỗi đã xảy ra.
+Widget _host({GlobalKey<NavigatorState>? navKey}) => MaterialApp(
       theme: buildNpTheme(Brightness.light),
-      home: const NotificationBannerHost(
-        child: Scaffold(body: Center(child: Text('nội dung'))),
+      navigatorKey: navKey,
+      builder: (context, child) => NotificationBannerHost(
+        navigatorKey: navKey,
+        child: child ?? const SizedBox.shrink(),
       ),
+      home: const Scaffold(body: Center(child: Text('nội dung'))),
     );
 
 void main() {
@@ -67,6 +73,36 @@ void main() {
     expect(find.text('Tin cũ'), findsNothing);
 
     // Dọn hẹn giờ đang treo, không thì test kết thúc với một Timer còn sống.
+    await tester.pump(const Duration(seconds: 6));
+    await tester.pump(const Duration(milliseconds: 300));
+  });
+
+  testWidgets('Banner hiện được cả khi đang mở một màn đẩy lên',
+      (tester) async {
+    final navKey = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(_host(navKey: navKey));
+    await tester.pump();
+
+    // Đẩy một màn lên, đúng như mở chi tiết tin tuyển dụng.
+    navKey.currentState!.push(MaterialPageRoute<void>(
+      builder: (_) => const Scaffold(body: Center(child: Text('chi tiết'))),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('chi tiết'), findsOneWidget);
+
+    NotificationsStore.instance.debugEmit(const NotificationItem(
+      id: 'n9',
+      title: 'Xong nhiệm vụ',
+      body: '',
+      isRead: false,
+    ));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    // Đây là điều đáng kiểm: trước khi sửa, host nằm TRONG route đầu tiên nên
+    // màn đẩy lên che mất banner và dòng này sẽ trượt.
+    expect(find.text('Xong nhiệm vụ'), findsOneWidget);
+
     await tester.pump(const Duration(seconds: 6));
     await tester.pump(const Duration(milliseconds: 300));
   });

@@ -12,6 +12,7 @@ import 'me_store.dart';
 import 'notification_bell.dart';
 import 'notifications_store.dart';
 import 'portfolio_page.dart';
+import 'quest_board.dart';
 import 'saved_list_page.dart';
 
 /// Tab Hồ sơ.
@@ -163,6 +164,16 @@ class _ProfilePageState extends State<ProfilePage> {
             // Truyền kho vào làm tham số để chỗ phụ thuộc lộ ra ngay trong
             // chữ ký, thay vì nấp trong thân build().
             _Stats(me: _me, gamification: GamificationStore.instance),
+
+            // CÙNG widget với trang chủ, không phải bản chép. Một danh sách
+            // nằm ở hai màn thì ít nhất phải có một nguồn duy nhất trong mã —
+            // hai bản chép tay là hai chỗ để lệch nhau khi sửa.
+            if (GamificationStore.instance.daily.isNotEmpty) ...[
+              const SizedBox(height: Np.s6),
+              const SectionLabel('Nhiệm vụ'),
+              const SizedBox(height: Np.s3),
+              QuestBoard(store: GamificationStore.instance),
+            ],
 
             const SizedBox(height: Np.s6),
             _PortfolioCard(me: _me, onTap: () => _push(const PortfolioPage())),
