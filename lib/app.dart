@@ -51,7 +51,10 @@ class _NextPleaseAppState extends State<NextPleaseApp>
           // Nạp danh sách đã lưu ngay khi có phiên, để tim hiện đúng ở lần
           // cuộn đầu tiên chứ không phải sau khi người dùng bấm thử.
           SavedStore.instance.hydrate();
-          GamificationStore.instance.hydrate();
+          // ping thay cho hydrate: nó vừa đánh dấu hoạt động hôm nay (đẩy
+          // chuỗi ngày, hoàn thành nhiệm vụ "Ghé thăm mỗi ngày") vừa TRẢ VỀ
+          // đúng trạng thái mà hydrate sẽ lấy. Gọi cả hai là gọi thừa.
+          GamificationStore.instance.ping(force: true);
           // Hai kho này quyết định nút Ứng tuyển hiện ra thế nào (xem
           // eligibility.dart). Không nạp ở đây thì thẻ và màn chi tiết mời
           // người dùng nộp một cơ hội mà máy chủ sẽ từ chối.
@@ -96,6 +99,10 @@ class _NextPleaseAppState extends State<NextPleaseApp>
     if (state == AppLifecycleState.resumed) {
       NotificationsStore.instance.hydrate();
       NotificationsStore.instance.startPolling();
+      // Người dùng mở app qua nửa đêm thì ngày đã đổi mà app vẫn đang chạy —
+      // không ping ở đây thì chuỗi ngày hôm đó mất trắng. ping() tự bỏ qua
+      // nếu đã ghi nhận hôm nay rồi.
+      GamificationStore.instance.ping();
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
       NotificationsStore.instance.stopPolling();
@@ -108,7 +115,7 @@ class _NextPleaseAppState extends State<NextPleaseApp>
     // dùng cũ mở app sẽ thấy mọi tin đều chưa lưu.
     if (_auth.signedIn) {
       SavedStore.instance.hydrate();
-      GamificationStore.instance.hydrate();
+      GamificationStore.instance.ping(force: true);
       MeStore.instance.hydrate();
       AppliedStore.instance.hydrate();
       NotificationsStore.instance.hydrate();

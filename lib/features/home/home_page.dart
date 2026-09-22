@@ -10,8 +10,10 @@ import '../jobs/opportunity_labels.dart';
 import '../jobs/saved_store.dart';
 import '../profile/application_item.dart';
 import '../profile/edit_profile_page.dart';
+import '../profile/gamification_store.dart';
 import '../profile/me_store.dart';
 import '../profile/notification_bell.dart';
+import '../profile/quest_board.dart';
 import '../profile/notifications_store.dart';
 
 /// Trang chủ.
@@ -73,6 +75,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _me.addListener(_onMe);
+    GamificationStore.instance.addListener(_onMe);
     NotificationsStore.instance.addListener(_onMe);
     SavedStore.instance.addListener(_onMe);
     _load();
@@ -85,6 +88,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _me.removeListener(_onMe);
+    GamificationStore.instance.removeListener(_onMe);
     NotificationsStore.instance.removeListener(_onMe);
     SavedStore.instance.removeListener(_onMe);
     super.dispose();
@@ -351,6 +355,19 @@ class _HomePageState extends State<HomePage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
                   child: _NudgeBar(nudge: nudge),
+                ),
+              ],
+
+              // Nhiệm vụ đứng TRƯỚC gợi ý cơ hội: nó là việc làm xong được
+              // ngay hôm nay và có thưởng, còn gợi ý là việc cân nhắc lâu hơn.
+              if (!widget.isGuest &&
+                  GamificationStore.instance.daily.isNotEmpty) ...[
+                const SizedBox(height: Np.s8),
+                const _Head(title: 'Nhiệm vụ hôm nay'),
+                const SizedBox(height: Np.s4),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                  child: QuestBoard(store: GamificationStore.instance),
                 ),
               ],
 

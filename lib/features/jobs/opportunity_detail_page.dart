@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import 'opportunities_repository.dart';
+import '../profile/gamification_store.dart';
 import 'applied_store.dart';
 import 'eligibility.dart';
 import 'opportunity.dart';
@@ -40,6 +41,11 @@ class _OpportunityDetailPageState extends State<OpportunityDetailPage> {
   @override
   void initState() {
     super.initState();
+    // Đếm vào nhiệm vụ "Khám phá 3 cơ hội". Chỉ tính cho người đã đăng nhập:
+    // khách không có hồ sơ để ghi nhận, và backend sẽ trả 401.
+    if (!widget.isGuest) {
+      GamificationStore.instance.record(GameEvent.viewOpportunity);
+    }
     _repo.fetchDetail(widget.summary).then((full) {
       if (mounted) setState(() => _item = full);
     });
@@ -136,7 +142,12 @@ class _OpportunityDetailPageState extends State<OpportunityDetailPage> {
 
     setState(() => _applying = true);
     final err = await _repo.apply(_item, note);
-    if (err == null) AppliedStore.instance.markApplied(_item);
+    if (err == null) {
+      AppliedStore.instance.markApplied(_item);
+      // Đếm vào cả nhiệm vụ ngày (DAILY_APPLY) lẫn tuần (WEEKLY_APPLY) —
+      // backend nhận một sự kiện rồi tự cộng cho mọi nhiệm vụ khớp.
+      GamificationStore.instance.record(GameEvent.apply);
+    }
     if (!mounted) return;
     setState(() => _applying = false);
 
