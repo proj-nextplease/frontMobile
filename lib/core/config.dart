@@ -26,6 +26,19 @@ class AppConfig {
 
   static String get apiUrl => '$baseUrl/api/v1';
 
+  /// Địa chỉ trang web, KHÔNG phải địa chỉ API.
+  ///
+  /// Hai thứ khác nhau và không suy ra được từ nhau: lúc dev thì API chạy ở
+  /// localhost còn trang web công khai vẫn là bản đã deploy. Dùng cho link hồ
+  /// sơ công khai (`/p/<slug>`) và hai văn bản pháp lý (/terms, /privacy) —
+  /// những trang app không tự dựng lại mà mở thẳng ra trình duyệt.
+  ///
+  /// Ghi đè: --dart-define=WEB_BASE_URL=https://nextplease.vn
+  static String get webBaseUrl {
+    const override = String.fromEnvironment('WEB_BASE_URL');
+    return override.isNotEmpty ? override : 'https://nextplease.vercel.app';
+  }
+
   /// Backend đang chạy trên máy dev là HTTP thuần. Cả iOS lẫn Android đều CHẶN
   /// HTTP không mã hoá theo mặc định, nên phần khai báo ngoại lệ nằm ở
   /// ios/Runner/Info.plist và android/.../network_security_config.xml.

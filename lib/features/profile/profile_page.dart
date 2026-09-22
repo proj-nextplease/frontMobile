@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api_client.dart';
+import '../../core/config.dart';
 import '../../core/theme.dart';
 import '../discussions/discussion_widgets.dart';
 import '../companies/companies_page.dart';
 import '../companies/companies_store.dart';
 import '../credentials/credentials_page.dart';
+import 'public_profile_page.dart';
 import '../wallet/wallet_page.dart';
 import '../wallet/wallet_store.dart';
 import '../credentials/credentials_store.dart';
@@ -265,6 +267,20 @@ class _ProfilePageState extends State<ProfilePage> {
               value: '${CompaniesStore.instance.followed.length}',
               hint: 'Theo dõi doanh nghiệp và CLB để thấy tin mới của họ',
               onTap: () => _push(const CompaniesPage(followedOnly: true)),
+            ),
+
+            const SizedBox(height: Np.s3),
+            _WideTile(
+              icon: NpIcon.send,
+              label: 'Hồ sơ công khai',
+              value: '',
+              hint: _me.publicSlug == null
+                  ? 'Link chia sẻ hồ sơ, gửi thay cho CV'
+                  // Bỏ "https://" cho gọn, nhưng lấy từ AppConfig chứ không
+                  // ghi cứng tên miền: đổi môi trường thì dòng này phải đổi
+                  // theo, không thì nó nói một địa chỉ không tồn tại.
+                  : '${AppConfig.webBaseUrl.replaceFirst(RegExp(r'^https?://'), '')}/p/${_me.publicSlug}',
+              onTap: () => _push(const PublicProfilePage()),
             ),
 
             const SizedBox(height: Np.s8),
@@ -688,10 +704,15 @@ class _WideTile extends StatelessWidget {
                             color: c.ink,
                             fontWeight: FontWeight.w600,
                           )),
-                      const SizedBox(width: Np.s2),
-                      Text(value,
-                          style: NpType.meta.copyWith(
-                              fontSize: 13, color: c.muted)),
+                      // Ô "Hồ sơ công khai" không có con số nào để hiện.
+                      // Vẽ Text rỗng kèm khoảng cách thì nhãn bị đẩy lệch so
+                      // với các ô khác.
+                      if (value.isNotEmpty) ...[
+                        const SizedBox(width: Np.s2),
+                        Text(value,
+                            style: NpType.meta.copyWith(
+                                fontSize: 13, color: c.muted)),
+                      ],
                     ],
                   ),
                   const SizedBox(height: 2),

@@ -46,6 +46,9 @@ class MeStore extends ChangeNotifier {
   /// Đường dẫn hồ sơ công khai, null nếu người dùng chưa đặt.
   String? get publicSlug => _str(raw['publicSlug']);
 
+  /// Phiên bản văn bản pháp lý người dùng đã đồng ý, null nếu chưa bao giờ.
+  String? get legalConsentVersion => _str(raw['legalConsentVersion']);
+
   /// Kỹ năng đúng cách viết người dùng đã nhập, để hiển thị.
   List<String> get skillLabels {
     final v = raw['skills'];

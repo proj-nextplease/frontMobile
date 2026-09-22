@@ -11,6 +11,7 @@ import 'features/credentials/credentials_store.dart';
 import 'features/jobs/applied_store.dart';
 import 'features/jobs/saved_store.dart';
 import 'features/profile/gamification_store.dart';
+import 'features/legal/consent_gate.dart';
 import 'features/profile/me_store.dart';
 import 'features/profile/notification_banner.dart';
 import 'features/profile/notifications_store.dart';
@@ -175,7 +176,14 @@ class _NextPleaseAppState extends State<NextPleaseApp>
       builder: (context, child) => NotificationBannerHost(
         navigatorKey: _navKey,
         enabled: _stage == _Stage.home,
-        child: child ?? const SizedBox.shrink(),
+        // Cổng đồng ý nằm TRONG banner host nhưng NGOÀI Navigator: nó phải
+        // phủ lên mọi màn được đẩy lên, còn banner thông báo thì không nên
+        // chạy đè lên một cổng đang chặn.
+        child: ConsentGate(
+          enabled: _stage == _Stage.home && _auth.signedIn,
+          onDecline: _auth.signOut,
+          child: child ?? const SizedBox.shrink(),
+        ),
       ),
       // Hai bộ theme, MaterialApp tự chọn theo cài đặt sáng/tối của máy.
       // themeMode mặc định là ThemeMode.system nên không cần khai báo.
