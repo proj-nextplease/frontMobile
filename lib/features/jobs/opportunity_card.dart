@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
@@ -57,7 +55,7 @@ class OpportunityCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                _Logo(url: item.companyLogo, name: item.companyName),
+                CompanyLogo(url: item.companyLogo, name: item.companyName),
                 const SizedBox(width: Np.s3),
                 Expanded(
                   child: Text(
@@ -152,72 +150,7 @@ class OpportunityCard extends StatelessWidget {
 /// KHÔNG đọc được lược đồ `data:` — nó chỉ làm việc với http/https — nên phải
 /// tự giải mã rồi dựng bằng Image.memory. Bỏ qua chỗ này thì mọi logo đều
 /// thất bại IM LẶNG và rơi về chữ cái đầu.
-class _Logo extends StatelessWidget {
-  const _Logo({required this.url, required this.name});
-  final String? url;
-  final String name;
 
-  @override
-  Widget build(BuildContext context) {
-    final c = Np.of(context);
-    const size = 26.0;
-    final trimmed = name.trim();
-    final initials = trimmed.isEmpty
-        ? 'NP'
-        : trimmed.substring(0, trimmed.length.clamp(1, 2)).toUpperCase();
-
-    Widget fallback() => Container(
-          width: size,
-          height: size,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: c.surfaceHi,
-            borderRadius: BorderRadius.circular(7),
-            border: Border.all(color: c.line),
-          ),
-          child: Text(
-            initials,
-            style: NpType.label.copyWith(
-              fontSize: 9.5,
-              color: c.muted,
-              letterSpacing: 0,
-            ),
-          ),
-        );
-
-    final src = url;
-    if (src == null || src.isEmpty) return fallback();
-
-    final Widget image;
-    if (src.startsWith('data:')) {
-      final comma = src.indexOf(',');
-      final bytes = comma == -1 ? null : _tryDecode(src.substring(comma + 1));
-      if (bytes == null) return fallback();
-      image = Image.memory(bytes,
-          width: size, height: size, fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => fallback());
-    } else {
-      image = Image.network(src,
-          width: size, height: size, fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => fallback());
-    }
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(7),
-      child: image,
-    );
-  }
-}
-
-/// Giải mã base64; chuỗi hỏng thì trả null để nơi gọi dùng phương án dự phòng
-/// thay vì ném lỗi ra giữa lúc dựng giao diện.
-Uint8List? _tryDecode(String b64) {
-  try {
-    return base64Decode(b64);
-  } catch (_) {
-    return null;
-  }
-}
 
 /// Chỗ đặt nhãn chặn, tự vẽ lại khi hồ sơ hoặc danh sách đơn đã nộp thay đổi.
 ///

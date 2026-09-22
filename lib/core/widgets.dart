@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 import 'design.dart';
@@ -176,5 +179,88 @@ class SectionLabel extends StatelessWidget {
             style: NpType.label.copyWith(color: c.muted)),
       ],
     );
+  }
+}
+
+/// Logo của tổ chức.
+///
+/// Trước đây nằm private trong opportunity_card.dart. Tách ra vì trang Đơn đã
+/// nộp cũng cần đúng thứ này, và chép lần hai là chép luôn cả phần xử lý
+/// data URL — thứ dễ quên nhất.
+///
+/// Xử lý được BA dạng: http(s), data URL base64 (bản web lưu ảnh tải lên theo
+/// kiểu đó, mà Image.network KHÔNG tải được và thất bại im lặng), và không có
+/// gì (rơi về chữ cái đầu).
+class CompanyLogo extends StatelessWidget {
+  const CompanyLogo({
+    super.key,
+    required this.url,
+    required this.name,
+    this.size = 26,
+  });
+
+  final String? url;
+  final String name;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final radius = size * 0.27;
+    final trimmed = name.trim();
+    final initials = trimmed.isEmpty
+        ? 'NP'
+        : trimmed.substring(0, trimmed.length.clamp(1, 2)).toUpperCase();
+
+    Widget fallback() => Container(
+          width: size,
+          height: size,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: c.surfaceHi,
+            borderRadius: BorderRadius.circular(radius),
+            border: Border.all(color: c.line),
+          ),
+          child: Text(
+            initials,
+            style: NpType.label.copyWith(
+              fontSize: size * 0.36,
+              color: c.muted,
+              letterSpacing: 0,
+            ),
+          ),
+        );
+
+    final src = url;
+    if (src == null || src.isEmpty) return fallback();
+
+    final Widget image;
+    if (src.startsWith('data:')) {
+      final comma = src.indexOf(',');
+      final bytes = comma == -1 ? null : _tryDecodeBase64(src.substring(comma + 1));
+      if (bytes == null) return fallback();
+      image = Image.memory(bytes,
+          width: size, height: size, fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => fallback());
+    } else {
+      image = Image.network(src,
+          width: size, height: size, fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => fallback());
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: image,
+    );
+  }
+}
+
+/// Giải mã base64; chuỗi hỏng thì trả null để nơi gọi dùng phương án dự phòng
+/// thay vì ném lỗi ra giữa lúc dựng giao diện.
+Uint8List? _tryDecodeBase64(String b64) {
+  try {
+    return base64Decode(b64);
+  } on FormatException {
+    return null;
   }
 }

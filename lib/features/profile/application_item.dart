@@ -22,6 +22,7 @@ class ApplicationItem {
     this.appliedAt,
     this.rejectReason,
     this.coverNote,
+    this.companyLogo,
     this.history = const [],
   });
 
@@ -33,6 +34,7 @@ class ApplicationItem {
   final DateTime? appliedAt;
   final String? rejectReason;
   final String? coverNote;
+  final String? companyLogo;
 
   /// Các mốc trạng thái, cũ trước mới sau.
   final List<StatusStep> history;
@@ -56,6 +58,7 @@ class ApplicationItem {
         appliedAt: _date(m['applied_at']),
         rejectReason: _str(m['reject_reason']),
         coverNote: _str(m['cover_note']),
+        companyLogo: _str(m['company_logo']),
         history: _history(m['statusHistory']),
       );
 
@@ -68,6 +71,7 @@ class ApplicationItem {
         appliedAt: _date(m['appliedAt']),
         rejectReason: _str(m['rejectReason']),
         coverNote: _str(m['cover_note'] ?? m['coverNote']),
+        companyLogo: _str(m['companyLogo']),
         history: _history(m['statusHistory']),
       );
 
@@ -81,6 +85,7 @@ class ApplicationItem {
         appliedAt: appliedAt,
         rejectReason: rejectReason,
         coverNote: coverNote,
+        companyLogo: companyLogo,
         history: [...history, StatusStep(status: next, at: DateTime.now())],
       );
 
