@@ -53,6 +53,9 @@ enum NpIcon {
   company,
   wallet,
   crown,
+  plus,
+  check,
+  close,
 }
 
 class NpIco extends StatelessWidget {
@@ -92,18 +95,21 @@ String _body(NpIcon i, String c) => switch (i) {
       NpIcon.jobs => '<path d="M12 12h.01"/>'
           '<path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>'
           '<path d="M22 13a18.15 18.15 0 0 1-20 0"/>'
-          '<rect width="20" height="14" x="2" y="6" rx="2"/>',
+          // rect gốc của Lucide viết lại thành path: bộ biến hình lấy mẫu
+          // theo đường, nên một icon còn <rect> hay <circle> sẽ bị mất hình
+          // đó mà không báo gì.
+          '<path d="M4 6h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/>',
 
       // message-circle
       NpIcon.chat => '<path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/>',
 
       // user
       NpIcon.person => '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>'
-          '<circle cx="12" cy="7" r="4"/>',
+          '<path d="M8 7a4 4 0 1 0 8 0 4 4 0 1 0-8 0z"/>',
 
       // search
       NpIcon.search => '<path d="m21 21-4.34-4.34"/>'
-          '<circle cx="11" cy="11" r="8"/>',
+          '<path d="M3 11a8 8 0 1 0 16 0 8 8 0 1 0-16 0z"/>',
 
       NpIcon.heart => '<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>',
 
@@ -143,4 +149,27 @@ String _body(NpIcon i, String c) => switch (i) {
 
       NpIcon.crown => '<path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/>'
           '<path d="M5 21h14"/>',
+
+      // plus / check / x — ba icon của các nút đổi trạng thái. plus → check
+      // là cặp biến hình kinh điển (nút theo dõi), nên chúng phải cùng bộ.
+      NpIcon.plus => '<path d="M5 12h14"/><path d="M12 5v14"/>',
+
+      NpIcon.check => '<path d="M20 6 9 17l-5-5"/>',
+
+      NpIcon.close => '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
     };
+
+/// Dữ liệu đường THÔ của một icon — chỉ các chuỗi `d`, không kèm lớp bọc SVG.
+///
+/// Bộ biến hình cần toạ độ để lấy mẫu và nội suy, mà từ một chuỗi SVG hoàn
+/// chỉnh thì phải bóc ngược ra bằng chuỗi ký tự. Giữ một nguồn ở đây và để
+/// cả hai nơi cùng đọc thì không có gì để lệch.
+List<String> npIconPaths(NpIcon i) => _pathRe
+    .allMatches(_body(i, '#000000'))
+    .map((m) => m.group(1)!)
+    .toList();
+
+final _pathRe = RegExp(r'<path[^>]*\sd="([^"]*)"');
+
+/// Icon này vẽ đặc hay chỉ có nét.
+bool npIconIsFilled(NpIcon i) => i == NpIcon.heartFill;

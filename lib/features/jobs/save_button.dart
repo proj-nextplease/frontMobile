@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
 import 'opportunity.dart';
+import '../../core/morph_icon.dart';
 import 'saved_store.dart';
 
 /// Nút lưu tin.
@@ -48,10 +49,21 @@ class SaveButton extends StatelessWidget {
             child: AnimatedScale(
               scale: busy ? 0.85 : 1,
               duration: const Duration(milliseconds: 120),
-              child: NpIco(
-                saved ? NpIcon.heartFill : NpIcon.heart,
-                size: size,
-                color: saved ? c.acidText : c.muted,
+              // Tim rỗng và tim đặc dùng CHUNG một đường, nên phép biến hình
+              // ở đây chạy trên độ đặc chứ không trên toạ độ: màu dâng lên
+              // từ trong ra. Lò xo nảy cho nó đi quá một chút rồi lắc về —
+              // cú "bịch" nhỏ mà một nút tim cần có.
+              child: TweenAnimationBuilder<Color?>(
+                tween: ColorTween(end: saved ? c.acidText : c.muted),
+                duration: const Duration(milliseconds: 220),
+                builder: (_, color, _) => MorphIconSwitch(
+                  from: NpIcon.heart,
+                  to: NpIcon.heartFill,
+                  active: saved,
+                  size: size,
+                  color: color ?? c.muted,
+                  spring: MorphSpring.bouncy,
+                ),
               ),
             ),
           ),

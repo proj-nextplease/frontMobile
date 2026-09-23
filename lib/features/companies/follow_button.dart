@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../core/design.dart';
+import '../../core/morph_icon.dart';
+import '../../core/np_icons.dart';
 import 'companies_store.dart';
 
 /// Nút theo dõi/bỏ theo dõi. Tự nghe kho nên đặt ở đâu cũng đồng bộ.
@@ -72,12 +74,29 @@ class _FollowButtonState extends State<FollowButton> {
           borderRadius: BorderRadius.circular(Np.rPill),
           border: Border.all(color: on ? c.line : c.acid),
         ),
-        child: Text(
-          on ? 'Đang theo dõi' : 'Theo dõi',
-          style: NpType.button.copyWith(
-            fontSize: widget.compact ? 13 : 15,
-            color: on ? c.muted : c.onAcid,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Cộng → tích: cặp biến hình chủ lực. Hai dấu này khác hẳn nhau
+            // về hình, nên ở đây phép biến hình chạy trên TOẠ ĐỘ — nét ngang
+            // của dấu cộng duỗi thành cạnh dài của dấu tích, nét dọc co lại.
+            MorphIconSwitch(
+              from: NpIcon.plus,
+              to: NpIcon.check,
+              active: on,
+              size: widget.compact ? 14 : 16,
+              color: on ? c.muted : c.onAcid,
+              strokeWidth: 2.4,
+            ),
+            SizedBox(width: widget.compact ? Np.s1 + 2 : Np.s2),
+            Text(
+              on ? 'Đang theo dõi' : 'Theo dõi',
+              style: NpType.button.copyWith(
+                fontSize: widget.compact ? 13 : 15,
+                color: on ? c.muted : c.onAcid,
+              ),
+            ),
+          ],
         ),
       ),
     );

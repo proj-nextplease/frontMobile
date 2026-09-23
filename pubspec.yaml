@@ -52,6 +52,12 @@ dependencies:
   # ô "Website"/"Fanpage" chỉ là chữ không bấm được — thà đừng hiện còn hơn.
   url_launcher: ^6.3.2
 
+  # Phân tích chuỗi `d` của SVG thành Path của Flutter, cho bộ biến hình icon
+  # (core/morph_icon.dart). Vốn đã có sẵn trong cây phụ thuộc của flutter_svg,
+  # nhưng dùng nhờ gói của người khác thì một bản nâng cấp của flutter_svg có
+  # thể làm mất nó mà không báo gì — nên khai báo thẳng.
+  path_parsing: ^1.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
