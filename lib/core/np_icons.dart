@@ -1,19 +1,59 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-/// Bộ biểu tượng riêng của nextplease.
+/// Bộ biểu tượng của nextplease, dựng trên hình học của Lucide.
 ///
-/// Vì sao không dùng Icons.* của Material: đó là bộ Google phát sẵn, và nó là
-/// dấu hiệu rõ nhất của một app "chưa ai buồn thiết kế". Mọi app Flutter dựng
-/// nhanh đều dùng đúng bộ đó, nên người dùng nhận ra ngay dù không gọi tên
-/// được.
+/// ─── Vì sao Lucide ──────────────────────────────────────────────────────
+/// Trước đây bộ này vẽ tay, cốt để tránh Icons.* của Material — thứ mà mọi
+/// app Flutter dựng nhanh đều dùng, nên người dùng nhận ra ngay dù không gọi
+/// tên được. Lý do đó vẫn đúng, nhưng kết luận thì không: tự vẽ nghĩa là tự
+/// gánh việc cân từng nét, và bộ vẽ tay cũ có chỗ lệch trọng lượng thấy rõ
+/// khi đặt cạnh nhau.
 ///
-/// Bộ này vẽ tay, thống nhất ba quy tắc:
-///   - nét 1.7px, đầu và khớp BO TRÒN — mềm hơn Material, hợp giọng trẻ
-///   - khung 24×24, phần vẽ nằm gọn trong 3..21 để các icon cân nhau
-///   - hình học đơn giản, không chi tiết vụn: ở cỡ 22px mọi thứ nhỏ hơn 2px
-///     đều bết lại thành vệt mờ
-enum NpIcon { home, jobs, chat, person, search, heart, heartFill, bolt, bell, flame, send, arrow, company, wallet, crown }
+/// Lucide giải đúng bài toán đó: hình học đặt trên lưới 24×24 nhất quán, nét
+/// 2px, đầu và khớp bo tròn, và mỗi icon đã được cân với cả bộ. Nó cũng là
+/// bộ mà morphicons dùng — nghĩa là nếu sau này thêm hiệu ứng biến hình thì
+/// các cặp icon đã sẵn cùng một hệ toạ độ.
+///
+/// Quy tắc giữ nguyên ba điều: khung 24×24, nét 2px bo tròn, hình học đơn
+/// giản. Icon nào Lucide không có thì dựng theo đúng ba quy tắc đó.
+///
+/// ─── Giấy phép ──────────────────────────────────────────────────────────
+/// Dữ liệu đường vẽ lấy từ Lucide, phát hành theo giấy phép ISC:
+///
+///   Copyright (c) 2026 Lucide Icons and Contributors
+///
+///   Permission to use, copy, modify, and/or distribute this software for
+///   any purpose with or without fee is hereby granted, provided that the
+///   above copyright notice and this permission notice appear in all copies.
+///
+///   THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+///   WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+///   WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR
+///   BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES
+///   OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+///   WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+///   ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+///   SOFTWARE.
+///
+/// Bản đầy đủ nằm ở LICENSE-lucide tại gốc dự án.
+enum NpIcon {
+  home,
+  jobs,
+  chat,
+  person,
+  search,
+  heart,
+  heartFill,
+  bolt,
+  bell,
+  flame,
+  send,
+  arrow,
+  company,
+  wallet,
+  crown,
+}
 
 class NpIco extends StatelessWidget {
   const NpIco(this.icon, {super.key, this.size = 22, required this.color});
@@ -24,7 +64,8 @@ class NpIco extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hex = '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
+    final hex =
+        '#${color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}';
     return SvgPicture.string(
       _svg(icon, hex),
       width: size,
@@ -34,89 +75,72 @@ class NpIco extends StatelessWidget {
 }
 
 String _svg(NpIcon i, String c) {
-  const open = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
-      'fill="none" stroke-width="1.7" stroke-linecap="round" '
+  // stroke-width 2 là mặc định của Lucide và là thứ giữ cả bộ cân nhau. Đổi
+  // riêng một icon sang nét khác là cách nhanh nhất làm nó nhảy ra khỏi hàng.
+  final open = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
+      'fill="none" stroke="$c" stroke-width="2" stroke-linecap="round" '
       'stroke-linejoin="round">';
   return '$open${_body(i, c)}</svg>';
 }
 
 String _body(NpIcon i, String c) => switch (i) {
-      // Mái nhà cộng một vòm cửa. Vòm chứ không phải ô vuông: đó là chi tiết
-      // duy nhất tách nó khỏi mọi icon nhà khác.
-      NpIcon.home => '<path stroke="$c" d="M3.6 10.4 12 3.6l8.4 6.8v8.3a1.7 1.7 0 0 1-1.7 1.7H5.3a1.7 1.7 0 0 1-1.7-1.7z"/>'
-          '<path stroke="$c" d="M9.3 20.4v-4.2a2.7 2.7 0 0 1 5.4 0v4.2"/>',
+      // house
+      NpIcon.home => '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/>'
+          '<path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
 
-      // Cặp tài liệu, quai hình thang chứ không phải chữ nhật — nhìn ra là
-      // cặp học sinh hơn là vali công sở.
-      NpIcon.jobs => '<rect stroke="$c" x="3.2" y="7.8" width="17.6" height="12.4" rx="2.6"/>'
-          '<path stroke="$c" d="M8.6 7.8V6.2a2 2 0 0 1 2-2h2.8a2 2 0 0 1 2 2v1.6"/>'
-          '<path stroke="$c" d="M3.2 12.9h17.6"/>',
+      // briefcase-business
+      NpIcon.jobs => '<path d="M12 12h.01"/>'
+          '<path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>'
+          '<path d="M22 13a18.15 18.15 0 0 1-20 0"/>'
+          '<rect width="20" height="14" x="2" y="6" rx="2"/>',
 
-      // Hai bong bóng chồng nhau, cái sau thò ra góc — gợi đối thoại chứ
-      // không phải một lời nhắn đơn.
-      NpIcon.chat => '<path stroke="$c" d="M3.4 8.2a2.6 2.6 0 0 1 2.6-2.6h7.6a2.6 2.6 0 0 1 2.6 2.6v3.6a2.6 2.6 0 0 1-2.6 2.6H8.1L4.6 17v-2.9a2.6 2.6 0 0 1-1.2-2.3z"/>'
-          '<path stroke="$c" d="M17.6 9.6h1a2.6 2.6 0 0 1 2.6 2.6v3.6a2.6 2.6 0 0 1-1.2 2.2V21l-3.4-2.6h-3.9"/>',
+      // message-circle
+      NpIcon.chat => '<path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719"/>',
 
-      NpIcon.person => '<circle stroke="$c" cx="12" cy="8.4" r="3.6"/>'
-          '<path stroke="$c" d="M4.8 20.4a7.2 7.2 0 0 1 14.4 0"/>',
+      // user
+      NpIcon.person => '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>'
+          '<circle cx="12" cy="7" r="4"/>',
 
-      NpIcon.search => '<circle stroke="$c" cx="10.9" cy="10.9" r="6.7"/>'
-          '<path stroke="$c" d="m15.9 15.9 4.5 4.5"/>',
+      // search
+      NpIcon.search => '<path d="m21 21-4.34-4.34"/>'
+          '<circle cx="11" cy="11" r="8"/>',
 
-      NpIcon.heart => '<path stroke="$c" d="M12 20.3S3.7 15 3.7 9.4a4.7 4.7 0 0 1 8.3-3 4.7 4.7 0 0 1 8.3 3c0 5.6-8.3 10.9-8.3 10.9z"/>',
+      NpIcon.heart => '<path d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>',
 
-      NpIcon.heartFill => '<path fill="$c" d="M12 20.3S3.7 15 3.7 9.4a4.7 4.7 0 0 1 8.3-3 4.7 4.7 0 0 1 8.3 3c0 5.6-8.3 10.9-8.3 10.9z"/>',
+      // Lucide không có tim đặc. Dùng ĐÚNG đường của tim rỗng rồi tô thêm —
+      // vẽ một hình riêng thì hai trạng thái của cùng một nút sẽ lệch nhau
+      // vài pixel và mắt bắt được cú giật đó khi bấm lưu tin.
+      NpIcon.heartFill => '<path fill="$c" d="M2 9.5a5.5 5.5 0 0 1 9.591-3.676.56.56 0 0 0 .818 0A5.49 5.49 0 0 1 22 9.5c0 2.29-1.5 4-3 5.5l-5.492 5.313a2 2 0 0 1-3 .019L5 15c-1.5-1.5-3-3.2-3-5.5"/>',
 
-      // Tia sét cho EXP.
-      NpIcon.bolt => '<path stroke="$c" d="M13.4 3.2 5.6 13.4h5.3l-.9 7.4 8-10.2h-5.4z"/>',
+      // zap — điểm uy tín và EXP
+      NpIcon.bolt => '<path d="M15.914 4a1.5 1.5 0 0 0-2.474-1.561l-9 9A1.5 1.5 0 0 0 5.5 14h4.002a.5.5 0 0 1 .471.666L8.086 20a1.5 1.5 0 0 0 2.475 1.56l9-9A1.5 1.5 0 0 0 18.5 10h-3.997a.5.5 0 0 1-.472-.667z"/>',
 
-      // Toà nhà — dùng khi tổ chức không có logo.
+      NpIcon.bell => '<path d="M10.268 21a2 2 0 0 0 3.464 0"/>'
+          '<path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/>',
+
+      // flame — chuỗi ngày liên tiếp, thay cho emoji 🔥
+      NpIcon.flame => '<path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4"/>',
+
+      NpIcon.send => '<path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/>'
+          '<path d="m21.854 2.147-10.94 10.939"/>',
+
+      // arrow-right
+      NpIcon.arrow => '<path d="M5 12h14"/>'
+          '<path d="m12 5 7 7-7 7"/>',
+
+      // building-2 — dùng khi tổ chức không có logo.
       //
       // Vì sao không để chữ cái đầu: "CT" cho "CTY KT" không nói được gì, và
-      // một danh sách toàn ô chữ hai ký tự trông như bảng mã. Một hình đồ hoạ
-      // nói ngay "đây là một tổ chức", kể cả khi chưa đọc tên.
-      //
-      // Hai khối CAO THẤP khác nhau chứ không phải một hộp: hộp đơn ở cỡ 26px
-      // đọc ra là cái thùng. Chênh lệch chiều cao là thứ khiến nó thành dãy
-      // nhà. Và nó phải khác hẳn icon `home` (mái dốc + vòm cửa) vì hai thứ
-      // này có thể đứng gần nhau.
-      NpIcon.company => '<path stroke="$c" d="M5.4 20.4V7.4a1.7 1.7 0 0 1 1.7-1.7h5.1a1.7 1.7 0 0 1 1.7 1.7v13"/>'
-          '<path stroke="$c" d="M13.9 11.6h3.6a1.7 1.7 0 0 1 1.7 1.7v7.1"/>'
-          '<path stroke="$c" d="M3.4 20.4h17.2"/>'
-          '<path stroke="$c" d="M8.3 9.5h2.4"/>'
-          '<path stroke="$c" d="M8.3 13.6h2.4"/>'
-          '<path stroke="$c" d="M16 15.8h1.3"/>',
+      // một danh sách toàn ô chữ hai ký tự trông như bảng mã.
+      NpIcon.company => '<path d="M10 12h4"/>'
+          '<path d="M10 8h4"/>'
+          '<path d="M14 21v-3a2 2 0 0 0-4 0v3"/>'
+          '<path d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"/>'
+          '<path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16"/>',
 
-      // Chuông. Phải là chuông chứ không mượn lại tia sét: tia sét đã mang
-      // nghĩa "điểm uy tín" ở huy hiệu ngay cạnh trên trang chủ, và hai biểu
-      // tượng giống hệt nhau đứng sát nhau với hai nghĩa khác nhau thì không
-      // biểu tượng nào còn nghĩa gì.
-      //
-      // Thân chuông vẽ bằng hai cung nối vai thay vì một hình thang bo góc —
-      // hình thang ở cỡ 21px trông như cái cốc úp ngược.
-      NpIcon.bell => '<path stroke="$c" d="M6.4 16.6V11a5.6 5.6 0 0 1 11.2 0v5.6"/>'
-          '<path stroke="$c" d="M4.9 16.6h14.2"/>'
-          '<path stroke="$c" d="M10.2 19.6a2 2 0 0 0 3.6 0"/>'
-          '<path stroke="$c" d="M12 5.4V3.6"/>',
+      NpIcon.wallet => '<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/>'
+          '<path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
 
-      // Ngọn lửa cho chuỗi ngày — thay cho emoji 🔥, vốn là dấu hiệu rõ nhất
-      // của giao diện dựng vội.
-      NpIcon.flame => '<path stroke="$c" d="M12 3.4s4.6 3.7 4.6 8.2a4.6 4.6 0 0 1-9.2 0c0-1.6.8-2.9 1.6-3.8 0 1.4.8 2.3 1.6 2.3 1.1 0 1.4-1.2 1.4-2.4 0-1.6-.6-3-.6-3z"/>'
-          '<path stroke="$c" d="M12 20.4a2.6 2.6 0 0 1-2.6-2.6c0-1.6 2.6-3.4 2.6-3.4s2.6 1.8 2.6 3.4a2.6 2.6 0 0 1-2.6 2.6z"/>',
-
-      NpIcon.send => '<path stroke="$c" d="M20.6 3.6 10.9 13.3"/>'
-          '<path stroke="$c" d="M20.6 3.6 14.4 20.6l-3.5-7.3-7.3-3.5z"/>',
-
-      // Ví: thân ví cộng một nắp gập và chấm khoá bên phải. Chấm lệch phải là
-      // chi tiết duy nhất tách nó khỏi một hộp bo góc thường.
-      NpIcon.wallet => '<path stroke="$c" d="M3.6 8.6a2.2 2.2 0 0 1 2.2-2.2h10.9a2.2 2.2 0 0 1 2.2 2.2v.9"/>'
-          '<rect stroke="$c" x="3.6" y="8.6" width="16.8" height="11.1" rx="2.4"/>'
-          '<path stroke="$c" d="M20.4 12.6h-3.3a1.8 1.8 0 0 0 0 3.6h3.3"/>',
-
-      // Vương miện cho Premium. Ba đỉnh chứ không phải năm: ở cỡ 22px năm
-      // đỉnh bết thành một đường răng cưa.
-      NpIcon.crown => '<path stroke="$c" d="M3.9 7.4 7.6 11l4.4-5.6L16.4 11l3.7-3.6-1.5 10.1a1.7 1.7 0 0 1-1.7 1.4H7.1a1.7 1.7 0 0 1-1.7-1.4z"/>',
-
-      NpIcon.arrow => '<path stroke="$c" d="M4.5 12h15"/>'
-          '<path stroke="$c" d="m13.4 5.9 6.1 6.1-6.1 6.1"/>',
+      NpIcon.crown => '<path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/>'
+          '<path d="M5 21h14"/>',
     };
