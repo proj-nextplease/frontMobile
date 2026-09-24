@@ -246,6 +246,35 @@ class _CardState extends State<_Card> {
             ),
           ),
 
+          // Đánh giá nằm NGOÀI phần gập.
+          //
+          // Lần đầu tôi đặt nó bên trong, rồi tự viết chú thích "tin vui nên
+          // tìm tới người dùng chứ không nằm chờ được tìm" — trong khi chỉ
+          // thẻ đầu tiên mở sẵn (initiallyOpen: i == 0), nên với mọi thẻ còn
+          // lại nó bị giấu đúng vào chỗ phải đi tìm. Đây là thứ người ta mở
+          // app ra để xem; nó phải thấy được mà không cần bấm gì.
+          if (item.ratingScore != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(Np.s4, 0, Np.s4, Np.s3),
+              child: Row(
+                children: [
+                  StarRow(score: item.ratingScore!),
+                  const SizedBox(width: Np.s2),
+                  Expanded(
+                    child: Text(
+                      item.ratingComment?.isNotEmpty == true
+                          ? '“${item.ratingComment!}”'
+                          : 'Tổ chức đã đánh giá bạn',
+                      style: NpType.meta
+                          .copyWith(fontSize: 12.5, color: c.muted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           AnimatedSize(
             duration: const Duration(milliseconds: 180),
             curve: Curves.easeOut,
@@ -269,30 +298,6 @@ class _CardState extends State<_Card> {
                           )
                         else
                           _Timeline(steps: item.history),
-
-                        // Đánh giá hiện ngay trên thẻ, không bắt mở chi tiết
-                        // mới thấy: đây là tin vui và nó nên tìm tới người
-                        // dùng, không phải nằm chờ được tìm.
-                        if (item.ratingScore != null) ...[
-                          const SizedBox(height: Np.s3),
-                          Row(
-                            children: [
-                              StarRow(score: item.ratingScore!),
-                              const SizedBox(width: Np.s2),
-                              Expanded(
-                                child: Text(
-                                  item.ratingComment?.isNotEmpty == true
-                                      ? '“${item.ratingComment!}”'
-                                      : 'Tổ chức đã đánh giá bạn',
-                                  style: NpType.meta.copyWith(
-                                      fontSize: 12.5, color: c.muted),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
 
                         if (item.status == 'REJECTED' &&
                             item.rejectReason != null &&

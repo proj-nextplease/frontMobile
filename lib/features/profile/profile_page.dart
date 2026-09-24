@@ -7,6 +7,7 @@ import '../discussions/discussion_widgets.dart';
 import '../companies/companies_page.dart';
 import '../companies/companies_store.dart';
 import '../credentials/credentials_page.dart';
+import 'account_settings_page.dart';
 import 'public_profile_page.dart';
 import '../wallet/wallet_page.dart';
 import '../wallet/wallet_store.dart';
@@ -281,6 +282,23 @@ class _ProfilePageState extends State<ProfilePage> {
                   // theo, không thì nó nói một địa chỉ không tồn tại.
                   : '${AppConfig.webBaseUrl.replaceFirst(RegExp(r'^https?://'), '')}/p/${_me.publicSlug}',
               onTap: () => _push(const PublicProfilePage()),
+            ),
+
+            const SizedBox(height: Np.s3),
+            _WideTile(
+              icon: NpIcon.person,
+              label: 'Cài đặt tài khoản',
+              value: '',
+              hint: 'Thông báo, đăng xuất mọi thiết bị, vô hiệu hoá',
+              onTap: () => _push(AccountSettingsPage(
+                onSignedOut: () async {
+                  // Máy chủ đã thu hồi token của chính máy này, nên phải đóng
+                  // màn cài đặt rồi mới đăng xuất — không thì người dùng nhìn
+                  // một màn hình đang gọi API bằng token đã chết.
+                  if (mounted) Navigator.of(context).pop();
+                  await widget.onSignOut();
+                },
+              )),
             ),
 
             const SizedBox(height: Np.s8),
