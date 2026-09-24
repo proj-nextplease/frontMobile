@@ -5,6 +5,7 @@ import '../../core/theme.dart';
 import '../jobs/opportunity_labels.dart';
 import 'application_detail_page.dart';
 import 'application_item.dart';
+import 'rating_view.dart';
 
 /// Danh sách đơn đã nộp.
 ///
@@ -268,6 +269,30 @@ class _CardState extends State<_Card> {
                           )
                         else
                           _Timeline(steps: item.history),
+
+                        // Đánh giá hiện ngay trên thẻ, không bắt mở chi tiết
+                        // mới thấy: đây là tin vui và nó nên tìm tới người
+                        // dùng, không phải nằm chờ được tìm.
+                        if (item.ratingScore != null) ...[
+                          const SizedBox(height: Np.s3),
+                          Row(
+                            children: [
+                              StarRow(score: item.ratingScore!),
+                              const SizedBox(width: Np.s2),
+                              Expanded(
+                                child: Text(
+                                  item.ratingComment?.isNotEmpty == true
+                                      ? '“${item.ratingComment!}”'
+                                      : 'Tổ chức đã đánh giá bạn',
+                                  style: NpType.meta.copyWith(
+                                      fontSize: 12.5, color: c.muted),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
 
                         if (item.status == 'REJECTED' &&
                             item.rejectReason != null &&

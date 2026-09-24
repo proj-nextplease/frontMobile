@@ -6,6 +6,7 @@ import '../jobs/applied_store.dart';
 import '../jobs/opportunity_labels.dart';
 import '../wallet/wallet_store.dart';
 import 'application_item.dart';
+import 'rating_view.dart';
 
 /// Chi tiết một đơn đã nộp.
 ///
@@ -186,6 +187,20 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
               ],
             ),
           ),
+
+          // Đánh giá đặt NGAY dưới trạng thái, trên cả dòng thời gian: đây
+          // là thứ người dùng mở đơn để xem sau khi làm xong việc, không
+          // phải một chi tiết phụ ở cuối trang.
+          if (_item.ratingScore != null) ...[
+            const SizedBox(height: Np.s5),
+            const SectionLabel('Đánh giá của tổ chức'),
+            const SizedBox(height: Np.s3),
+            RatingCard(
+              score: _item.ratingScore!,
+              comment: _item.ratingComment,
+              companyName: _item.companyName,
+            ),
+          ],
 
           if (_item.status == 'REJECTED' &&
               _item.rejectReason != null &&

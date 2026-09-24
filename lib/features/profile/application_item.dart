@@ -23,6 +23,8 @@ class ApplicationItem {
     this.rejectReason,
     this.coverNote,
     this.companyLogo,
+    this.ratingScore,
+    this.ratingComment,
     this.history = const [],
   });
 
@@ -35,6 +37,17 @@ class ApplicationItem {
   final String? rejectReason;
   final String? coverNote;
   final String? companyLogo;
+
+  /// Đánh giá của tổ chức sau khi công việc hoàn thành: 1..5 sao và nhận xét.
+  ///
+  /// Đây là phần thưởng cảm xúc của cả hệ thống proof — thứ mà ứng viên chờ
+  /// sau khi làm xong việc. Dữ liệu đã nằm sẵn trong /me/applications từ lâu
+  /// và web đã hiện; app thì chưa bao giờ đọc tới.
+  ///
+  /// Lại một lần nữa hai endpoint đặt tên khác nhau: rating_score (snake) cho
+  /// tin tuyển dụng, ratingScore (camel) cho quest.
+  final int? ratingScore;
+  final String? ratingComment;
 
   /// Các mốc trạng thái, cũ trước mới sau.
   final List<StatusStep> history;
@@ -59,6 +72,8 @@ class ApplicationItem {
         rejectReason: _str(m['reject_reason']),
         coverNote: _str(m['cover_note']),
         companyLogo: _str(m['company_logo']),
+        ratingScore: _int(m['rating_score']),
+        ratingComment: _str(m['rating_comment']),
         history: _history(m['statusHistory']),
       );
 
@@ -72,6 +87,8 @@ class ApplicationItem {
         rejectReason: _str(m['rejectReason']),
         coverNote: _str(m['cover_note'] ?? m['coverNote']),
         companyLogo: _str(m['companyLogo']),
+        ratingScore: _int(m['ratingScore']),
+        ratingComment: _str(m['ratingComment']),
         history: _history(m['statusHistory']),
       );
 
@@ -86,8 +103,19 @@ class ApplicationItem {
         rejectReason: rejectReason,
         coverNote: coverNote,
         companyLogo: companyLogo,
+        ratingScore: ratingScore,
+        ratingComment: ratingComment,
         history: [...history, StatusStep(status: next, at: DateTime.now())],
       );
+
+  /// Điểm sao. Chấp nhận cả số lẫn chuỗi vì hai endpoint không nhất quán, và
+  /// kẹp về 1..5 để một giá trị lạ không vẽ ra hàng sao dài vô tận.
+  static int? _int(Object? v) {
+    if (v == null) return null;
+    final n = v is num ? v.toInt() : int.tryParse('$v');
+    if (n == null || n <= 0) return null;
+    return n > 5 ? 5 : n;
+  }
 
   static String? _str(Object? v) {
     final s = v?.toString().trim();
