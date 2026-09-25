@@ -4,6 +4,7 @@ import '../../core/design.dart';
 import '../../core/np_icons.dart';
 import '../../core/widgets.dart';
 import 'premium_page.dart';
+import 'topup_sheet.dart';
 import 'wallet_store.dart';
 
 /// Ví NP: số dư, các gói đang bật, và lịch sử giao dịch.
@@ -34,6 +35,20 @@ class _WalletPageState extends State<WalletPage> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _topUp() async {
+    final ok = await TopUpSheet.show(context);
+    if (ok != true || !mounted) return;
+    // Kho đã tự nạp lại sau khi nạp tiền; chỉ cần báo cho người dùng.
+    final c = Np.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor: c.surfaceHi,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Np.rSm)),
+      content: Text('Đã cộng NP (bản demo, không thu tiền thật).',
+          style: NpType.body.copyWith(fontSize: 14, color: c.ink)),
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
@@ -53,7 +68,7 @@ class _WalletPageState extends State<WalletPage> {
           padding: const EdgeInsets.fromLTRB(
               Np.gutter, Np.s2, Np.gutter, Np.navInset),
           children: [
-            _BalanceCard(store: _store),
+            _BalanceCard(store: _store, onTopUp: _topUp),
             const SizedBox(height: Np.s5),
             _PremiumRow(store: _store),
             const SizedBox(height: Np.s6),
@@ -77,8 +92,9 @@ class _WalletPageState extends State<WalletPage> {
 }
 
 class _BalanceCard extends StatelessWidget {
-  const _BalanceCard({required this.store});
+  const _BalanceCard({required this.store, required this.onTopUp});
   final WalletStore store;
+  final VoidCallback onTopUp;
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +134,36 @@ class _BalanceCard extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: Np.s4),
+          GestureDetector(
+            onTap: onTopUp,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: Np.s4, vertical: Np.s2 + 2),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(Np.rPill),
+                border: Border.all(color: c.onBand.withValues(alpha: 0.35)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  NpIco(NpIcon.plus, size: 15, color: c.onBand),
+                  const SizedBox(width: Np.s2),
+                  Text('Nạp NP',
+                      style: NpType.button
+                          .copyWith(fontSize: 14, color: c.onBand)),
+                  const SizedBox(width: Np.s2),
+                  // Nói ngay trên nút, không đợi mở màn nạp mới biết.
+                  Text('· demo',
+                      style: NpType.meta.copyWith(
+                          fontSize: 12,
+                          color: c.onBand.withValues(alpha: 0.65))),
+                ],
+              ),
+            ),
+          ),
+
           // Chỉ hiện khi thực sự có NP bị giữ. Luôn hiện "0 đang tạm giữ" là
           // thêm một dòng vô nghĩa vào thứ quan trọng nhất màn hình.
           if (store.locked > 0) ...[

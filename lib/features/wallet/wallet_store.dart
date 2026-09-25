@@ -25,6 +25,11 @@ class WalletStore extends ChangeNotifier {
   DateTime? matchAlertUntil;
 
   int premiumPriceNp = 0;
+
+  /// Số tiền nạp tối thiểu, lấy từ máy chủ (khoá min_topup_vnd, admin sửa
+  /// được). Ghi cứng 10.000 ở đây thì đổi cấu hình xong app vẫn chặn theo
+  /// mức cũ.
+  int minTopupVnd = 10000;
   List<WalletTx> transactions = const [];
 
   /// Giá từng dịch vụ, lấy từ /premium/config.
@@ -48,6 +53,8 @@ class WalletStore extends ChangeNotifier {
         premiumUntil = _date(w['premiumUntil']);
         matchAlertUntil = _date(w['jobMatchAlertUntil']);
         premiumPriceNp = _int(w['premiumPriceNp']);
+        final minTopup = _int(w['minTopupVnd']);
+        if (minTopup > 0) minTopupVnd = minTopup;
         transactions = (w['recentTransactions'] as List?)
                 ?.whereType<Map<String, dynamic>>()
                 .map(WalletTx.fromJson)
@@ -83,6 +90,25 @@ class WalletStore extends ChangeNotifier {
   Future<String?> subscribeMatchAlert() =>
       _spend('/premium/match-alert/subscribe');
 
+  /// Nạp NP.
+  ///
+  /// ⚠️ Backend hiện là GIẢ LẬP: POST /wallet/topup ghi payment_requests với
+  /// provider 'MOCK', status 'PAID' ngay lập tức rồi cộng thẳng vào ví. Không
+  /// có cổng thanh toán nào, không thu một đồng nào. Mọi màn hình gọi hàm này
+  /// PHẢI nói rõ điều đó ra — một luồng nạp tiền trông như thật mà không thu
+  /// tiền là thứ nguy hiểm nhất có thể dựng trong app.
+  ///
+  /// Trả null khi xong, chuỗi lỗi khi hỏng.
+  Future<String?> topUp(int amountVnd) async {
+    if (amountVnd < minTopupVnd) {
+      return 'Số tiền nạp tối thiểu là ${_money(minTopupVnd)} VND.';
+    }
+    if (amountVnd > 10000000) {
+      return 'Số tiền nạp tối đa là ${_money(10000000)} VND.';
+    }
+    return _spend('/wallet/topup', body: {'amountVnd': amountVnd});
+  }
+
   /// Mua Premium Pass.
   Future<String?> buyPremium() => _spend('/wallet/subscribe');
 
@@ -91,9 +117,9 @@ class WalletStore extends ChangeNotifier {
       _spend('/premium/boost?applicationId=$applicationId'
           '&applicationType=${isQuest ? 'QUEST' : 'JOB'}');
 
-  Future<String?> _spend(String path) async {
+  Future<String?> _spend(String path, {Object? body}) async {
     try {
-      await _api.post(path);
+      await _api.post(path, body: body);
       // Nạp lại ngay: số dư vừa đổi, và nếu không nạp thì màn ví hiện số cũ
       // đúng lúc người dùng đang nhìn xem tiền đã trừ chưa.
       await hydrate();
@@ -113,6 +139,20 @@ class WalletStore extends ChangeNotifier {
   }
 
   static int _int(Object? v) => (v is num) ? v.toInt() : 0;
+
+  /// 50000 → "50.000". Dấu chấm phân nhóm, đúng quy ước tiếng Việt và khớp
+  /// với cách các giá khác trong app đang hiện.
+  static String _money(int v) {
+    final s = v.toString();
+    final b = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) b.write('.');
+      b.write(s[i]);
+    }
+    return b.toString();
+  }
+
+  static String money(int v) => _money(v);
   static DateTime? _date(Object? v) =>
       v == null ? null : DateTime.tryParse('$v')?.toLocal();
 }
