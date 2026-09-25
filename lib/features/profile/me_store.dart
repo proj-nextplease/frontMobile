@@ -85,6 +85,10 @@ class MeStore extends ChangeNotifier {
   /// Tên hiển thị đầy đủ. Kỹ năng, kinh nghiệm… đều đã có getter riêng.
   bool loaded = false;
 
+  /// Lỗi của lần nạp gần nhất. Khác `loaded == false` ở chỗ: chưa nạp là chưa
+  /// biết gì, còn có lỗi là đã hỏi và hỏng.
+  String? error;
+
   /// Các việc còn thiếu trong hồ sơ, theo thứ tự ảnh hưởng đến kết quả khớp.
   /// Kỹ năng đứng đầu vì thiếu nó thì phép khớp không chạy được chút nào.
   List<String> get missing => [
@@ -127,15 +131,21 @@ class MeStore extends ChangeNotifier {
               ?.whereType<Map<String, dynamic>>()
               .toList() ??
           const [];
+      error = null;
       loaded = true;
       notifyListeners();
-    } on ApiException {
-      // Khách hoặc hồ sơ chưa khởi tạo: trang chủ vẫn chạy, chỉ là không khớp
-      // theo kỹ năng được. Không phải sự cố cần báo.
+    } on ApiException catch (e) {
+      // Khách chưa đăng nhập thì im lặng là đúng. Nhưng với người ĐÃ đăng
+      // nhập mà mạng hỏng, im lặng có hậu quả nặng: tab Hồ sơ hiện uy tín 0,
+      // cấp 0, kỹ năng 0%, ví 0, đơn 0 — app khẳng định người dùng không có
+      // gì, trong khi thật ra họ có đủ. Ghi lại lỗi để màn hình nói đúng.
+      error = e.message;
+      notifyListeners();
     }
   }
 
   void clear() {
+    error = null;
     name = headline = school = avatarUrl = bio = location = null;
     raw = const {};
     reputationScore = 0;

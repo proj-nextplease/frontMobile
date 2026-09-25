@@ -17,6 +17,13 @@ class CredentialsStore extends ChangeNotifier {
   int get pendingCount =>
       items.where((e) => e.status == 'PENDING').length;
 
+  /// Lỗi của lần nạp gần nhất, null nếu không có.
+  ///
+  /// Trước đây lỗi bị nuốt và `loaded` giữ nguyên false, nên màn hình kẹt ở
+  /// "Đang tải…" VĨNH VIỄN — không báo lỗi, không có đường thử lại. Người
+  /// dùng chỉ biết ngồi nhìn.
+  String? error;
+
   Future<void> hydrate() async {
     try {
       final d = await _api.get('/credentials');
@@ -25,10 +32,13 @@ class CredentialsStore extends ChangeNotifier {
           .whereType<Map<String, dynamic>>()
           .map(Credential.fromJson)
           .toList();
+      error = null;
       loaded = true;
       notifyListeners();
-    } on ApiException {
-      // Khách hoặc endpoint hỏng: danh sách rỗng đã tự nói lên vấn đề.
+    } on ApiException catch (e) {
+      error = e.message;
+      loaded = true;
+      notifyListeners();
     }
   }
 

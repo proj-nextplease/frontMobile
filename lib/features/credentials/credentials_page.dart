@@ -80,20 +80,41 @@ class _CredentialsPageState extends State<CredentialsPage> {
                   NpIco(NpIcon.bolt, size: 26, color: c.faint),
                   const SizedBox(height: Np.s4),
                   Text(
-                    _store.loaded
-                        ? 'Chưa có minh chứng nào'
-                        : 'Đang tải…',
+                    _store.error != null
+                        ? 'Không tải được minh chứng'
+                        : _store.loaded
+                            ? 'Chưa có minh chứng nào'
+                            : 'Đang tải…',
                     style: NpType.title.copyWith(fontSize: 17, color: c.ink),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: Np.s2),
+                  // "Chưa có gì" và "tải hỏng" là hai chuyện khác nhau và phải
+                  // nói khác nhau — nếu không, mạng chập một cái là app khẳng
+                  // định người dùng chưa từng nộp minh chứng nào.
                   Text(
-                    'Nộp một hoạt động bạn đã làm kèm bằng chứng. Được duyệt '
-                    'thì nó cộng EXP, điểm uy tín và gắn dấu đã xác thực trên '
-                    'hồ sơ của bạn.',
+                    _store.error ??
+                        'Nộp một hoạt động bạn đã làm kèm bằng chứng. Được '
+                            'duyệt thì nó cộng EXP, điểm uy tín và gắn dấu đã '
+                            'xác thực trên hồ sơ của bạn.',
                     style: NpType.meta.copyWith(color: c.muted, height: 1.45),
                     textAlign: TextAlign.center,
                   ),
+                  if (_store.error != null) ...[
+                    const SizedBox(height: Np.s4),
+                    Center(
+                      child: GestureDetector(
+                        onTap: _store.hydrate,
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: const EdgeInsets.all(Np.s2),
+                          child: Text('Thử lại',
+                              style: NpType.button
+                                  .copyWith(fontSize: 15, color: c.acidText)),
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: Np.s6),
                   Center(
                     child: AcidButton(

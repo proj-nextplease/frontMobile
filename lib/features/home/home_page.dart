@@ -66,6 +66,10 @@ class _HomePageState extends State<HomePage> {
   final _me = MeStore.instance;
 
   List<Opportunity> _items = const [];
+
+  /// Lỗi của lần nạp gần nhất. Giữ riêng để phân biệt "chưa có cơ hội nào"
+  /// với "không tải được".
+  String? _loadError;
   List<Map<String, dynamic>> _posts = const [];
   List<Map<String, dynamic>> _topics = const [];
   List<Map<String, dynamic>> _apps = const [];
@@ -106,9 +110,18 @@ class _HomePageState extends State<HomePage> {
   Future<void> _load() async {
     try {
       final data = await _repo.fetchAll();
-      if (mounted) setState(() => _items = data);
-    } on ApiException {
-      // Danh sách rỗng đã tự nói lên vấn đề.
+      if (mounted) {
+        setState(() {
+          _items = data;
+          _loadError = null;
+        });
+      }
+    } on ApiException catch (e) {
+      // Chú thích cũ ở đây ghi "danh sách rỗng đã tự nói lên vấn đề" — đó là
+      // một giả định SAI. Danh sách rỗng nói "không có cơ hội nào đang mở",
+      // và đó là điều app khẳng định với người dùng khi thật ra chỉ là mạng
+      // hỏng. Cùng loại lỗi đã sửa hai lần bên web.
+      if (mounted) setState(() => _loadError = e.message);
     }
 
     final posts = await _get('/discussions/posts');
@@ -380,7 +393,11 @@ class _HomePageState extends State<HomePage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
                 child: top == null
-                    ? _EmptyToday(loading: _loading)
+                    ? _EmptyToday(
+                        loading: _loading,
+                        error: _loadError,
+                        onRetry: _load,
+                      )
                     : _TodayCard(
                         item: top,
                         reason: _reason(top),
@@ -841,8 +858,14 @@ class _PostRow extends StatelessWidget {
 /// nói hai câu khác nhau, vì gộp lại thì lúc mạng chậm người dùng tưởng app
 /// trống không.
 class _EmptyToday extends StatelessWidget {
-  const _EmptyToday({required this.loading});
+  const _EmptyToday({
+    required this.loading,
+    this.error,
+    this.onRetry,
+  });
   final bool loading;
+  final String? error;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -854,13 +877,37 @@ class _EmptyToday extends StatelessWidget {
       decoration: Np.card(c, radius: Np.rLg),
       child: Column(
         children: [
-          NpIco(loading ? NpIcon.bolt : NpIcon.search, size: 24, color: c.faint),
+          NpIco(
+              error != null
+                  ? NpIcon.close
+                  : loading
+                      ? NpIcon.bolt
+                      : NpIcon.search,
+              size: 24,
+              color: error != null ? c.danger : c.faint),
           const SizedBox(height: Np.s3),
           Text(
-            loading ? 'Đang tìm việc hợp với bạn…' : 'Chưa có cơ hội nào đang mở',
+            error != null
+                ? 'Không tải được cơ hội'
+                : loading
+                    ? 'Đang tìm việc hợp với bạn…'
+                    : 'Chưa có cơ hội nào đang mở',
             style: NpType.meta.copyWith(color: c.muted),
             textAlign: TextAlign.center,
           ),
+          if (error != null && onRetry != null) ...[
+            const SizedBox(height: Np.s3),
+            GestureDetector(
+              onTap: onRetry,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(Np.s2),
+                child: Text('Thử lại',
+                    style: NpType.button
+                        .copyWith(fontSize: 15, color: c.acidText)),
+              ),
+            ),
+          ],
         ],
       ),
     );

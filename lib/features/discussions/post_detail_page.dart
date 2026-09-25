@@ -142,9 +142,20 @@ class _PostDetailPageState extends State<PostDetailPage> {
         setState(() => _post = _post.copyWith(poll: poll));
         widget.onChanged?.call(_post);
       }
-    } on ApiException {
-      // Bỏ phiếu hỏng thì giữ nguyên trạng thái cũ; không có gì để hoàn tác vì
-      // giao diện chưa đổi trước.
+    } on ApiException catch (e) {
+      // Giữ nguyên trạng thái cũ là đúng, nhưng IM LẶNG thì không: người dùng
+      // vừa bấm một lựa chọn và không có gì xảy ra, không lời giải thích nào.
+      // Với họ đó là một cái nút hỏng.
+      if (!mounted) return;
+      final c = Np.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: c.danger,
+        behavior: SnackBarBehavior.floating,
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(Np.rSm)),
+        content: Text(e.message,
+            style: NpType.body.copyWith(fontSize: 14, color: Colors.white)),
+      ));
     }
   }
 

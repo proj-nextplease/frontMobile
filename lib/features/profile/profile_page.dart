@@ -180,7 +180,16 @@ class _ProfilePageState extends State<ProfilePage> {
             //
             // Truyền kho vào làm tham số để chỗ phụ thuộc lộ ra ngay trong
             // chữ ký, thay vì nấp trong thân build().
-            _Stats(me: _me, gamification: GamificationStore.instance),
+            // Hồ sơ nạp hỏng thì KHÔNG hiện dải số — bốn số 0 đứng cạnh
+            // nhau đọc ra là "bạn chưa có gì", một lời khẳng định sai về
+            // chính người đang nhìn. Hiện lý do và đường thử lại thay vào đó.
+            if (!widget.isGuest && _me.error != null && !_me.loaded)
+              _ProfileLoadError(
+                message: _me.error!,
+                onRetry: () => _me.hydrate(),
+              )
+            else
+              _Stats(me: _me, gamification: GamificationStore.instance),
 
             // CÙNG widget với trang chủ, không phải bản chép. Một danh sách
             // nằm ở hai màn thì ít nhất phải có một nguồn duy nhất trong mã —
@@ -846,6 +855,56 @@ class _SignOutRow extends StatelessWidget {
           child: Text('Đăng xuất',
               style: NpType.button.copyWith(fontSize: 15, color: c.danger)),
         ),
+      ),
+    );
+  }
+}
+
+/// Hồ sơ không nạp được.
+///
+/// Trước đây trường hợp này im lặng, và tab Hồ sơ hiện uy tín 0, cấp 0, kỹ
+/// năng 0%, ví 0 — mọi con số đều là số 0 tự tin. Người dùng có RS 10, cấp 3,
+/// 1000 NP mở app lên thấy mình trắng tay.
+class _ProfileLoadError extends StatelessWidget {
+  const _ProfileLoadError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(Np.s5),
+      decoration: BoxDecoration(
+        color: c.danger.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(Np.rLg),
+        border: Border.all(color: c.danger.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Không tải được hồ sơ',
+              style: NpType.title.copyWith(color: c.ink)),
+          const SizedBox(height: Np.s1),
+          Text(
+            '$message\n\nCác con số bên dưới có thể chưa đúng cho tới khi '
+            'tải lại được.',
+            style: NpType.meta.copyWith(color: c.muted, height: 1.45),
+          ),
+          const SizedBox(height: Np.s3),
+          GestureDetector(
+            onTap: onRetry,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: Np.s1),
+              child: Text('Thử lại',
+                  style:
+                      NpType.button.copyWith(fontSize: 15, color: c.acidText)),
+            ),
+          ),
+        ],
       ),
     );
   }
