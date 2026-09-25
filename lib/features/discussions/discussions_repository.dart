@@ -43,9 +43,10 @@ class DiscussionsRepository {
     return (m['hasLiked'] == true, (m['likesCount'] as num?)?.toInt() ?? 0);
   }
 
-  Future<DiscussionComment> addComment(String postId, String content) async {
+  Future<DiscussionComment> addComment(String postId, String content,
+      {bool anonymous = false}) async {
     final d = await _api.post('/discussions/posts/$postId/comments',
-        body: {'content': content});
+        body: {'content': content, 'isAnonymous': anonymous});
     return DiscussionComment.fromJson(
         d is Map<String, dynamic> ? d : const <String, dynamic>{});
   }
@@ -54,10 +55,12 @@ class DiscussionsRepository {
     required String topicSlug,
     required String content,
     List<String>? pollOptions,
+    bool anonymous = false,
   }) =>
       _api.post('/discussions/posts', body: {
         'topic': topicSlug,
         'content': content,
+        'isAnonymous': anonymous,
         // Bỏ hẳn khoá khi không có lựa chọn nào, thay vì gửi mảng rỗng:
         // normalizePollOptions phía backend coi mảng 1 phần tử là lỗi, và một
         // mảng rỗng đi qua đó thì không có gì bảo đảm vẫn im lặng.

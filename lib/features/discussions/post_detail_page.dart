@@ -38,6 +38,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   List<DiscussionComment> _comments = const [];
   bool _loading = true;
   bool _sending = false;
+  bool _anonymous = false;
 
   @override
   void initState() {
@@ -102,7 +103,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
     setState(() => _sending = true);
     try {
-      final added = await _repo.addComment(_post.id, text);
+      final added =
+          await _repo.addComment(_post.id, text, anonymous: _anonymous);
       if (!mounted) return;
       _input.clear();
       setState(() {
@@ -252,6 +254,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
             isGuest: widget.isGuest,
             onSend: _send,
             onSignIn: widget.onSignIn,
+            anonymous: _anonymous,
+            onToggleAnonymous: () =>
+                setState(() => _anonymous = !_anonymous),
           ),
         ],
       ),
@@ -315,6 +320,8 @@ class _Composer extends StatelessWidget {
     required this.isGuest,
     required this.onSend,
     required this.onSignIn,
+    required this.anonymous,
+    required this.onToggleAnonymous,
   });
 
   final TextEditingController controller;
@@ -322,6 +329,8 @@ class _Composer extends StatelessWidget {
   final bool isGuest;
   final VoidCallback onSend;
   final VoidCallback onSignIn;
+  final bool anonymous;
+  final VoidCallback onToggleAnonymous;
 
   @override
   Widget build(BuildContext context) {
@@ -354,7 +363,39 @@ class _Composer extends StatelessWidget {
         color: c.bg,
         border: Border(top: BorderSide(color: c.line)),
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Công tắc ẩn danh đặt NGAY TRÊN ô nhập, không giấu sau menu: người
+          // ta quyết định có ẩn danh hay không TRƯỚC khi gõ, không phải sau.
+          GestureDetector(
+            onTap: onToggleAnonymous,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: Np.s2, left: Np.s1),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  NpIco(anonymous ? NpIcon.check : NpIcon.person,
+                      size: 14, color: anonymous ? c.acidText : c.faint),
+                  const SizedBox(width: Np.s1 + 2),
+                  Text(
+                    anonymous
+                        ? 'Đang bình luận ẩn danh'
+                        : 'Bình luận ẩn danh',
+                    style: NpType.meta.copyWith(
+                      fontSize: 12,
+                      color: anonymous ? c.acidText : c.faint,
+                      fontWeight:
+                          anonymous ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
@@ -409,6 +450,8 @@ class _Composer extends StatelessWidget {
                     )
                   : NpIco(NpIcon.send, size: 18, color: c.onAcid),
             ),
+          ),
+            ],
           ),
         ],
       ),

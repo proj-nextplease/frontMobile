@@ -43,6 +43,7 @@ class DiscussionPost {
     required this.id,
     required this.content,
     required this.authorName,
+    this.isAnonymous = false,
     required this.authorRole,
     required this.topicName,
     required this.topicSlug,
@@ -63,6 +64,10 @@ class DiscussionPost {
   final String content;
 
   final String authorName;
+
+  /// Bài đăng ẩn danh. Với người khác backend đã trả về tên 'Ẩn danh'; cờ này
+  /// để CHÍNH tác giả nhận ra bài nào mình đã đăng ẩn danh.
+  final bool isAnonymous;
   final String authorRole;
   final String? authorAvatarUrl;
   final String topicName;
@@ -90,6 +95,7 @@ class DiscussionPost {
         id: '${m['id']}',
         content: '${m['content'] ?? ''}'.trim(),
         authorName: '${m['authorName'] ?? 'Ẩn danh'}',
+        isAnonymous: m['isAnonymous'] == true,
         authorRole: '${m['authorRole'] ?? ''}',
         authorAvatarUrl: avatarUrlOrNull(m['authorAvatarUrl']),
         topicName: '${m['topicName'] ?? ''}',
@@ -121,6 +127,7 @@ class DiscussionPost {
         id: id,
         content: content,
         authorName: authorName,
+        isAnonymous: isAnonymous,
         authorRole: authorRole,
         authorAvatarUrl: authorAvatarUrl,
         topicName: topicName,
@@ -180,6 +187,7 @@ class DiscussionComment {
   const DiscussionComment({
     required this.id,
     required this.author,
+    this.isAnonymous = false,
     required this.role,
     required this.content,
     this.avatarUrl,
@@ -188,6 +196,9 @@ class DiscussionComment {
 
   final String id;
   final String author;
+
+  /// Bình luận ẩn danh — xem ghi chú ở DiscussionPost.isAnonymous.
+  final bool isAnonymous;
   final String role;
   final String content;
 
@@ -202,6 +213,7 @@ class DiscussionComment {
       DiscussionComment(
         id: '${m['id']}',
         author: '${m['author'] ?? 'Ẩn danh'}',
+        isAnonymous: m['isAnonymous'] == true,
         role: '${m['role'] ?? ''}',
         content: '${m['content'] ?? ''}'.trim(),
         avatarUrl: avatarUrlOrNull(m['authorAvatarUrl']),

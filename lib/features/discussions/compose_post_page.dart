@@ -30,6 +30,7 @@ class _ComposePostPageState extends State<ComposePostPage> {
 
   String? _topicSlug;
   bool _poll = false;
+  bool _anonymous = false;
   bool _sending = false;
 
   @override
@@ -82,6 +83,7 @@ class _ComposePostPageState extends State<ComposePostPage> {
         topicSlug: _topicSlug!,
         content: _content.text.trim(),
         pollOptions: _poll ? _pollValues : null,
+        anonymous: _anonymous,
       );
       if (mounted) Navigator.of(context).pop(true);
     } on ApiException catch (e) {
@@ -218,6 +220,41 @@ class _ComposePostPageState extends State<ComposePostPage> {
               ],
             ),
           ),
+
+          const SizedBox(height: Np.s4),
+          GestureDetector(
+            onTap: () => setState(() => _anonymous = !_anonymous),
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                NpIco(_anonymous ? NpIcon.check : NpIcon.person,
+                    size: 17, color: _anonymous ? c.acidText : c.muted),
+                const SizedBox(width: Np.s2),
+                Text('Đăng ẩn danh',
+                    style: NpType.meta.copyWith(
+                      color: _anonymous ? c.acidText : c.muted,
+                      fontWeight: FontWeight.w600,
+                    )),
+              ],
+            ),
+          ),
+
+          // Nói rõ giới hạn của "ẩn danh" NGAY tại chỗ bật nó.
+          //
+          // Tên bị ẩn với người dùng khác, nhưng hệ thống vẫn lưu ai viết —
+          // nếu không thì không xử lý được quấy rối, và "ẩn danh" sẽ thành lá
+          // chắn cho đúng thứ nó dễ bị lợi dụng nhất. Hứa "hoàn toàn ẩn danh"
+          // rồi vẫn lưu danh tính là nói dối về quyền riêng tư, thứ người dùng
+          // không có cách nào tự kiểm chứng.
+          if (_anonymous) ...[
+            const SizedBox(height: Np.s2),
+            Text(
+              'Tên và ảnh của bạn được ẩn với người dùng khác. Quản trị viên '
+              'vẫn xem được để xử lý vi phạm.',
+              style: NpType.meta.copyWith(
+                  fontSize: 12, color: c.muted, height: 1.4),
+            ),
+          ],
 
           if (_poll) ...[
             const SizedBox(height: Np.s4),
