@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
 import 'edit_profile_page.dart';
+import 'edit_experience_page.dart';
 import 'me_store.dart';
 
 /// Hồ sơ năng lực — CHỈ ĐỌC.
@@ -44,6 +45,33 @@ class _PortfolioPageState extends State<PortfolioPage> {
     );
     // EditProfilePage đã gọi hydrate() sau khi lưu, và kho báo qua listener.
     // Không cần nạp lại ở đây — làm vậy chỉ thêm một lượt gọi mạng thừa.
+  }
+
+  /// Các liên kết đã điền, bỏ qua giá trị rỗng.
+  Map<String, String> get _socialLinks {
+    final raw = _me.raw['socialLinks'];
+    if (raw is! Map) return const {};
+    return {
+      for (final e in raw.entries)
+        if ('${e.value}'.trim().isNotEmpty) '${e.key}': '${e.value}'.trim(),
+    };
+  }
+
+  static String _socialLabel(String key) => switch (key) {
+        'github' => 'GitHub',
+        'linkedin' => 'LinkedIn',
+        'website' => 'Website',
+        'email' => 'Email',
+        _ => key,
+      };
+
+  Future<void> _editExperience() async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const EditExperiencePage()),
+    );
+    // MeStore đã tự nạp lại sau khi lưu và báo qua listener; setState ở đây chỉ
+    // để chắc chắn khi người dùng thoát mà không lưu.
+    if (changed == true && mounted) setState(() {});
   }
 
   @override
@@ -121,7 +149,39 @@ class _PortfolioPageState extends State<PortfolioPage> {
               ),
             const SizedBox(height: Np.s6),
 
-            _Section(label: 'Kinh nghiệm'),
+            // Hiện lại ngay trong app, không chỉ trên trang công khai: sửa
+            // được mà không thấy kết quả thì người dùng không biết mình đã gõ
+            // đúng chưa.
+            if (_socialLinks.isNotEmpty) ...[
+              _Section(label: 'Liên kết'),
+              Wrap(
+                spacing: Np.s2,
+                runSpacing: Np.s2,
+                children: [
+                  for (final e in _socialLinks.entries)
+                    _Chip(label: '${_socialLabel(e.key)}: ${e.value}'),
+                ],
+              ),
+              const SizedBox(height: Np.s6),
+            ],
+
+            Row(
+              children: [
+                Expanded(child: _Section(label: 'Kinh nghiệm')),
+                GestureDetector(
+                  onTap: _editExperience,
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: Np.s1),
+                    child: Text(
+                      _me.experienceList.isEmpty ? 'Thêm' : 'Sửa',
+                      style: NpType.button
+                          .copyWith(fontSize: 14, color: c.acidText),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             if (_me.experienceList.isEmpty)
               _Hint(text: 'Chưa có mục kinh nghiệm nào.')
             else
@@ -141,9 +201,12 @@ class _PortfolioPageState extends State<PortfolioPage> {
               ],
 
             const SizedBox(height: Np.s8),
+            // Câu cũ ghi "kinh nghiệm và chứng chỉ cần tải ảnh minh chứng"
+            // — sai với phần kinh nghiệm: ExperienceDto toàn là chữ, proofLink
+            // chỉ là một URL. App đang đổ lỗi cho một ràng buộc không tồn tại.
             _Hint(
-              text: 'Kinh nghiệm và chứng chỉ vẫn sửa trên website — chúng cần '
-                  'tải ảnh minh chứng và đi qua bước xác thực.',
+              text: 'Chứng chỉ và ảnh bìa vẫn sửa trên website — chứng chỉ cần '
+                  'tải tệp bằng cấp lên.',
             ),
           ],
         ),

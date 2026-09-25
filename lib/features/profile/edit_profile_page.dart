@@ -45,6 +45,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   late bool _openToWork = _me.openToWork;
 
+  /// Bốn khoá này phải TRÙNG với web (CandidatePortfolioPage): github,
+  /// linkedin, website, email. Đặt tên khác đi thì cùng một hồ sơ sẽ hiện
+  /// khác nhau ở hai nơi, và không ai phát hiện cho tới khi mở cả hai.
+  late final Map<String, TextEditingController> _social = {
+    for (final k in const ['github', 'linkedin', 'website', 'email'])
+      k: TextEditingController(text: _socialValue(k)),
+  };
+
+  String _socialValue(String key) {
+    final raw = _me.raw['socialLinks'];
+    if (raw is Map) return '${raw[key] ?? ''}'.trim();
+    return '';
+  }
+
   /// Danh sách gợi ý từ /skills. Rỗng cũng không sao — người dùng vẫn gõ tay
   /// được, và backend tự tạo kỹ năng mới nếu tên chưa có.
   List<String> _catalog = const [];
@@ -68,6 +82,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   void dispose() {
     for (final c in [_name, _headline, _school, _location, _bio, _skillInput]) {
+      c.dispose();
+    }
+    for (final c in _social.values) {
       c.dispose();
     }
     super.dispose();
@@ -117,7 +134,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ..['location'] = _location.text.trim()
       ..['bio'] = _bio.text.trim()
       ..['skills'] = _skills
-      ..['openToWork'] = _openToWork;
+      ..['openToWork'] = _openToWork
+      // Bỏ hẳn khoá rỗng thay vì gửi chuỗi '': hồ sơ công khai sẽ hiện một
+      // biểu tượng liên kết trỏ đi đâu không biết nếu giá trị là chuỗi rỗng.
+      ..['socialLinks'] = {
+        for (final e in _social.entries)
+          if (e.value.text.trim().isNotEmpty) e.key: e.value.text.trim(),
+      };
 
     // Các trường CHỈ ĐỌC của phản hồi. Backend không đọc chúng trong
     // PortfolioRequest, nhưng gửi kèm thì payload phình vô ích — avatarUrl và
@@ -233,6 +256,40 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
 
           const SizedBox(height: Np.s6),
+          const SectionLabel('Liên kết liên hệ'),
+          const SizedBox(height: Np.s2),
+          Text(
+            'Tuỳ chọn. Hiện trên trang hồ sơ công khai để nhà tuyển dụng liên '
+            'hệ hoặc xem sản phẩm của bạn.',
+            style: NpType.meta.copyWith(fontSize: 12.5, color: c.muted),
+          ),
+          const SizedBox(height: Np.s4),
+          _Field(
+            label: 'GitHub',
+            controller: _social['github']!,
+            plainText: true,
+            hint: 'github.com/tendangnhap',
+          ),
+          _Field(
+            label: 'LinkedIn',
+            controller: _social['linkedin']!,
+            plainText: true,
+            hint: 'linkedin.com/in/tendangnhap',
+          ),
+          _Field(
+            label: 'Website',
+            controller: _social['website']!,
+            plainText: true,
+            hint: 'website-cua-ban.com',
+          ),
+          _Field(
+            label: 'Email liên hệ',
+            controller: _social['email']!,
+            plainText: true,
+            hint: 'email@lienhe.com',
+          ),
+
+          const SizedBox(height: Np.s6),
           const SectionLabel('Kỹ năng'),
           const SizedBox(height: Np.s2),
           Text(
@@ -339,6 +396,7 @@ class _Field extends StatelessWidget {
   const _Field({
     required this.label,
     required this.controller,
+    this.plainText = false,
     this.hint,
     this.lines = 1,
     this.note,
@@ -347,6 +405,13 @@ class _Field extends StatelessWidget {
 
   final String label;
   final TextEditingController controller;
+
+  /// Ô nhập URL hoặc email: TẮT tự viết hoa và tự sửa chính tả.
+  ///
+  /// iOS mặc định viết hoa chữ đầu câu, nên gõ "github.com/taiphat" ra
+  /// "GitHub.com/taiphat" — tôi gặp đúng lỗi này khi thử trên máy. Với URL thì
+  /// còn chạy, với email thì hỏng hẳn.
+  final bool plainText;
   final String? hint;
   final int lines;
   final String? note;
@@ -364,6 +429,11 @@ class _Field extends StatelessWidget {
           const SizedBox(height: Np.s2),
           TextField(
             controller: controller,
+            textCapitalization: plainText
+                ? TextCapitalization.none
+                : TextCapitalization.sentences,
+            autocorrect: !plainText,
+            keyboardType: plainText ? TextInputType.url : null,
             minLines: lines,
             maxLines: lines,
             onChanged: onChanged,
