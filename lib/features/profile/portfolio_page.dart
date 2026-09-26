@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/mascot.dart';
 import '../../core/theme.dart';
 import 'edit_profile_page.dart';
 import 'edit_experience_page.dart';
@@ -108,7 +109,11 @@ class _PortfolioPageState extends State<PortfolioPage> {
           padding: const EdgeInsets.fromLTRB(
               Np.gutter, Np.s2, Np.gutter, Np.s10),
           children: [
-            _Completeness(value: _me.completeness, missing: missing),
+            _Completeness(
+              value: _me.completeness,
+              missing: missing,
+              avatar: _me.raw['avatar'],
+            ),
             const SizedBox(height: Np.s6),
 
             if (_me.headline != null) ...[
@@ -218,45 +223,69 @@ class _PortfolioPageState extends State<PortfolioPage> {
 /// Thanh hoàn thiện. Con số đi kèm DANH SÁCH còn thiếu — một phần trăm trần
 /// trụi chỉ làm người ta lo mà không biết phải làm gì tiếp.
 class _Completeness extends StatelessWidget {
-  const _Completeness({required this.value, required this.missing});
+  const _Completeness({
+    required this.value,
+    required this.missing,
+    required this.avatar,
+  });
+
   final double value;
   final List<String> missing;
+  final dynamic avatar;
 
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
     final pct = (value * 100).round();
+    final mascotId = NpMascot.resolveId(avatar);
 
     return Container(
       padding: const EdgeInsets.all(Np.s5),
       decoration: Np.card(c, radius: Np.rLg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text('Hồ sơ hoàn thiện $pct%',
-                    style: NpType.title.copyWith(fontSize: 17, color: c.ink)),
-              ),
-              NpIco(NpIcon.person, size: 18, color: c.muted),
-            ],
-          ),
-          const SizedBox(height: Np.s3),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(Np.rPill),
-            child: LinearProgressIndicator(
-              value: value.clamp(0.0, 1.0),
-              minHeight: 6,
-              backgroundColor: c.line,
-              valueColor: AlwaysStoppedAnimation(c.acid),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text('Hồ sơ hoàn thiện $pct%',
+                        style: NpType.title.copyWith(fontSize: 16.5, color: c.ink)),
+                  ],
+                ),
+                const SizedBox(height: Np.s3),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(Np.rPill),
+                  child: LinearProgressIndicator(
+                    value: value.clamp(0.0, 1.0),
+                    minHeight: 6,
+                    backgroundColor: c.line,
+                    valueColor: AlwaysStoppedAnimation(c.acid),
+                  ),
+                ),
+                if (missing.isNotEmpty) ...[
+                  const SizedBox(height: Np.s3),
+                  Text('Còn thiếu: ${missing.join(', ')}',
+                      style: NpType.meta.copyWith(fontSize: 12, color: c.muted)),
+                ] else ...[
+                  const SizedBox(height: Np.s3),
+                  Text('Tuyệt vời! Hồ sơ đã hoàn tất.',
+                      style: NpType.meta.copyWith(
+                        fontSize: 12,
+                        color: c.acidText,
+                        fontWeight: FontWeight.w600,
+                      )),
+                ],
+              ],
             ),
           ),
-          if (missing.isNotEmpty) ...[
-            const SizedBox(height: Np.s3),
-            Text('Còn thiếu: ${missing.join(', ')}',
-                style: NpType.meta.copyWith(fontSize: 12.5, color: c.muted)),
-          ],
+          const SizedBox(width: Np.s3),
+          InteractiveMascot(
+            mascotId: mascotId,
+            size: 78,
+          ),
         ],
       ),
     );

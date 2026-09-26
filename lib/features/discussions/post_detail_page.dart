@@ -292,6 +292,19 @@ class _CommentRow extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                   ),
+                  if (comment.isAnonymous) ...[
+                    const SizedBox(width: Np.s1 + 2),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                      decoration: BoxDecoration(
+                        color: c.surface,
+                        borderRadius: BorderRadius.circular(Np.rPill),
+                        border: Border.all(color: c.line),
+                      ),
+                      child: Text('Ẩn danh',
+                          style: NpType.meta.copyWith(fontSize: 9.5, color: c.muted, fontWeight: FontWeight.w600)),
+                    ),
+                  ],
                   if (comment.createdAt != null) ...[
                     const SizedBox(width: Np.s2),
                     Text('· ${relativeTime(comment.createdAt)}',

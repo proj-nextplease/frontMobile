@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api_client.dart';
+import '../../core/mascot.dart';
 import '../../core/theme.dart';
 import 'me_store.dart';
 
@@ -31,6 +32,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _api = ApiClient();
   final _me = MeStore.instance;
 
+  late String _mascot = NpMascot.resolveId(_me.raw['avatar']);
   late final _name = TextEditingController(text: _me.name ?? '');
   late final _headline = TextEditingController(text: _me.headline ?? '');
   late final _school = TextEditingController(text: _me.school ?? '');
@@ -135,6 +137,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ..['bio'] = _bio.text.trim()
       ..['skills'] = _skills
       ..['openToWork'] = _openToWork
+      ..['avatar'] = {
+        ...?(_me.raw['avatar'] is Map ? Map<String, dynamic>.from(_me.raw['avatar']) : null),
+        'mascot': _mascot,
+      }
       // Bỏ hẳn khoá rỗng thay vì gửi chuỗi '': hồ sơ công khai sẽ hiện một
       // biểu tượng liên kết trỏ đi đâu không biết nếu giá trị là chuỗi rỗng.
       ..['socialLinks'] = {
@@ -225,6 +231,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
         padding: EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter,
             Np.s10 + MediaQuery.viewInsetsOf(context).bottom),
         children: [
+          MascotPicker(
+            selectedId: _mascot,
+            onSelected: (id) => setState(() => _mascot = id),
+          ),
+          const SizedBox(height: Np.s6),
           _Field(
             label: 'Họ và tên',
             controller: _name,

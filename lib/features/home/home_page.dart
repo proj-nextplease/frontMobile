@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/api_client.dart';
+import '../../core/mascot.dart';
 import '../../core/theme.dart';
 import '../jobs/opportunities_repository.dart';
 import '../jobs/opportunity.dart';
@@ -360,6 +361,8 @@ class _HomePageState extends State<HomePage> {
                   name: _firstName,
                   rs: _me.loaded ? _me.reputationScore : null,
                   showBell: !widget.isGuest,
+                  avatar: _me.raw['avatar'],
+                  onTapMascot: widget.onOpenProfile,
                 ),
               ),
 
@@ -492,18 +495,44 @@ class _Greeting extends StatelessWidget {
     required this.name,
     required this.rs,
     required this.showBell,
+    this.avatar,
+    this.onTapMascot,
   });
   final String greeting;
   final String? name;
   final int? rs;
   final bool showBell;
+  final dynamic avatar;
+  final VoidCallback? onTapMascot;
 
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
+    final mascotId = NpMascot.resolveId(avatar);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        GestureDetector(
+          onTap: onTapMascot,
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            width: 44,
+            height: 44,
+            margin: const EdgeInsets.only(right: Np.s3),
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              color: c.surfaceHi,
+              shape: BoxShape.circle,
+              border: Border.all(color: c.acid, width: 1.5),
+            ),
+            child: MascotSprite(
+              assetPath: NpMascot.directionsAsset(mascotId),
+              frameIndex: 4,
+              size: 40,
+            ),
+          ),
+        ),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -511,11 +540,9 @@ class _Greeting extends StatelessWidget {
               Text('nextplease',
                   style: NpType.label.copyWith(color: c.muted)),
               const SizedBox(height: Np.s1),
-              Text(
-                name == null ? greeting : '$greeting, $name',
+              MarqueeText(
+                text: name == null ? greeting : '$greeting, $name',
                 style: NpType.h1.copyWith(color: c.ink),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

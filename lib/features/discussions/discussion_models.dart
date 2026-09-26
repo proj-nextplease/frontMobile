@@ -91,13 +91,15 @@ class DiscussionPost {
     return i < 0 ? '' : content.substring(i + 1).trim();
   }
 
-  factory DiscussionPost.fromJson(Map<String, dynamic> m) => DiscussionPost(
+  factory DiscussionPost.fromJson(Map<String, dynamic> m) {
+    final anon = m['isAnonymous'] == true;
+    return DiscussionPost(
         id: '${m['id']}',
         content: '${m['content'] ?? ''}'.trim(),
-        authorName: '${m['authorName'] ?? 'Ẩn danh'}',
-        isAnonymous: m['isAnonymous'] == true,
-        authorRole: '${m['authorRole'] ?? ''}',
-        authorAvatarUrl: avatarUrlOrNull(m['authorAvatarUrl']),
+        authorName: anon ? 'Ẩn danh' : '${m['authorName'] ?? 'Ẩn danh'}',
+        isAnonymous: anon,
+        authorRole: anon ? 'Thành viên ẩn danh' : '${m['authorRole'] ?? ''}',
+        authorAvatarUrl: anon ? null : avatarUrlOrNull(m['authorAvatarUrl']),
         topicName: '${m['topicName'] ?? ''}',
         topicSlug: '${m['topicSlug'] ?? ''}',
         likes: (m['likesCount'] as num?)?.toInt() ?? 0,
@@ -116,6 +118,7 @@ class DiscussionPost {
                 .toList() ??
             const [],
       );
+  }
 
   DiscussionPost copyWith({
     int? likes,
@@ -209,16 +212,18 @@ class DiscussionComment {
 
   final DateTime? createdAt;
 
-  factory DiscussionComment.fromJson(Map<String, dynamic> m) =>
-      DiscussionComment(
+  factory DiscussionComment.fromJson(Map<String, dynamic> m) {
+    final anon = m['isAnonymous'] == true;
+    return DiscussionComment(
         id: '${m['id']}',
-        author: '${m['author'] ?? 'Ẩn danh'}',
-        isAnonymous: m['isAnonymous'] == true,
-        role: '${m['role'] ?? ''}',
+        author: anon ? 'Ẩn danh' : '${m['author'] ?? 'Ẩn danh'}',
+        isAnonymous: anon,
+        role: anon ? 'Thành viên ẩn danh' : '${m['role'] ?? ''}',
         content: '${m['content'] ?? ''}'.trim(),
-        avatarUrl: avatarUrlOrNull(m['authorAvatarUrl']),
+        avatarUrl: anon ? null : avatarUrlOrNull(m['authorAvatarUrl']),
         createdAt: m['createdAt'] == null
             ? null
             : DateTime.tryParse('${m['createdAt']}')?.toLocal(),
       );
+  }
 }

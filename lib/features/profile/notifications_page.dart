@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/mascot.dart';
 import '../../core/theme.dart';
 import '../jobs/opportunity_labels.dart';
 import 'notification_router.dart';
@@ -66,17 +67,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
         child: _store.items.isEmpty
             ? ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                    Np.s10, Np.s10 * 2, Np.s10, Np.s10),
                 children: [
-                  Text(
-                    _store.loaded
-                        ? 'Chưa có thông báo nào.\n'
-                            'Nhà tuyển dụng phản hồi đơn của bạn thì tin sẽ '
-                            'hiện ở đây.'
-                        : 'Đang tải…',
-                    style: NpType.meta.copyWith(color: c.muted),
-                    textAlign: TextAlign.center,
+                  const SizedBox(height: Np.s8),
+                  MascotEmptyState(
+                    mascotId: 'frog',
+                    title: _store.loaded ? 'Hộp thư trống' : 'Đang tải thông báo…',
+                    description: _store.loaded
+                        ? 'Khi có tin tức mới về đơn ứng tuyển hoặc nhiệm vụ, bạn sẽ nhận được thông báo tại đây.'
+                        : 'Vui lòng đợi giây lát.',
                   ),
                 ],
               )

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/api_client.dart';
+import '../../core/mascot.dart';
 import '../../core/theme.dart';
 import '../jobs/opportunity.dart';
 import '../jobs/opportunity_card.dart';
@@ -108,15 +109,16 @@ class _SavedListPageState extends State<SavedListPage> {
             : _items.isEmpty
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(
-                        Np.s10, Np.s10 * 2, Np.s10, Np.s10),
                     children: [
-                      Text(
-                        _error ??
-                            'Chưa lưu tin nào.\n'
-                                'Bấm hình trái tim trên một cơ hội để lưu lại.',
-                        style: NpType.meta.copyWith(color: c.muted),
-                        textAlign: TextAlign.center,
+                      const SizedBox(height: Np.s8),
+                      MascotEmptyState(
+                        mascotId: 'frog',
+                        title: _error ?? 'Chưa lưu tin nào',
+                        description: _error != null
+                            ? 'Vui lòng vuốt xuống để thử tải lại.'
+                            : 'Bấm biểu tượng trái tim trên các cơ hội việc làm & nhiệm vụ để lưu lại xem sau.',
+                        actionLabel: 'Khám phá cơ hội ngay',
+                        onAction: () => Navigator.of(context).pop(),
                       ),
                     ],
                   )

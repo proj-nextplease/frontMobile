@@ -257,3 +257,122 @@ Uint8List? _tryDecodeBase64(String b64) {
     return null;
   }
 }
+
+/// Dòng chữ chạy ngang vô tận mượt mà (Infinite Marquee Ticker).
+///
+/// Chạy liên tục từ phải sang trái mượt mà và liền mạch không ngắt quãng,
+/// kèm dải mờ nhẹ ở 2 cạnh mép.
+class MarqueeText extends StatefulWidget {
+  const MarqueeText({
+    super.key,
+    required this.text,
+    required this.style,
+    this.velocity = 30.0, // pixels per second
+    this.separator = '   ✦   ',
+  });
+
+  final String text;
+  final TextStyle style;
+  final double velocity;
+  final String separator;
+
+  @override
+  State<MarqueeText> createState() => _MarqueeTextState();
+}
+
+class _MarqueeTextState extends State<MarqueeText>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  double _singleWidth = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this);
+  }
+
+  @override
+  void didUpdateWidget(MarqueeText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      _singleWidth = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _calculateAndStart(double textWidth) {
+    if (textWidth <= 0) return;
+    if (_singleWidth != textWidth) {
+      _singleWidth = textWidth;
+      final durationMs =
+          ((textWidth / widget.velocity) * 1000).toInt().clamp(1000, 60000);
+      _controller.duration = Duration(milliseconds: durationMs);
+      _controller.repeat();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final itemText = '${widget.text}${widget.separator}';
+    final textSpan = TextSpan(text: itemText, style: widget.style);
+    final tp = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+
+    final itemWidth = tp.width;
+    _calculateAndStart(itemWidth);
+
+    return ShaderMask(
+      shaderCallback: (rect) {
+        return const LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Colors.transparent,
+            Colors.white,
+            Colors.white,
+            Colors.transparent,
+          ],
+          stops: [0.0, 0.03, 0.94, 1.0],
+        ).createShader(rect);
+      },
+      blendMode: BlendMode.dstIn,
+      child: ClipRect(
+        child: SizedBox(
+          height: tp.height + 4,
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, child) {
+              final offset = -(_controller.value * itemWidth);
+              return OverflowBox(
+                alignment: Alignment.centerLeft,
+                minWidth: 0,
+                maxWidth: double.infinity,
+                minHeight: 0,
+                maxHeight: double.infinity,
+                child: Transform.translate(
+                  offset: Offset(offset, 0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(itemText, style: widget.style, maxLines: 1),
+                      Text(itemText, style: widget.style, maxLines: 1),
+                      Text(itemText, style: widget.style, maxLines: 1),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}

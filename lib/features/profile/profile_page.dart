@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/api_client.dart';
 import '../../core/config.dart';
+import '../../core/mascot.dart';
 import '../../core/theme.dart';
 import '../discussions/discussion_widgets.dart';
 import '../companies/companies_page.dart';
@@ -341,13 +342,46 @@ class _Identity extends StatelessWidget {
         ? (email.contains('@') ? email.split('@').first : 'Bạn')
         : name;
 
+    final mascotId = NpMascot.resolveId(me.raw['avatar']);
+    final mascotInfo = NpMascot.candidateMascots.firstWhere(
+      (m) => m.id == mascotId,
+      orElse: () => NpMascot.candidateMascots.first,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Avatar(name: display, url: me.avatarUrl, size: 62),
+            GestureDetector(
+              onTap: onEdit,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Avatar(name: display, url: me.avatarUrl, size: 62),
+                  Positioned(
+                    right: -4,
+                    bottom: -4,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: c.surfaceHi,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: c.acid, width: 1.5),
+                      ),
+                      child: MascotSprite(
+                        assetPath: NpMascot.directionsAsset(mascotId),
+                        frameIndex: 4,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(width: Np.s4),
             Expanded(
               child: Column(
@@ -362,16 +396,34 @@ class _Identity extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis),
                       ),
+                      const SizedBox(width: Np.s2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: Np.s2, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: c.surfaceHi,
+                          borderRadius: BorderRadius.circular(Np.rPill),
+                          border: Border.all(color: c.line),
+                        ),
+                        child: Text(
+                          mascotInfo.label,
+                          style: NpType.meta.copyWith(
+                            fontSize: 10.5,
+                            color: c.acidText,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                       if (me.openToWork) ...[
-                        const SizedBox(width: Np.s2),
+                        const SizedBox(width: Np.s1 + 2),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: Np.s2 + 2, vertical: 2),
+                              horizontal: Np.s2, vertical: 1.5),
                           decoration: BoxDecoration(
                             color: c.acid.withValues(alpha: 0.16),
                             borderRadius: BorderRadius.circular(Np.rPill),
                           ),
-                          child: Text('Đang tìm việc',
+                          child: Text('Tìm việc',
                               style: NpType.meta.copyWith(
                                 fontSize: 10.5,
                                 color: c.acidText,
