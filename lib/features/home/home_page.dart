@@ -5,6 +5,7 @@ import '../../core/api_client.dart';
 import '../../core/mascot.dart';
 import '../../core/theme.dart';
 import '../jobs/opportunities_repository.dart';
+import '../wallet/wallet_store.dart';
 import '../jobs/opportunity.dart';
 import '../jobs/opportunity_detail_page.dart';
 import '../jobs/opportunity_labels.dart';
@@ -83,6 +84,9 @@ class _HomePageState extends State<HomePage> {
     GamificationStore.instance.addListener(_onMe);
     NotificationsStore.instance.addListener(_onMe);
     SavedStore.instance.addListener(_onMe);
+    // Không lắng nghe thì huy hiệu Premium chỉ hiện nhờ ăn ké một lần
+    // setState của store khác — lúc có lúc không, tuỳ thứ tự nạp.
+    WalletStore.instance.addListener(_onMe);
     _load();
   }
 
@@ -96,6 +100,7 @@ class _HomePageState extends State<HomePage> {
     GamificationStore.instance.removeListener(_onMe);
     NotificationsStore.instance.removeListener(_onMe);
     SavedStore.instance.removeListener(_onMe);
+    WalletStore.instance.removeListener(_onMe);
     super.dispose();
   }
 
@@ -361,6 +366,7 @@ class _HomePageState extends State<HomePage> {
                   name: _firstName,
                   rs: _me.loaded ? _me.reputationScore : null,
                   showBell: !widget.isGuest,
+                  isPremium: WalletStore.instance.isPremium,
                   avatar: _me.raw['avatar'],
                   onTapMascot: widget.onOpenProfile,
                 ),
@@ -494,6 +500,7 @@ class _Greeting extends StatelessWidget {
     required this.greeting,
     required this.name,
     required this.rs,
+    required this.isPremium,
     required this.showBell,
     this.avatar,
     this.onTapMascot,
@@ -501,6 +508,7 @@ class _Greeting extends StatelessWidget {
   final String greeting;
   final String? name;
   final int? rs;
+  final bool isPremium;
   final bool showBell;
   final dynamic avatar;
   final VoidCallback? onTapMascot;
@@ -547,6 +555,14 @@ class _Greeting extends StatelessWidget {
             ],
           ),
         ),
+        // Dạng gọn, chỉ vương miện: hàng này đã có tên, điểm RS và chuông
+        // thông báo tranh chỗ; thêm chữ "Premium" nữa là tên bị cắt trên máy
+        // hẹp. Đặt TRƯỚC ô RS vì vương miện nói về tài khoản, còn RS là một
+        // chỉ số — gom thứ thuộc danh tính lại gần tên.
+        if (isPremium) ...[
+          const SizedBox(width: Np.s2),
+          const PremiumTag(compact: true),
+        ],
         if (rs != null) ...[
           const SizedBox(width: Np.s3),
           Container(

@@ -405,30 +405,7 @@ class _Identity extends StatelessWidget {
                       // hạn, còn /wallet trả isPremium tính từ premium_until.
                       if (WalletStore.instance.isPremium) ...[
                         const SizedBox(width: Np.s2),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: Np.s2, vertical: 1.5),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFFF7C948), Color(0xFFE0A109)],
-                            ),
-                            borderRadius: BorderRadius.circular(Np.rPill),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const NpIco(NpIcon.crown,
-                                  size: 11, color: Color(0xFF2B1D00)),
-                              const SizedBox(width: 3),
-                              Text('Premium',
-                                  style: NpType.meta.copyWith(
-                                    fontSize: 10.5,
-                                    color: const Color(0xFF2B1D00),
-                                    fontWeight: FontWeight.w800,
-                                  )),
-                            ],
-                          ),
-                        ),
+                        const PremiumTag(),
                       ],
                       const SizedBox(width: Np.s2),
                       Container(

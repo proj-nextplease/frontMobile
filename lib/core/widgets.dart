@@ -111,6 +111,69 @@ class _AcidButtonState extends State<AcidButton> {
 /// Không tô nền cho chip: một dãy chip có nền tạo ra quá nhiều mảng cạnh nhau
 /// và mắt không còn biết đâu là thông tin chính. Viền mờ đủ để gom nhóm mà
 /// không tranh chấp với nội dung.
+
+/// Nhãn Premium — vàng kim, dùng chung ở mọi nơi.
+///
+/// VÌ SAO MỘT WIDGET CHỨ KHÔNG PHẢI MetaChip(accent: true):
+/// MetaChip accent dùng màu nhấn của theme. Nhãn Premium phải giữ MỘT màu cố
+/// định ở mọi ngữ cảnh — thẻ tin, trang chi tiết, hồ sơ, trang chủ — vì nó là
+/// dấu hiệu nhận diện, không phải một nhãn thông tin như "Remote" hay "Quest".
+/// Ăn theo màu theme thì mỗi màn hình một sắc và mất tác dụng nhận diện.
+///
+/// [compact] bỏ chữ, chỉ còn vương miện: dùng ở chỗ chật như header trang chủ,
+/// nơi đã có tên, điểm RS và chuông thông báo tranh chỗ.
+class PremiumTag extends StatelessWidget {
+  const PremiumTag({super.key, this.compact = false});
+
+  final bool compact;
+
+  /// Vàng kim cố định, KHÔNG lấy từ theme. Cùng cặp màu với huy hiệu bên web
+  /// để hai nền tảng nhìn như một sản phẩm.
+  static const _gold = LinearGradient(
+    colors: [Color(0xFFF7C948), Color(0xFFE0A109)],
+  );
+  static const _onGold = Color(0xFF2B1D00);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 6 : Np.s2 + 2,
+        vertical: compact ? 5 : 3,
+      ),
+      decoration: BoxDecoration(
+        gradient: _gold,
+        borderRadius: BorderRadius.circular(Np.rPill),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x33E0A109),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          NpIco(NpIcon.crown, size: compact ? 13 : 11, color: _onGold),
+          if (!compact) ...[
+            const SizedBox(width: 3),
+            Text(
+              'Premium',
+              style: NpType.meta.copyWith(
+                fontSize: 10.5,
+                color: _onGold,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class MetaChip extends StatelessWidget {
   const MetaChip({super.key, required this.label, this.icon, this.accent = false});
 

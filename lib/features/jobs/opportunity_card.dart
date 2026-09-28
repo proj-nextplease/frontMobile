@@ -103,8 +103,7 @@ class OpportunityCard extends StatelessWidget {
                 // Nhãn Premium phải có trên THẺ, không chỉ ở trang chi tiết.
                 // Biết sau khi đã đọc hết mô tả rồi bấm nộp mới bị chặn là
                 // trải nghiệm tệ nhất.
-                if (item.requiresPremium)
-                  const MetaChip(label: 'Premium', accent: true),
+                if (item.requiresPremium) const PremiumTag(),
                 // Tin ngoài KHÔNG có nút lưu: lưu một tin không tồn tại trong
                 // DB của mình thì lần sau mở danh sách đã lưu sẽ hỏng.
                 if (!item.isExternal)

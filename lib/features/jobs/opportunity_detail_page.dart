@@ -190,7 +190,7 @@ class _Header extends StatelessWidget {
             SectionLabel(item.isQuest ? 'Quest' : 'Tin tuyển dụng'),
             if (item.requiresPremium) ...[
               const SizedBox(width: Np.s3),
-              const MetaChip(label: 'Premium', accent: true),
+              const PremiumTag(),
             ],
           ],
         ),
