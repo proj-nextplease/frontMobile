@@ -219,7 +219,10 @@ class _PremiumRow extends StatelessWidget {
                   Text(
                     on
                         ? _until(store.premiumUntil)
-                        : 'Boost đơn, mở Insight, nhận gợi ý sớm',
+                        // Lời cũ sai: Boost và Insight mua LẺ từng lần, ai
+                        // cũng mua được, Premium không mở khoá chúng. Và
+                        // "nhận gợi ý sớm" chưa có dòng code nào thực hiện.
+                        : 'Tin chỉ nhận Premium · huy hiệu trên hồ sơ',
                     style: NpType.meta.copyWith(color: c.muted),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

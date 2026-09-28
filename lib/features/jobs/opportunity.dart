@@ -206,6 +206,9 @@ class Opportunity {
         createdAt: _parseDate(q['createdAt']),
         capacity: (q['capacity'] as num?)?.toInt(),
         minReqRs: (q['minReqRs'] as num?)?.toInt() ?? 0,
+        // Quest cũng có chế độ Premium từ V54. Thiếu dòng này thì Quest
+        // Premium mất nhãn trên app dù tin đang bật.
+        requiresPremium: q['requiresPremium'] == true,
         startsAt: _parseDate(q['startsAt']),
         endsAt: _parseDate(q['endsAt']),
       );

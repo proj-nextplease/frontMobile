@@ -94,9 +94,12 @@ class _PremiumPageState extends State<PremiumPage> {
           _Card(
             icon: NpIcon.crown,
             title: 'Premium Pass',
-            body: 'Mở toàn bộ tính năng trả phí trong thời hạn gói: '
-                'đẩy đơn, xem Insight, và thấy tin mới sớm hơn '
-                '${_hours(p['earlyAccessHours'])}.',
+            // Mô tả cũ sai hai chỗ: Premium KHÔNG mở Boost/Insight/Express —
+            // ba món đó mua lẻ từng lần, ai cũng mua được. Và "thấy tin mới
+            // sớm hơn" không có dòng code nào thực hiện.
+            body: 'Nộp đơn vào những tin chỉ nhận ứng viên Premium, '
+                'và hiện huy hiệu Premium trên hồ sơ để nhà tuyển dụng '
+                'nhận ra bạn.',
             price: _store.premiumPriceNp,
             active: _store.isPremium,
             activeNote: _until(_store.premiumUntil),
@@ -110,8 +113,10 @@ class _PremiumPageState extends State<PremiumPage> {
           _Card(
             icon: NpIcon.bell,
             title: 'Job Match Alert',
-            body: 'Nhận thông báo ngay khi có tin tuyển dụng khớp với kỹ năng '
-                'và điểm RS của bạn, thay vì phải tự vào xem.',
+            body: 'Nhận thông báo khi có tin tuyển dụng hoặc Quest khớp kỹ '
+                'năng trong hồ sơ, kèm gợi ý được xếp hạng và giải thích '
+                'vì sao phù hợp.',
+            comingSoon: true,
             price: p['matchAlertPriceNp'] ?? 0,
             active: _store.hasMatchAlert,
             activeNote: _until(_store.matchAlertUntil),
@@ -163,6 +168,7 @@ class _Card extends StatelessWidget {
     required this.busy,
     required this.balance,
     required this.onBuy,
+    this.comingSoon = false,
   });
 
   final NpIcon icon;
@@ -174,6 +180,10 @@ class _Card extends StatelessWidget {
   final bool busy;
   final int balance;
   final VoidCallback onBuy;
+
+  /// Dịch vụ chưa giao đúng thứ đã quảng cáo nên tạm ngừng bán. Vẫn hiện thẻ
+  /// để giữ lộ trình, nhưng KHÔNG giả vờ là đã có.
+  final bool comingSoon;
 
   @override
   Widget build(BuildContext context) {
@@ -195,6 +205,7 @@ class _Card extends StatelessWidget {
                     style: NpType.title.copyWith(color: c.ink)),
               ),
               if (active) MetaChip(label: 'Đang bật', accent: true),
+              if (comingSoon && !active) const MetaChip(label: 'Sắp ra mắt'),
             ],
           ),
           const SizedBox(height: Np.s2),
@@ -204,6 +215,10 @@ class _Card extends StatelessWidget {
             Text(activeNote,
                 style: NpType.meta.copyWith(
                     color: c.acidText, fontWeight: FontWeight.w600))
+          else if (comingSoon)
+            // Không hiện giá: nêu giá cho thứ chưa bán được là mời gọi hụt.
+            Text('Tính năng đang hoàn thiện, chưa mở bán.',
+                style: NpType.meta.copyWith(color: c.muted))
           else ...[
             AcidButton(
               label: busy ? 'Đang xử lý…' : 'Kích hoạt · $price NP',
