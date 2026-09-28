@@ -11,7 +11,11 @@ import 'opportunity_card.dart';
 import 'opportunity_detail_page.dart';
 import 'seen_store.dart';
 
-enum OrgTab { all, business, club }
+/// `external` = tin tổng hợp từ nguồn ngoài. Phải là một mục RIÊNG: nó không
+/// phải doanh nghiệp đối tác của nextplease cũng không phải CLB. Gộp vào
+/// "Doanh nghiệp" thì con số ở đó thành vô nghĩa — 40 tin Careerjet sẽ được
+/// đếm như 40 đối tác đã qua duyệt.
+enum OrgTab { all, business, club, external }
 
 class JobsPage extends StatefulWidget {
   const JobsPage({super.key, this.isGuest = false, this.onSignIn});
@@ -98,8 +102,10 @@ class _JobsPageState extends State<JobsPage> {
   /// ra rỗng.
   List<Opportunity> get _byOrg => switch (_tab) {
         OrgTab.all => _items,
-        OrgTab.business => _items.where((e) => !e.isClub).toList(),
+        OrgTab.business =>
+          _items.where((e) => !e.isClub && !e.isExternal).toList(),
         OrgTab.club => _items.where((e) => e.isClub).toList(),
+        OrgTab.external => _items.where((e) => e.isExternal).toList(),
       };
 
   List<Opportunity> get _filtered =>
@@ -179,8 +185,9 @@ class _JobsPageState extends State<JobsPage> {
           current: _tab,
           counts: (
             all: _items.length,
-            business: _items.where((e) => !e.isClub).length,
+            business: _items.where((e) => !e.isClub && !e.isExternal).length,
             club: _items.where((e) => e.isClub).length,
+            external: _items.where((e) => e.isExternal).length,
           ),
           onChanged: (t) => setState(() => _tab = t),
         ),
@@ -233,7 +240,7 @@ class _Tabs extends StatelessWidget {
   });
 
   final OrgTab current;
-  final ({int all, int business, int club}) counts;
+  final ({int all, int business, int club, int external}) counts;
   final ValueChanged<OrgTab> onChanged;
 
   @override
@@ -243,6 +250,8 @@ class _Tabs extends StatelessWidget {
       (OrgTab.all, 'Tất cả', counts.all),
       (OrgTab.business, 'Doanh nghiệp', counts.business),
       (OrgTab.club, 'CLB & Đoàn hội', counts.club),
+      if (counts.external > 0)
+        (OrgTab.external, 'Từ thị trường', counts.external),
     ];
 
     return SizedBox(

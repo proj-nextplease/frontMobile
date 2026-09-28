@@ -7,7 +7,10 @@
 /// GET /jobs và GET /quests trả về `Map<String,Object>` thô, nên đặc tả chỉ mô
 /// tả chúng là "object rỗng" — sinh code ra cũng chỉ được `Map<String,dynamic>`.
 /// Các trường dưới đây lấy từ payload THẬT của hai endpoint đó.
-enum OpportunityKind { job, quest }
+/// `external` = tin tổng hợp từ nguồn ngoài (Careerjet). Không có bản ghi
+/// trong DB của nextplease nên không ứng tuyển, không lưu, không cộng Proof —
+/// bấm vào là mở trang gốc của nhà tuyển dụng.
+enum OpportunityKind { job, quest, external }
 
 class Opportunity {
   const Opportunity({
@@ -34,6 +37,8 @@ class Opportunity {
     this.endsAt,
     this.skills = const [],
     this.requiresPremium = false,
+    this.applyUrl,
+    this.externalSalary,
   });
 
   final String id;
@@ -68,6 +73,20 @@ class Opportunity {
   final DateTime? endsAt;      // quest
   final List<String> skills;
   final bool requiresPremium;
+
+  /// Chỉ có với [OpportunityKind.external]: link tới tin gốc.
+  final String? applyUrl;
+
+  /// Lương đã dựng sẵn cho tin ngoài, ví dụ "5 - 6 triệu / tháng".
+  ///
+  /// Không nhét vào [compensation] vì đó là một CON SỐ, mà Careerjet cho một
+  /// KHOẢNG. Lấy số đầu khoảng rồi hiển thị như lương chính xác là nói sai:
+  /// tin "5 - 6 triệu" sẽ hiện thành "5 triệu".
+  final String? externalSalary;
+
+  /// Tin ngoài không tạo được bản ghi ứng tuyển, nên mọi thứ gắn với hồ sơ —
+  /// theo dõi đơn, cộng RS/EXP, Proof — đều không áp dụng.
+  bool get isExternal => kind == OpportunityKind.external;
 
   bool get isQuest => kind == OpportunityKind.quest;
 
@@ -125,6 +144,46 @@ class Opportunity {
         skills: _parseSkills(j['skills']) ?? const [],
         requiresPremium: j['requiresPremium'] == true,
       );
+
+  /// Tin nguồn ngoài, đưa về cùng hình dạng để nằm chung một danh sách với
+  /// tin thật — giống cách quest đã làm. Web cũng trộn chung ở trang /jobs.
+  factory Opportunity.fromExternal(Map<String, dynamic> e) => Opportunity(
+        // Tiền tố 'ext:' để id không đụng id thật. Hai nguồn dùng chung một
+        // danh sách nên trùng id là thẻ này ghi đè thẻ kia khi Flutter dựng
+        // lại cây widget theo key.
+        id: 'ext:${e['id']}',
+        kind: OpportunityKind.external,
+        title: (e['title'] ?? 'Chưa đặt tên') as String,
+        description: (e['excerpt'] ?? '') as String,
+        companyName: (e['companyName'] ?? 'Nhà tuyển dụng') as String,
+        isClub: false,
+        location: e['location'] as String?,
+        createdAt: _parseDate(e['postedAt']),
+        applyUrl: e['applyUrl'] as String?,
+        externalSalary: _externalSalary(e),
+      );
+
+  /// Careerjet trả lương dạng chuỗi tiếng Anh ("₫5000000 - 6000000 per month")
+  /// kèm salaryMin/Max/Type. Dựng lại bằng tiếng Việt từ các số đó; không đủ
+  /// số thì trả null để thẻ nói "Lương không công khai" thay vì bịa.
+  static String? _externalSalary(Map<String, dynamic> e) {
+    const unit = {'Y': 'năm', 'M': 'tháng', 'W': 'tuần', 'D': 'ngày', 'H': 'giờ'};
+    final suffix = unit[e['salaryType']] == null ? '' : ' / ${unit[e['salaryType']]}';
+    String? short(Object? v) {
+      final n = v is num ? v : num.tryParse('$v');
+      if (n == null || n <= 0) return null;
+      if (n >= 1000000) {
+        final t = n / 1000000;
+        return '${t.toStringAsFixed(t.truncateToDouble() == t ? 0 : 1)} triệu';
+      }
+      return '${n.toStringAsFixed(0)} đ';
+    }
+    final lo = short(e['salaryMin']);
+    final hi = short(e['salaryMax']);
+    if (lo != null && hi != null && lo != hi) return '$lo - $hi$suffix';
+    if (lo != null) return '$lo$suffix';
+    return null;
+  }
 
   factory Opportunity.fromQuest(Map<String, dynamic> q) => Opportunity(
         id: '${q['id']}',

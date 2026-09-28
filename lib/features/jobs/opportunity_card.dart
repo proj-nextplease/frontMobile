@@ -1,4 +1,5 @@
 
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
@@ -37,6 +38,31 @@ class OpportunityCard extends StatelessWidget {
   final bool isGuest;
   final VoidCallback? onNeedSignIn;
 
+  /// Mở tin gốc bằng trình duyệt ngoài.
+  ///
+  /// Không dùng WebView trong app: link Careerjet là link chuyển hướng qua
+  /// jobviewtrack.com rồi mới tới trang tuyển dụng thật, và nhiều trang trong
+  /// số đó có bước đăng nhập hoặc tải CV — những thứ WebView nhúng xử lý kém
+  /// và người dùng cũng không tin tưởng để nhập thông tin.
+  Future<void> _openExternal(BuildContext context) async {
+    final raw = item.applyUrl;
+    final uri = raw == null ? null : Uri.tryParse(raw);
+    if (uri == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tin này thiếu đường dẫn gốc.')),
+        );
+      }
+      return;
+    }
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không mở được trang tuyển dụng.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
@@ -46,7 +72,10 @@ class OpportunityCard extends StatelessWidget {
 
 
     return GestureDetector(
-      onTap: onTap,
+      // Xử lý ngay TRONG thẻ chứ không để từng nơi gọi tự lo: thẻ này dùng ở
+      // 4 màn hình (Cơ hội, Tìm kiếm, Đã lưu, Chi tiết công ty). Để mỗi nơi tự
+      // kiểm tra thì sót một chỗ là tin ngoài mở ra trang chi tiết trống.
+      onTap: item.isExternal ? () => _openExternal(context) : onTap,
       child: Container(
         padding: const EdgeInsets.all(Np.s5),
         decoration: Np.card(c),
@@ -65,18 +94,25 @@ class OpportunityCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                _BadgeSlot(item: item, isGuest: isGuest),
+                if (!item.isExternal) _BadgeSlot(item: item, isGuest: isGuest),
                 if (isQuest) const MetaChip(label: 'Quest', accent: true),
-                // Lùi lề để vùng chạm rộng của nút tim không đội thẻ ra.
-                Transform.translate(
-                  offset: const Offset(Np.s3, -Np.s2),
-                  child: SaveButton(
-                    item: item,
-                    isGuest: isGuest,
-                    onNeedSignIn: onNeedSignIn,
-                    size: 20,
+                // Nhãn này là thứ DUY NHẤT báo cho người dùng biết chạm vào sẽ
+                // rời khỏi app. Thiếu nó thì họ bị đẩy sang trình duyệt mà
+                // không hiểu vì sao.
+                if (item.isExternal) const MetaChip(label: 'Trang ngoài'),
+                // Tin ngoài KHÔNG có nút lưu: lưu một tin không tồn tại trong
+                // DB của mình thì lần sau mở danh sách đã lưu sẽ hỏng.
+                if (!item.isExternal)
+                  // Lùi lề để vùng chạm rộng của nút tim không đội thẻ ra.
+                  Transform.translate(
+                    offset: const Offset(Np.s3, -Np.s2),
+                    child: SaveButton(
+                      item: item,
+                      isGuest: isGuest,
+                      onNeedSignIn: onNeedSignIn,
+                      size: 20,
+                    ),
                   ),
-                ),
               ],
             ),
             const SizedBox(height: Np.s4),
@@ -94,10 +130,11 @@ class OpportunityCard extends StatelessWidget {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  salaryLabel(
-                    compensation: item.compensation,
-                    isQuest: isQuest,
-                  ),
+                  item.externalSalary ??
+                      salaryLabel(
+                        compensation: item.compensation,
+                        isQuest: isQuest,
+                      ),
                   style: NpType.title.copyWith(
                     fontSize: hasPay ? 19 : 15,
                     fontWeight: FontWeight.w700,
@@ -123,10 +160,14 @@ class OpportunityCard extends StatelessWidget {
                       ? '${item.location ?? "Không rõ"} · Remote'
                       : (item.location ?? 'Không rõ'),
                 ),
-                MetaChip(
-                  icon: Icons.schedule_rounded,
-                  label: typeLabel(item.typeCode),
-                ),
+                // Careerjet khong tra loai hinh cong viec, nen typeCode null
+                // va typeLabel() cho ra "Khac" — mot chip xuat hien tren MOI
+                // the tin ngoai ma khong noi duoc gi. An di thay vi hien nhieu.
+                if (!item.isExternal)
+                  MetaChip(
+                    icon: Icons.schedule_rounded,
+                    label: typeLabel(item.typeCode),
+                  ),
               ],
             ),
 

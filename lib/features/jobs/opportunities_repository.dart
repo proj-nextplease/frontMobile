@@ -30,10 +30,15 @@ class OpportunitiesRepository {
     final jobs = await Future.wait([
       _tryFetch(() => _api.get('/jobs', query: {'limit': limit})),
       _tryFetch(() => _api.get('/quests')),
+      // Tin nguồn ngoài. Cũng chịu lỗi riêng: backend gọi sang Careerjet nên
+      // chậm hay hỏng là chuyện của bên thứ ba, không được kéo theo danh sách
+      // chính. Không có nó thì app vẫn chạy như trước.
+      _tryFetch(() => _api.get('/jobs/external', query: {'limit': 40})),
     ]);
 
     final jobsRaw = jobs[0];
     final questsRaw = jobs[1];
+    final externalRaw = jobs[2];
 
     if (jobsRaw == null && questsRaw == null) {
       throw ApiException(
@@ -44,6 +49,9 @@ class OpportunitiesRepository {
     _cache = <Opportunity>[
       ...?jobsRaw?.whereType<Map<String, dynamic>>().map(Opportunity.fromJob),
       ...?questsRaw?.whereType<Map<String, dynamic>>().map(Opportunity.fromQuest),
+      // Xếp sau cùng: tin thật của nextplease mới là sản phẩm chính, tin ngoài
+      // chỉ là phần mở rộng.
+      ...?externalRaw?.whereType<Map<String, dynamic>>().map(Opportunity.fromExternal),
     ];
     return _cache!;
   }
