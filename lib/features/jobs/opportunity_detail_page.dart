@@ -190,7 +190,7 @@ class _Header extends StatelessWidget {
             SectionLabel(item.isQuest ? 'Quest' : 'Tin tuyển dụng'),
             if (item.requiresPremium) ...[
               const SizedBox(width: Np.s3),
-              const PremiumTag(),
+              const PremiumTag(prominent: true),
             ],
           ],
         ),
@@ -234,6 +234,7 @@ class _Facts extends StatelessWidget {
     final left = daysLeft(item.deadlineAt ?? item.endsAt);
 
     final facts = <(String, String)>[
+      if (item.requiresPremium) ('Đặc quyền', '👑 Chỉ dành cho Premium Pass'),
       ('Địa điểm', item.isRemote
           ? '${item.location ?? "Không rõ"} · Remote'
           : (item.location ?? 'Không rõ')),

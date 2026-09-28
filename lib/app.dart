@@ -14,6 +14,7 @@ import 'features/profile/gamification_store.dart';
 import 'features/legal/consent_gate.dart';
 import 'features/profile/me_store.dart';
 import 'features/profile/notification_banner.dart';
+import 'features/wallet/wallet_store.dart';
 import 'features/profile/notifications_store.dart';
 import 'features/onboarding/splash_page.dart';
 
@@ -62,6 +63,7 @@ class _NextPleaseAppState extends State<NextPleaseApp>
           // eligibility.dart). Không nạp ở đây thì thẻ và màn chi tiết mời
           // người dùng nộp một cơ hội mà máy chủ sẽ từ chối.
           MeStore.instance.hydrate();
+          WalletStore.instance.hydrate();
           AppliedStore.instance.hydrate();
           NotificationsStore.instance.hydrate();
           NotificationsStore.instance.startPolling();
@@ -75,6 +77,7 @@ class _NextPleaseAppState extends State<NextPleaseApp>
           SavedStore.instance.clear();
           GamificationStore.instance.clear();
           MeStore.instance.clear();
+          WalletStore.instance.clear();
           AppliedStore.instance.clear();
           CredentialsStore.instance.clear();
           NotificationsStore.instance.clear();

@@ -69,7 +69,23 @@ class OpportunityCard extends StatelessWidget {
     final posted = relativeTime(item.createdAt);
     final isQuest = item.kind == OpportunityKind.quest;
     final hasPay = item.compensation != null && item.compensation! > 0;
-
+    final cardDecoration = item.requiresPremium
+        ? BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(Np.rMd),
+            border: Border.all(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.45),
+              width: 1.2,
+            ),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x18F59E0B),
+                blurRadius: 14,
+                offset: Offset(0, 4),
+              ),
+            ],
+          )
+        : Np.card(c);
 
     return GestureDetector(
       // Xử lý ngay TRONG thẻ chứ không để từng nơi gọi tự lo: thẻ này dùng ở
@@ -78,7 +94,7 @@ class OpportunityCard extends StatelessWidget {
       onTap: item.isExternal ? () => _openExternal(context) : onTap,
       child: Container(
         padding: const EdgeInsets.all(Np.s5),
-        decoration: Np.card(c),
+        decoration: cardDecoration,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -100,10 +116,8 @@ class OpportunityCard extends StatelessWidget {
                 // rời khỏi app. Thiếu nó thì họ bị đẩy sang trình duyệt mà
                 // không hiểu vì sao.
                 if (item.isExternal) const MetaChip(label: 'Trang ngoài'),
-                // Nhãn Premium phải có trên THẺ, không chỉ ở trang chi tiết.
-                // Biết sau khi đã đọc hết mô tả rồi bấm nộp mới bị chặn là
-                // trải nghiệm tệ nhất.
-                if (item.requiresPremium) const PremiumTag(),
+                // Nhãn Premium nổi bật phải có trên THẺ, không chỉ ở trang chi tiết.
+                if (item.requiresPremium) const PremiumTag(prominent: true),
                 // Tin ngoài KHÔNG có nút lưu: lưu một tin không tồn tại trong
                 // DB của mình thì lần sau mở danh sách đã lưu sẽ hỏng.
                 if (!item.isExternal)
@@ -158,6 +172,7 @@ class OpportunityCard extends StatelessWidget {
               spacing: Np.s2,
               runSpacing: Np.s2,
               children: [
+                if (item.requiresPremium) const PremiumTag(prominent: true),
                 MetaChip(
                   icon: Icons.place_outlined,
                   label: item.isRemote

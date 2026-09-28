@@ -117,20 +117,28 @@ class _AcidButtonState extends State<AcidButton> {
 /// VÌ SAO MỘT WIDGET CHỨ KHÔNG PHẢI MetaChip(accent: true):
 /// MetaChip accent dùng màu nhấn của theme. Nhãn Premium phải giữ MỘT màu cố
 /// định ở mọi ngữ cảnh — thẻ tin, trang chi tiết, hồ sơ, trang chủ — vì nó là
-/// dấu hiệu nhận diện, không phải một nhãn thông tin như "Remote" hay "Quest".
-/// Ăn theo màu theme thì mỗi màn hình một sắc và mất tác dụng nhận diện.
-///
-/// [compact] bỏ chữ, chỉ còn vương miện: dùng ở chỗ chật như header trang chủ,
-/// nơi đã có tên, điểm RS và chuông thông báo tranh chỗ.
+/// Huy hiệu Premium. Dùng chung cho người dùng Premium và các tin/Quest yêu cầu
+/// Premium. Luôn dùng màu vàng kim rực rỡ và gradient chuyển tiếp ánh kim để
+/// tạo cảm giác cao cấp, nổi bật và có tính nhận diện tức thì.
 class PremiumTag extends StatelessWidget {
-  const PremiumTag({super.key, this.compact = false});
+  const PremiumTag({
+    super.key,
+    this.compact = false,
+    this.prominent = false,
+  });
 
   final bool compact;
+  final bool prominent;
 
-  /// Vàng kim cố định, KHÔNG lấy từ theme. Cùng cặp màu với huy hiệu bên web
-  /// để hai nền tảng nhìn như một sản phẩm.
+  /// Vàng kim rực rỡ với 3 điểm dừng gradient tạo hiệu ứng ánh kim lấp lánh.
   static const _gold = LinearGradient(
-    colors: [Color(0xFFF7C948), Color(0xFFE0A109)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [
+      Color(0xFFFFE066),
+      Color(0xFFF7C948),
+      Color(0xFFD97706),
+    ],
   );
   static const _onGold = Color(0xFF2B1D00);
 
@@ -138,33 +146,42 @@ class PremiumTag extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 6 : Np.s2 + 2,
-        vertical: compact ? 5 : 3,
+        horizontal: compact ? 7 : (prominent ? Np.s3 : Np.s2 + 3),
+        vertical: compact ? 5 : (prominent ? 4.5 : 3.5),
       ),
       decoration: BoxDecoration(
         gradient: _gold,
         borderRadius: BorderRadius.circular(Np.rPill),
-        boxShadow: const [
+        border: Border.all(
+          color: const Color(0xFFFFFBEB).withValues(alpha: 0.8),
+          width: 1.0,
+        ),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x33E0A109),
-            blurRadius: 8,
-            offset: Offset(0, 2),
+            color: const Color(0xFFE0A109).withValues(alpha: prominent ? 0.45 : 0.35),
+            blurRadius: prominent ? 10 : 7,
+            spreadRadius: prominent ? 1 : 0,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          NpIco(NpIcon.crown, size: compact ? 13 : 11, color: _onGold),
+          NpIco(
+            NpIcon.crown,
+            size: compact ? 13 : (prominent ? 13 : 11.5),
+            color: _onGold,
+          ),
           if (!compact) ...[
-            const SizedBox(width: 3),
+            const SizedBox(width: 4),
             Text(
               'Premium',
               style: NpType.meta.copyWith(
-                fontSize: 10.5,
+                fontSize: prominent ? 11.5 : 10.5,
                 color: _onGold,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.2,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0.3,
               ),
             ),
           ],

@@ -147,7 +147,10 @@ class _HomePageState extends State<HomePage> {
 
     if (!widget.isGuest) {
       // Chỉ dành cho người đã đăng nhập; gọi khi là khách sẽ nhận 401.
-      await _me.hydrate();
+      await Future.wait([
+        _me.hydrate(),
+        WalletStore.instance.hydrate(),
+      ]);
       final apps = await _get('/me/applications');
       if (mounted && apps is List) {
         setState(() => _apps = apps.whereType<Map<String, dynamic>>().toList());
@@ -532,7 +535,19 @@ class _Greeting extends StatelessWidget {
             decoration: BoxDecoration(
               color: c.surfaceHi,
               shape: BoxShape.circle,
-              border: Border.all(color: c.acid, width: 1.5),
+              border: Border.all(
+                color: isPremium ? const Color(0xFFF7C948) : c.acid,
+                width: isPremium ? 2.0 : 1.5,
+              ),
+              boxShadow: isPremium
+                  ? const [
+                      BoxShadow(
+                        color: Color(0x33E0A109),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ]
+                  : null,
             ),
             child: MascotSprite(
               assetPath: NpMascot.directionsAsset(mascotId),
@@ -545,8 +560,16 @@ class _Greeting extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('nextplease',
-                  style: NpType.label.copyWith(color: c.muted)),
+              Row(
+                children: [
+                  Text('nextplease',
+                      style: NpType.label.copyWith(color: c.muted)),
+                  if (isPremium) ...[
+                    const SizedBox(width: Np.s2),
+                    const PremiumTag(),
+                  ],
+                ],
+              ),
               const SizedBox(height: Np.s1),
               MarqueeText(
                 text: name == null ? greeting : '$greeting, $name',
@@ -555,14 +578,6 @@ class _Greeting extends StatelessWidget {
             ],
           ),
         ),
-        // Dạng gọn, chỉ vương miện: hàng này đã có tên, điểm RS và chuông
-        // thông báo tranh chỗ; thêm chữ "Premium" nữa là tên bị cắt trên máy
-        // hẹp. Đặt TRƯỚC ô RS vì vương miện nói về tài khoản, còn RS là một
-        // chỉ số — gom thứ thuộc danh tính lại gần tên.
-        if (isPremium) ...[
-          const SizedBox(width: Np.s2),
-          const PremiumTag(compact: true),
-        ],
         if (rs != null) ...[
           const SizedBox(width: Np.s3),
           Container(
@@ -737,6 +752,7 @@ class _TodayCard extends StatelessWidget {
               spacing: Np.s2,
               runSpacing: Np.s2,
               children: [
+                if (item.requiresPremium) const PremiumTag(prominent: true),
                 if (pay.isNotEmpty) MetaChip(label: pay),
                 if (item.location != null && item.location!.isNotEmpty)
                   MetaChip(label: item.location!),
@@ -808,6 +824,10 @@ class _CompactRow extends StatelessWidget {
                 ],
               ),
             ),
+            if (item.requiresPremium) ...[
+              const SizedBox(width: Np.s2),
+              const PremiumTag(),
+            ],
             if (match > 0) ...[
               const SizedBox(width: Np.s3),
               Container(
