@@ -9,8 +9,15 @@
 /// phía client (web cũng gửi kèm trong bundle), nhưng nằm trong lịch sử git
 /// thì không xoá đi được nữa nếu sau này dự án đổi khoá hoặc đổi chế độ repo.
 abstract final class Env {
-  static const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-  static const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+  static const supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: 'https://whqbyggyizukucawxfre.supabase.co',
+  );
+  static const supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndocWJ5Z2d5aXp1a3VjYXd4ZnJlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMDgzMDYsImV4cCI6MjA5Njc4NDMwNn0.AZ_Hl2QFRx4MreH0rnaE5gLuQCLH_q5xt_0DJgoYzY4',
+  );
 
   /// Deep link Supabase gọi về sau khi đăng nhập OAuth xong. Phải trùng với
   /// mục Redirect URLs trong Supabase Dashboard, và trùng với URL scheme khai
