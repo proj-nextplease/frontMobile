@@ -137,30 +137,41 @@ class _MainShellState extends State<MainShell> {
         // Thanh điều hướng NỔI đè lên nội dung thay vì đẩy nội dung lên. Nhờ
         // vậy danh sách trôi qua bên dưới nó, đúng như mẫu.
         extendBody: true,
-        body: NotificationListener<UserScrollNotification>(
-          onNotification: _onScroll,
-          child: IndexedStack(
-          index: _index,
+        body: Stack(
+          fit: StackFit.expand,
           children: [
-            HomePage(
-              isGuest: widget.isGuest,
-              onSignIn: widget.onSignIn,
-              onSeeAll: () => setState(() => _index = 1),
-              onOpenDiscussions: () => _onTab(2),
-              onOpenProfile: () => _onTab(3),
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: NeonMeshBackground(height: 520, opacity: 0.72),
             ),
-            JobsPage(isGuest: widget.isGuest, onSignIn: widget.onSignIn),
-            DiscussionsPage(
-              isGuest: widget.isGuest,
-              onSignIn: widget.onSignIn,
+            NotificationListener<UserScrollNotification>(
+              onNotification: _onScroll,
+              child: IndexedStack(
+                index: _index,
+                children: [
+                  HomePage(
+                    isGuest: widget.isGuest,
+                    onSignIn: widget.onSignIn,
+                    onSeeAll: () => setState(() => _index = 1),
+                    onOpenDiscussions: () => _onTab(2),
+                    onOpenProfile: () => _onTab(3),
+                  ),
+                  JobsPage(isGuest: widget.isGuest, onSignIn: widget.onSignIn),
+                  DiscussionsPage(
+                    isGuest: widget.isGuest,
+                    onSignIn: widget.onSignIn,
+                  ),
+                  ProfilePage(
+                    isGuest: widget.isGuest,
+                    onSignIn: widget.onSignIn,
+                    onSignOut: widget.onSignOut,
+                  ),
+                ],
+              ),
             ),
-            ProfilePage(
-              isGuest: widget.isGuest,
-              onSignIn: widget.onSignIn,
-              onSignOut: widget.onSignOut,
-            ),
-            ],
-          ),
+          ],
         ),
         bottomNavigationBar: AnimatedSlide(
           offset: _navVisible ? Offset.zero : const Offset(0, 1.4),

@@ -172,12 +172,21 @@ class _PostDetailPageState extends State<PostDetailPage> {
         title: Text(_post.topicName.isEmpty ? 'Bài viết' : _post.topicName,
             style: NpType.h1.copyWith(fontSize: 19, color: c.ink)),
       ),
-      body: Column(
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(
-            child: ListView(
-              controller: _scroll,
-              padding: const EdgeInsets.fromLTRB(
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 480, opacity: 0.65),
+          ),
+          Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  controller: _scroll,
+                  padding: const EdgeInsets.fromLTRB(
                   Np.gutter, Np.s2, Np.gutter, Np.s6),
               children: [
                 Row(
@@ -248,20 +257,22 @@ class _PostDetailPageState extends State<PostDetailPage> {
               ],
             ),
           ),
-          _Composer(
-            controller: _input,
-            sending: _sending,
-            isGuest: widget.isGuest,
-            onSend: _send,
-            onSignIn: widget.onSignIn,
-            anonymous: _anonymous,
-            onToggleAnonymous: () =>
-                setState(() => _anonymous = !_anonymous),
-          ),
-        ],
-      ),
-    );
-  }
+            _Composer(
+              controller: _input,
+              sending: _sending,
+              isGuest: widget.isGuest,
+              onSend: _send,
+              onSignIn: widget.onSignIn,
+              anonymous: _anonymous,
+              onToggleAnonymous: () =>
+                  setState(() => _anonymous = !_anonymous),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 }
 
 class _CommentRow extends StatelessWidget {

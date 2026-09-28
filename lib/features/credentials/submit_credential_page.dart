@@ -117,9 +117,17 @@ class _SubmitCredentialPageState extends State<SubmitCredentialPage> {
         titleSpacing: Np.gutter,
         title: Text('Nộp minh chứng', style: NpType.h1.copyWith(color: c.ink)),
       ),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter,
-            Np.s10 + MediaQuery.viewInsetsOf(context).bottom),
+      body: Stack(
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 380),
+          ),
+          ListView(
+            padding: EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter,
+                Np.s10 + MediaQuery.viewInsetsOf(context).bottom),
         children: [
           Text(
             'Nộp một hoạt động bạn đã làm kèm bằng chứng. Sau khi được duyệt, '
@@ -230,7 +238,8 @@ class _SubmitCredentialPageState extends State<SubmitCredentialPage> {
               child: Text(missing,
                   style: NpType.meta.copyWith(fontSize: 12.5, color: c.muted)),
             ),
-          ],
+            ],
+          ),
         ],
       ),
     );

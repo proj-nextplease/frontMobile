@@ -158,9 +158,17 @@ class _EditExperiencePageState extends State<EditExperiencePage> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-            Np.gutter, Np.s2, Np.gutter, Np.navInset),
+      body: Stack(
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 380),
+          ),
+          ListView(
+            padding: const EdgeInsets.fromLTRB(
+                Np.gutter, Np.s2, Np.gutter, Np.navInset),
         children: [
           if (_items.isEmpty)
             Container(
@@ -202,9 +210,11 @@ class _EditExperiencePageState extends State<EditExperiencePage> {
             label: 'Thêm mục kinh nghiệm',
             onTap: () => _edit(),
           ),
-        ],
-      ),
-    );
+          ],
+        ),
+      ],
+    ),
+  );
   }
 }
 

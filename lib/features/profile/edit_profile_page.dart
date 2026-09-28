@@ -227,12 +227,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
         ],
       ),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter,
-            Np.s10 + MediaQuery.viewInsetsOf(context).bottom),
+      body: Stack(
         children: [
-          MascotPicker(
-            selectedId: _mascot,
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 380),
+          ),
+          ListView(
+            padding: EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter,
+                Np.s10 + MediaQuery.viewInsetsOf(context).bottom),
+            children: [
+              MascotPicker(
+                selectedId: _mascot,
             onSelected: (id) => setState(() => _mascot = id),
           ),
           const SizedBox(height: Np.s6),
@@ -391,6 +399,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
             'Kinh nghiệm và chứng chỉ vẫn sửa trên website — chúng cần tải ảnh '
             'minh chứng và đi qua bước xác thực. Lưu ở đây KHÔNG làm mất chúng.',
             style: NpType.meta.copyWith(fontSize: 12.5, color: c.muted),
+          ),
+            ],
           ),
         ],
       ),

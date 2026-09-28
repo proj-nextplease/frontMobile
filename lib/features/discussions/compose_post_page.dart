@@ -127,12 +127,19 @@ class _ComposePostPageState extends State<ComposePostPage> {
               ),
             ),
           ),
-        ],
-      ),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter,
-            Np.s6 + MediaQuery.viewInsetsOf(context).bottom),
+      body: Stack(
+        fit: StackFit.expand,
         children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 480, opacity: 0.65),
+          ),
+          ListView(
+            padding: EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter,
+                Np.s6 + MediaQuery.viewInsetsOf(context).bottom),
+            children: [
           const SectionLabel('Chủ đề'),
           const SizedBox(height: Np.s3),
           Wrap(
@@ -299,6 +306,8 @@ class _ComposePostPageState extends State<ComposePostPage> {
                         color: c.acidText, fontWeight: FontWeight.w600)),
               ),
           ],
+        ],
+      ),
         ],
       ),
     );

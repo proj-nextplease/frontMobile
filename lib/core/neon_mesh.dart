@@ -141,3 +141,40 @@ class _NeonMeshPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+/// Widget bọc nền neon mesh phát sáng chuẩn nextplease.
+class NeonBackground extends StatelessWidget {
+  const NeonBackground({
+    super.key,
+    required this.child,
+    this.meshHeight = 500,
+    this.meshOpacity = 0.70,
+  });
+
+  final Widget child;
+  final double meshHeight;
+  final double meshOpacity;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Material(
+      color: c.bg,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(
+              height: meshHeight,
+              opacity: meshOpacity,
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}

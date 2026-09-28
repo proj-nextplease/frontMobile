@@ -63,8 +63,16 @@ class _CompaniesPageState extends State<CompaniesPage> {
         titleSpacing: Np.gutter,
         title: Text('Đối tác', style: NpType.h1.copyWith(color: c.ink)),
       ),
-      body: Column(
+      body: Stack(
         children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 380),
+          ),
+          Column(
+            children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
                 Np.gutter, 0, Np.gutter, Np.s3),
@@ -145,9 +153,11 @@ class _CompaniesPageState extends State<CompaniesPage> {
                     ),
             ),
           ),
-        ],
-      ),
-    );
+          ],
+        ),
+      ],
+    ),
+  );
   }
 
   String _emptyText() {

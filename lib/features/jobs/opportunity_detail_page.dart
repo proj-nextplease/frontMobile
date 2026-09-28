@@ -84,43 +84,53 @@ class _OpportunityDetailPageState extends State<OpportunityDetailPage> {
             ),
           ],
         ),
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(Np.gutter, 0, Np.gutter, Np.s10),
+        body: Stack(
           children: [
-            _Header(item: it),
-            const SizedBox(height: Np.s6),
-            _Facts(item: it),
-            const SizedBox(height: Np.s8),
-
-            const SectionLabel('Mô tả'),
-            const SizedBox(height: Np.s3),
-            Text(
-              it.description.trim().isEmpty
-                  ? 'Tổ chức chưa viết mô tả cho tin này.'
-                  : it.description.trim(),
-              style: NpType.body.copyWith(
-                color: it.description.trim().isEmpty ? c.muted : c.ink,
-                height: 1.62,
-              ),
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: NeonMeshBackground(height: 480, opacity: 0.65),
             ),
+            ListView(
+              padding: const EdgeInsets.fromLTRB(Np.gutter, 0, Np.gutter, Np.s10),
+              children: [
+                _Header(item: it),
+                const SizedBox(height: Np.s6),
+                _Facts(item: it),
+                const SizedBox(height: Np.s8),
 
-            if (it.skills.isNotEmpty) ...[
-              const SizedBox(height: Np.s8),
-              const SectionLabel('Kỹ năng'),
-              const SizedBox(height: Np.s3),
-              Wrap(
-                spacing: Np.s2,
-                runSpacing: Np.s2,
-                children: [
-                  for (final s in it.skills) MetaChip(label: s),
+                const SectionLabel('Mô tả'),
+                const SizedBox(height: Np.s3),
+                Text(
+                  it.description.trim().isEmpty
+                      ? 'Tổ chức chưa viết mô tả cho tin này.'
+                      : it.description.trim(),
+                  style: NpType.body.copyWith(
+                    color: it.description.trim().isEmpty ? c.muted : c.ink,
+                    height: 1.62,
+                  ),
+                ),
+
+                if (it.skills.isNotEmpty) ...[
+                  const SizedBox(height: Np.s8),
+                  const SectionLabel('Kỹ năng'),
+                  const SizedBox(height: Np.s3),
+                  Wrap(
+                    spacing: Np.s2,
+                    runSpacing: Np.s2,
+                    children: [
+                      for (final s in it.skills) MetaChip(label: s),
+                    ],
+                  ),
                 ],
-              ),
-            ],
 
-            const SizedBox(height: Np.s8),
-            const SectionLabel('Đơn vị đăng'),
-            const SizedBox(height: Np.s3),
-            _CompanyRow(item: it),
+                const SizedBox(height: Np.s8),
+                const SectionLabel('Đơn vị đăng'),
+                const SizedBox(height: Np.s3),
+                _CompanyRow(item: it),
+              ],
+            ),
           ],
         ),
         bottomNavigationBar: _ApplyBar(

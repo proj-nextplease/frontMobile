@@ -168,39 +168,49 @@ class _RegisterPageState extends State<RegisterPage> {
         title: Text(otpStep ? 'Xác nhận email' : 'Tạo tài khoản',
             style: NpType.h1.copyWith(color: c.ink)),
       ),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter,
-            Np.s10 + MediaQuery.viewInsetsOf(context).bottom),
+      body: Stack(
         children: [
-          // Ô lỗi LUÔN chiếm một vị trí trong danh sách, rỗng thì thu về 0.
-          //
-          // Trước đây nó là `if (_error != null) ...[...]`, nên mỗi lần lỗi
-          // hiện ra hay biến mất là mọi widget bên dưới DỊCH 2 chỗ. Flutter
-          // khớp widget không key theo (kiểu, vị trí), nên ô "Họ và tên" bị
-          // khớp với ô "Email sinh viên" — hai TextEditingController khác
-          // nhau dùng chung một Element. EditableText giữ GlobalKey bên
-          // trong, và đó đúng là kiểu lỗi
-          // '_elements.contains(element) is not true'.
-          //
-          // Giữ cấu trúc bất biến thì không có gì để dịch.
-          _error == null
-              ? const SizedBox.shrink()
-              : Padding(
-                  padding: const EdgeInsets.only(bottom: Np.s5),
-                  child: Container(
-                    padding: const EdgeInsets.all(Np.s4),
-                    decoration: BoxDecoration(
-                      color: c.danger.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(Np.rMd),
-                      border:
-                          Border.all(color: c.danger.withValues(alpha: 0.3)),
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 380),
+          ),
+          ListView(
+            padding: EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter,
+                Np.s10 + MediaQuery.viewInsetsOf(context).bottom),
+            children: [
+              // Ô lỗi LUÔN chiếm một vị trí trong danh sách, rỗng thì thu về 0.
+              //
+              // Trước đây nó là `if (_error != null) ...[...]`, nên mỗi lần lỗi
+              // hiện ra hay biến mất là mọi widget bên dưới DỊCH 2 chỗ. Flutter
+              // khớp widget không key theo (kiểu, vị trí), nên ô "Họ và tên" bị
+              // khớp với ô "Email sinh viên" — hai TextEditingController khác
+              // nhau dùng chung một Element. EditableText giữ GlobalKey bên
+              // trong, và đó đúng là kiểu lỗi
+              // '_elements.contains(element) is not true'.
+              //
+              // Giữ cấu trúc bất biến thì không có gì để dịch.
+              _error == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(bottom: Np.s5),
+                      child: Container(
+                        padding: const EdgeInsets.all(Np.s4),
+                        decoration: BoxDecoration(
+                          color: c.danger.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(Np.rMd),
+                          border:
+                              Border.all(color: c.danger.withValues(alpha: 0.3)),
+                        ),
+                        child: Text(_error!,
+                            style: NpType.meta.copyWith(color: c.danger)),
+                      ),
                     ),
-                    child: Text(_error!,
-                        style: NpType.meta.copyWith(color: c.danger)),
-                  ),
-                ),
 
-          if (otpStep) ..._otpStep(c) else ..._formStep(c),
+              if (otpStep) ..._otpStep(c) else ..._formStep(c),
+            ],
+          ),
         ],
       ),
     );

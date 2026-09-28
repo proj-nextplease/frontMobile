@@ -60,37 +60,48 @@ class _NotificationsPageState extends State<NotificationsPage> {
             ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _store.hydrate,
-        color: c.acidText,
-        backgroundColor: c.surfaceHi,
-        child: _store.items.isEmpty
-            ? ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: [
-                  const SizedBox(height: Np.s8),
-                  MascotEmptyState(
-                    mascotId: 'frog',
-                    title: _store.loaded ? 'Hộp thư trống' : 'Đang tải thông báo…',
-                    description: _store.loaded
-                        ? 'Khi có tin tức mới về đơn ứng tuyển hoặc nhiệm vụ, bạn sẽ nhận được thông báo tại đây.'
-                        : 'Vui lòng đợi giây lát.',
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 480, opacity: 0.65),
+          ),
+          RefreshIndicator(
+            onRefresh: _store.hydrate,
+            color: c.acidText,
+            backgroundColor: c.surfaceHi,
+            child: _store.items.isEmpty
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      const SizedBox(height: Np.s8),
+                      MascotEmptyState(
+                        mascotId: 'frog',
+                        title: _store.loaded ? 'Hộp thư trống' : 'Đang tải thông báo…',
+                        description: _store.loaded
+                            ? 'Khi có tin tức mới về đơn ứng tuyển hoặc nhiệm vụ, bạn sẽ nhận được thông báo tại đây.'
+                            : 'Vui lòng đợi giây lát.',
+                      ),
+                    ],
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(
+                        Np.gutter, Np.s2, Np.gutter, Np.s10),
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: _store.items.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: Np.s2),
+                    itemBuilder: (context, i) => _Row(
+                      item: _store.items[i],
+                      // Router tự đánh dấu đã đọc rồi mới điều hướng.
+                      onTap: () =>
+                          NotificationRouter.open(context, _store.items[i]),
+                    ),
                   ),
-                ],
-              )
-            : ListView.separated(
-                padding: const EdgeInsets.fromLTRB(
-                    Np.gutter, Np.s2, Np.gutter, Np.s10),
-                physics: const AlwaysScrollableScrollPhysics(),
-                itemCount: _store.items.length,
-                separatorBuilder: (_, _) => const SizedBox(height: Np.s2),
-                itemBuilder: (context, i) => _Row(
-                  item: _store.items[i],
-                  // Router tự đánh dấu đã đọc rồi mới điều hướng.
-                  onTap: () =>
-                      NotificationRouter.open(context, _store.items[i]),
-                ),
-              ),
+          ),
+        ],
       ),
     );
   }

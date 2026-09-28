@@ -31,7 +31,7 @@ ThemeData buildNpTheme(Brightness brightness) {
       onError: dark ? const Color(0xFF14141A) : Colors.white,
     ),
     appBarTheme: AppBarTheme(
-      backgroundColor: c.bg,
+      backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       foregroundColor: c.ink,
       elevation: 0,

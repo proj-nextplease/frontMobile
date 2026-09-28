@@ -112,35 +112,46 @@ class _SearchPageState extends State<SearchPage> {
             ),
         ],
       ),
-      body: _loading
-          ? Center(
-              child: CircularProgressIndicator(
-                  color: c.acidText, strokeWidth: 2.4))
-          : !typed
-              ? _Hint(total: _all.length)
-              : results.isEmpty
-                  ? _Empty(query: _q.trim())
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(
-                          Np.gutter, Np.s3, Np.gutter, Np.s10),
-                      itemCount: results.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: Np.s3),
-                      itemBuilder: (_, i) => OpportunityCard(
-                        item: results[i],
-                        isGuest: widget.isGuest,
-                        onNeedSignIn: widget.onSignIn,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => OpportunityDetailPage(
-                              summary: results[i],
-                              isGuest: widget.isGuest,
-                              onSignIn: widget.onSignIn,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 480, opacity: 0.65),
+          ),
+          _loading
+              ? Center(
+                  child: CircularProgressIndicator(
+                      color: c.acidText, strokeWidth: 2.4))
+              : !typed
+                  ? _Hint(total: _all.length)
+                  : results.isEmpty
+                      ? _Empty(query: _q.trim())
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(
+                              Np.gutter, Np.s3, Np.gutter, Np.s10),
+                          itemCount: results.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: Np.s3),
+                          itemBuilder: (_, i) => OpportunityCard(
+                            item: results[i],
+                            isGuest: widget.isGuest,
+                            onNeedSignIn: widget.onSignIn,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => OpportunityDetailPage(
+                                  summary: results[i],
+                                  isGuest: widget.isGuest,
+                                  onSignIn: widget.onSignIn,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
+        ],
+      ),
     );
   }
 }

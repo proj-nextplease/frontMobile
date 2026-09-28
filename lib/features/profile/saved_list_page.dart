@@ -98,52 +98,63 @@ class _SavedListPageState extends State<SavedListPage> {
         titleSpacing: Np.gutter,
         title: Text('Tin đã lưu', style: NpType.h1.copyWith(color: c.ink)),
       ),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        color: c.acidText,
-        backgroundColor: c.surfaceHi,
-        child: _loading
-            ? Center(
-                child: CircularProgressIndicator(
-                    color: c.acidText, strokeWidth: 2.4))
-            : _items.isEmpty
-                ? ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    children: [
-                      const SizedBox(height: Np.s8),
-                      MascotEmptyState(
-                        mascotId: 'frog',
-                        title: _error ?? 'Chưa lưu tin nào',
-                        description: _error != null
-                            ? 'Vui lòng vuốt xuống để thử tải lại.'
-                            : 'Bấm biểu tượng trái tim trên các cơ hội việc làm & nhiệm vụ để lưu lại xem sau.',
-                        actionLabel: 'Khám phá cơ hội ngay',
-                        onAction: () => Navigator.of(context).pop(),
-                      ),
-                    ],
-                  )
-                : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(
-                        Np.gutter, Np.s2, Np.gutter, Np.s10),
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount: _items.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: Np.s3),
-                    itemBuilder: (_, i) => OpportunityCard(
-                      item: _items[i],
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          // Màn này chỉ tới được khi đã đăng nhập (nó nằm
-                          // trong tab Hồ sơ của người có phiên), nên isGuest
-                          // luôn false và không cần lối mời đăng nhập.
-                          builder: (_) => OpportunityDetailPage(
-                            summary: _items[i],
-                            isGuest: false,
-                            onSignIn: () {},
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 480, opacity: 0.65),
+          ),
+          RefreshIndicator(
+            onRefresh: _load,
+            color: c.acidText,
+            backgroundColor: c.surfaceHi,
+            child: _loading
+                ? Center(
+                    child: CircularProgressIndicator(
+                        color: c.acidText, strokeWidth: 2.4))
+                : _items.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          const SizedBox(height: Np.s8),
+                          MascotEmptyState(
+                            mascotId: 'frog',
+                            title: _error ?? 'Chưa lưu tin nào',
+                            description: _error != null
+                                ? 'Vui lòng vuốt xuống để thử tải lại.'
+                                : 'Bấm biểu tượng trái tim trên các cơ hội việc làm & nhiệm vụ để lưu lại xem sau.',
+                            actionLabel: 'Khám phá cơ hội ngay',
+                            onAction: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(
+                            Np.gutter, Np.s2, Np.gutter, Np.s10),
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: _items.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: Np.s3),
+                        itemBuilder: (_, i) => OpportunityCard(
+                          item: _items[i],
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                              // Màn này chỉ tới được khi đã đăng nhập (nó nằm
+                              // trong tab Hồ sơ của người có phiên), nên isGuest
+                              // luôn false và không cần lối mời đăng nhập.
+                              builder: (_) => OpportunityDetailPage(
+                                summary: _items[i],
+                                isGuest: false,
+                                onSignIn: () {},
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
+          ),
+        ],
       ),
     );
   }

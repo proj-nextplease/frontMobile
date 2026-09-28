@@ -120,9 +120,17 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
     return Scaffold(
       backgroundColor: c.bg,
       appBar: AppBar(titleSpacing: Np.gutter, title: const SizedBox.shrink()),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-            Np.gutter, 0, Np.gutter, Np.navInset),
+      body: Stack(
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 380),
+          ),
+          ListView(
+            padding: const EdgeInsets.fromLTRB(
+                Np.gutter, 0, Np.gutter, Np.navInset),
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,9 +212,11 @@ class _CompanyDetailPageState extends State<CompanyDetailPage> {
                           OpportunityDetailPage(summary: o, isGuest: false))),
                 ),
               ),
-        ],
-      ),
-    );
+          ],
+        ),
+      ],
+    ),
+  );
   }
 }
 

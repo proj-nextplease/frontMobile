@@ -135,7 +135,7 @@ class _JobsPageState extends State<JobsPage> {
         statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: c.bg,
+        backgroundColor: Colors.transparent,
         appBar: AppBar(
           titleSpacing: Np.gutter,
           toolbarHeight: 74,

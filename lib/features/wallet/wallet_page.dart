@@ -60,32 +60,43 @@ class _WalletPageState extends State<WalletPage> {
         titleSpacing: Np.gutter,
         title: Text('Ví NP', style: NpType.h1.copyWith(color: c.ink)),
       ),
-      body: RefreshIndicator(
-        color: c.acidText,
-        backgroundColor: c.surface,
-        onRefresh: _store.hydrate,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-              Np.gutter, Np.s2, Np.gutter, Np.navInset),
-          children: [
-            _BalanceCard(store: _store, onTopUp: _topUp),
-            const SizedBox(height: Np.s5),
-            _PremiumRow(store: _store),
-            const SizedBox(height: Np.s6),
-            const SectionLabel('Lịch sử giao dịch'),
-            const SizedBox(height: Np.s3),
-            if (!_store.loaded)
-              _Placeholder(text: 'Đang tải…', c: c)
-            else if (txs.isEmpty)
-              _Placeholder(
-                text: 'Chưa có giao dịch nào.\n'
-                    'NP kiếm được từ nhiệm vụ sẽ hiện ở đây.',
-                c: c,
-              )
-            else
-              for (final t in txs) _TxRow(tx: t),
-          ],
-        ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 480, opacity: 0.65),
+          ),
+          RefreshIndicator(
+            color: c.acidText,
+            backgroundColor: c.surface,
+            onRefresh: _store.hydrate,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                  Np.gutter, Np.s2, Np.gutter, Np.navInset),
+              children: [
+                _BalanceCard(store: _store, onTopUp: _topUp),
+                const SizedBox(height: Np.s5),
+                _PremiumRow(store: _store),
+                const SizedBox(height: Np.s6),
+                const SectionLabel('Lịch sử giao dịch'),
+                const SizedBox(height: Np.s3),
+                if (!_store.loaded)
+                  _Placeholder(text: 'Đang tải…', c: c)
+                else if (txs.isEmpty)
+                  _Placeholder(
+                    text: 'Chưa có giao dịch nào.\n'
+                        'NP kiếm được từ nhiệm vụ sẽ hiện ở đây.',
+                    c: c,
+                  )
+                else
+                  for (final t in txs) _TxRow(tx: t),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

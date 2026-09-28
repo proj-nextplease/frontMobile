@@ -163,7 +163,7 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
     final c = Np.of(context);
 
     return Scaffold(
-      backgroundColor: c.bg,
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         bottom: false,
         child: RefreshIndicator(

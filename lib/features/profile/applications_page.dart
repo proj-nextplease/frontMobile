@@ -92,54 +92,65 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
         titleSpacing: Np.gutter,
         title: Text('Đơn đã nộp', style: NpType.h1.copyWith(color: c.ink)),
       ),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        color: c.acidText,
-        backgroundColor: c.surfaceHi,
-        child: _loading
-            ? Center(
-                child: CircularProgressIndicator(
-                    color: c.acidText, strokeWidth: 2.4))
-            : _error != null
-                ? _Note(text: _error!)
-                : _items.isEmpty
-                    ? _Note(
-                        text: 'Bạn chưa nộp đơn nào.\n'
-                            'Mở một cơ hội và bấm Ứng tuyển để bắt đầu.')
-                    : ListView(
-                        padding: const EdgeInsets.fromLTRB(
-                            Np.gutter, Np.s2, Np.gutter, Np.s10),
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          if (open > 0) ...[
-                            Text('$open đơn đang chờ phản hồi',
-                                style: NpType.meta.copyWith(color: c.muted)),
-                            const SizedBox(height: Np.s4),
-                          ],
-                          for (var i = 0; i < _items.length; i++) ...[
-                            _Card(
-                              item: _items[i],
-                              // Đơn MỚI NHẤT mở sẵn, còn lại gập. Mở hết thì
-                              // phải cuộn qua vài màn mới thấy đơn thứ ba;
-                              // gập hết thì lần nào vào cũng phải bấm thêm
-                              // một cái để biết chuyện gì đang xảy ra.
-                              initiallyOpen: i == 0,
-                              onOpenDetail: () async {
-                                await Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => ApplicationDetailPage(
-                                        item: _items[i]),
-                                  ),
-                                );
-                                // Rút đơn xong thì trạng thái trong danh sách
-                                // phải đổi theo.
-                                if (mounted) await _load();
-                              },
-                            ),
-                            const SizedBox(height: Np.s3),
-                          ],
-                        ],
-                      ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 480, opacity: 0.65),
+          ),
+          RefreshIndicator(
+            onRefresh: _load,
+            color: c.acidText,
+            backgroundColor: c.surfaceHi,
+            child: _loading
+                ? Center(
+                    child: CircularProgressIndicator(
+                        color: c.acidText, strokeWidth: 2.4))
+                : _error != null
+                    ? _Note(text: _error!)
+                    : _items.isEmpty
+                        ? _Note(
+                            text: 'Bạn chưa nộp đơn nào.\n'
+                                'Mở một cơ hội và bấm Ứng tuyển để bắt đầu.')
+                        : ListView(
+                            padding: const EdgeInsets.fromLTRB(
+                                Np.gutter, Np.s2, Np.gutter, Np.s10),
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              if (open > 0) ...[
+                                Text('$open đơn đang chờ phản hồi',
+                                    style: NpType.meta.copyWith(color: c.muted)),
+                                const SizedBox(height: Np.s4),
+                              ],
+                              for (var i = 0; i < _items.length; i++) ...[
+                                _Card(
+                                  item: _items[i],
+                                  // Đơn MỚI NHẤT mở sẵn, còn lại gập. Mở hết thì
+                                  // phải cuộn qua vài màn mới thấy đơn thứ ba;
+                                  // gập hết thì lần nào vào cũng phải bấm thêm
+                                  // một cái để biết chuyện gì đang xảy ra.
+                                  initiallyOpen: i == 0,
+                                  onOpenDetail: () async {
+                                    await Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => ApplicationDetailPage(
+                                            item: _items[i]),
+                                      ),
+                                    );
+                                    // Rút đơn xong thì trạng thái trong danh sách
+                                    // phải đổi theo.
+                                    if (mounted) await _load();
+                                  },
+                                ),
+                                const SizedBox(height: Np.s3),
+                              ],
+                            ],
+                          ),
+          ),
+        ],
       ),
     );
   }

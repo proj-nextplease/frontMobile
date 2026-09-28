@@ -189,11 +189,19 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
         title: Text('Cài đặt tài khoản',
             style: NpType.h1.copyWith(color: c.ink)),
       ),
-      body: _loading
-          ? Center(child: CircularProgressIndicator(color: c.faint))
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(
-                  Np.gutter, Np.s2, Np.gutter, Np.navInset),
+      body: Stack(
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 380),
+          ),
+          _loading
+              ? Center(child: CircularProgressIndicator(color: c.faint))
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(
+                      Np.gutter, Np.s2, Np.gutter, Np.navInset),
               children: [
                 if (_loadError != null) ...[
                   _ErrorCard(message: _loadError!, onRetry: _load),
@@ -259,8 +267,10 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                   danger: true,
                   onTap: _deactivate,
                 ),
-              ],
-            ),
+                  ],
+                ),
+        ],
+      ),
     );
   }
 }

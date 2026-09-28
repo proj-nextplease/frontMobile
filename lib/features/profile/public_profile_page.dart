@@ -137,9 +137,17 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
         title: Text('Hồ sơ công khai',
             style: NpType.h1.copyWith(color: c.ink)),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-            Np.gutter, Np.s2, Np.gutter, Np.navInset),
+      body: Stack(
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 380),
+          ),
+          ListView(
+            padding: const EdgeInsets.fromLTRB(
+                Np.gutter, Np.s2, Np.gutter, Np.navInset),
         children: [
           Text(
             'Một trang web hiển thị kỹ năng, kinh nghiệm và minh chứng đã '
@@ -230,7 +238,9 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           ),
         ],
       ),
-    );
+    ],
+  ),
+);
   }
 
   /// Nói rõ điều gì xảy ra ở mỗi trạng thái, kể cả phần người dùng dễ hiểu

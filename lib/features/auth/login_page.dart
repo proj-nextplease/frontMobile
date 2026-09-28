@@ -106,8 +106,16 @@ class _LoginPageState extends State<LoginPage> {
       ),
       child: Scaffold(
         backgroundColor: c.bg,
-        body: SafeArea(
-          child: ListView(
+        body: Stack(
+          children: [
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: NeonMeshBackground(height: 480),
+            ),
+            SafeArea(
+              child: ListView(
             // Đệm đáy cộng chiều cao bàn phím, nếu không bàn phím che mất nút.
             padding: EdgeInsets.fromLTRB(
               Np.gutter, Np.s6, Np.gutter,
@@ -295,8 +303,10 @@ class _LoginPageState extends State<LoginPage> {
             ],
           ),
         ),
-      ),
-    );
+      ],
+    ),
+  ),
+);
   }
 
   void _submit() {

@@ -67,11 +67,19 @@ class _CredentialsPageState extends State<CredentialsPage> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _store.hydrate,
-        color: c.acidText,
-        backgroundColor: c.surfaceHi,
-        child: items.isEmpty
+      body: Stack(
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 380),
+          ),
+          RefreshIndicator(
+            onRefresh: _store.hydrate,
+            color: c.acidText,
+            backgroundColor: c.surfaceHi,
+            child: items.isEmpty
             ? ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.fromLTRB(
@@ -132,8 +140,10 @@ class _CredentialsPageState extends State<CredentialsPage> {
                 separatorBuilder: (_, _) => const SizedBox(height: Np.s3),
                 itemBuilder: (_, i) => _Card(item: items[i]),
               ),
-      ),
-    );
+        ),
+      ],
+    ),
+  );
   }
 }
 

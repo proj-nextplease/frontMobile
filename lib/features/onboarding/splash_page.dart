@@ -117,6 +117,12 @@ class _SplashPageState extends State<SplashPage>
           animation: Listenable.merge([_c, _float]),
           builder: (context, _) => Stack(
             children: [
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: NeonMeshBackground(height: 600, opacity: 0.85),
+              ),
               Positioned.fill(
                 child: CustomPaint(
                   painter: _DotGrid(progress: _grid.value, ink: c.ink),

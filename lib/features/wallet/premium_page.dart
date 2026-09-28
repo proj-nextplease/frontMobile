@@ -69,10 +69,19 @@ class _PremiumPageState extends State<PremiumPage> {
         titleSpacing: Np.gutter,
         title: Text('Premium', style: NpType.h1.copyWith(color: c.ink)),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-            Np.gutter, Np.s2, Np.gutter, Np.navInset),
+      body: Stack(
+        fit: StackFit.expand,
         children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 480, opacity: 0.65),
+          ),
+          ListView(
+            padding: const EdgeInsets.fromLTRB(
+                Np.gutter, Np.s2, Np.gutter, Np.navInset),
+            children: [
           Container(
             padding: const EdgeInsets.symmetric(
                 horizontal: Np.s4, vertical: Np.s3),
@@ -146,6 +155,8 @@ class _PremiumPageState extends State<PremiumPage> {
             note: 'được duyệt trước hàng chờ',
             price: p['expressPriceNp'],
             where: 'Mở trong màn minh chứng',
+          ),
+            ],
           ),
         ],
       ),

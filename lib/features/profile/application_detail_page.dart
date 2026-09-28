@@ -153,9 +153,17 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
         titleSpacing: Np.gutter,
         title: Text('Đơn của bạn', style: NpType.h1.copyWith(color: c.ink)),
       ),
-      body: ListView(
-        padding:
-            const EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter, Np.s10),
+      body: Stack(
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 380),
+          ),
+          ListView(
+            padding:
+                const EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter, Np.s10),
         children: [
           Text(_item.title,
               style: NpType.title.copyWith(fontSize: 20, color: c.ink)),
@@ -264,7 +272,8 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
               style: NpType.meta.copyWith(fontSize: 12, color: c.muted),
               textAlign: TextAlign.center,
             ),
-          ],
+            ],
+          ),
         ],
       ),
     );

@@ -100,11 +100,19 @@ class _PortfolioPageState extends State<PortfolioPage> {
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _me.hydrate,
-        color: c.acidText,
-        backgroundColor: c.surfaceHi,
-        child: ListView(
+      body: Stack(
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: NeonMeshBackground(height: 400),
+          ),
+          RefreshIndicator(
+            onRefresh: _me.hydrate,
+            color: c.acidText,
+            backgroundColor: c.surfaceHi,
+            child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(
               Np.gutter, Np.s2, Np.gutter, Np.s10),
@@ -216,7 +224,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
           ],
         ),
       ),
-    );
+    ],
+  ),
+);
   }
 }
 
