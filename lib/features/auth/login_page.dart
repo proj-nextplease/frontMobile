@@ -140,7 +140,18 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                 ],
               ),
-              const SizedBox(height: Np.s5),
+              const SizedBox(height: Np.s6),
+
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 52,
+                  height: 52,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              const SizedBox(height: Np.s4),
 
               // Tiêu đề khổng lồ cạnh nhãn 11px ở trên — đây chính là độ
               // tương phản cỡ chữ mà bốn bản trước thiếu.

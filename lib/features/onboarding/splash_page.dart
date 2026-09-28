@@ -161,10 +161,23 @@ class _SplashPageState extends State<SplashPage>
                       const SizedBox(height: Np.s5),
                       _MaskedRise(
                         t: _word.value,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            width: 64,
+                            height: 64,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: Np.s4),
+                      _MaskedRise(
+                        t: _word.value,
                         child: Text(
                           'nextplease',
                           style: NpType.display
-                              .copyWith(fontSize: 40, color: c.ink),
+                              .copyWith(fontSize: 38, color: c.ink),
                         ),
                       ),
                       const SizedBox(height: Np.s2),
