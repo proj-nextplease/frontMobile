@@ -188,8 +188,8 @@ class _NextPleaseAppState extends State<NextPleaseApp>
           child: child ?? const SizedBox.shrink(),
         ),
       ),
-      // Hai bộ theme, MaterialApp tự chọn theo cài đặt sáng/tối của máy.
-      // themeMode mặc định là ThemeMode.system nên không cần khai báo.
+      // Màu chủ đạo Neon Dark tương tự webapp (nextplease.online)
+      themeMode: ThemeMode.dark,
       theme: buildNpTheme(Brightness.light),
       darkTheme: buildNpTheme(Brightness.dark),
       home: switch (_stage) {

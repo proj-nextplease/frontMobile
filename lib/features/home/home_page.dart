@@ -343,138 +343,148 @@ class _HomePageState extends State<HomePage> {
     final nudge = _nudge;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // Nền sáng liền mạch từ trên xuống nên thanh trạng thái không còn phải
-      // đổi theo độ cuộn — bỏ hẳn được cả ScrollController lẫn ngưỡng đoán
-      // chiều cao dải mà bản trước phải nuôi.
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
         statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       ),
-      child: RefreshIndicator(
-        onRefresh: _load,
-        color: c.acidText,
-        backgroundColor: c.surfaceHi,
-        child: SafeArea(
-          bottom: false,
-          child: ListView(
-            padding: EdgeInsets.only(bottom: Np.navInset),
-            physics: const AlwaysScrollableScrollPhysics(),
-            children: [
-              const SizedBox(height: Np.s4),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
-                child: _Greeting(
-                  greeting: _greeting,
-                  name: _firstName,
-                  rs: _me.loaded ? _me.reputationScore : null,
-                  showBell: !widget.isGuest,
-                  isPremium: WalletStore.instance.isPremium,
-                  avatar: _me.raw['avatar'],
-                  onTapMascot: widget.onOpenProfile,
-                ),
-              ),
-
-              if (nudge != null) ...[
-                const SizedBox(height: Np.s5),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
-                  child: _NudgeBar(nudge: nudge),
-                ),
-              ],
-
-              // Nhiệm vụ đứng TRƯỚC gợi ý cơ hội: nó là việc làm xong được
-              // ngay hôm nay và có thưởng, còn gợi ý là việc cân nhắc lâu hơn.
-              if (!widget.isGuest &&
-                  GamificationStore.instance.daily.isNotEmpty) ...[
-                const SizedBox(height: Np.s8),
-                // "Nhiệm vụ" trơn, KHÔNG phải "Nhiệm vụ hôm nay": danh sách
-                // trộn cả nhiệm vụ ngày lẫn tuần, nên chữ "hôm nay" nói sai
-                // với hai phần ba số dòng. Phạm vi ghi trên từng dòng.
-                const _Head(title: 'Nhiệm vụ'),
-                const SizedBox(height: Np.s4),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
-                  child: QuestBoard(store: GamificationStore.instance),
-                ),
-              ],
-
-              const SizedBox(height: Np.s8),
-              const _Head(title: 'Nên xem hôm nay'),
-              const SizedBox(height: Np.s4),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
-                child: top == null
-                    ? _EmptyToday(
-                        loading: _loading,
-                        error: _loadError,
-                        onRetry: _load,
-                      )
-                    : _TodayCard(
-                        item: top,
-                        reason: _reason(top),
-                        onTap: () => _open(top),
-                      ),
-              ),
-
-              if (rest.isNotEmpty) ...[
-                const SizedBox(height: Np.s8),
-                _Head(
-                  // "Hợp với bạn" chỉ được dùng khi THẬT SỰ có tin khớp kỹ
-                  // năng. Có hồ sơ mà không tin nào khớp thì đây chỉ là danh
-                  // sách cơ hội khác, và gọi nó là "hợp với bạn" là nói dối
-                  // người dùng ngay ở dòng tiêu đề.
-                  title: rest.any((o) => _matchCount(o) > 0)
-                      ? 'Hợp với bạn'
-                      : 'Cơ hội khác đang mở',
-                  action: 'Tất cả',
-                  onTap: widget.onSeeAll,
-                ),
-                const SizedBox(height: Np.s4),
-                for (final o in rest) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
-                    child: _CompactRow(
-                      item: o,
-                      match: _matchCount(o),
-                      onTap: () => _open(o),
-                    ),
-                  ),
-                  const SizedBox(height: Np.s2),
-                ],
-              ],
-
-              if (_posts.isNotEmpty || _topics.isNotEmpty) ...[
-                const SizedBox(height: Np.s8),
-                _Head(
-                  title: 'Sinh viên đang bàn',
-                  action: 'Vào thảo luận',
-                  onTap: widget.onOpenDiscussions,
-                ),
-                const SizedBox(height: Np.s4),
-                if (_posts.isNotEmpty)
-                  for (final p in _posts) ...[
+      child: Material(
+        color: c.bg,
+        child: Stack(
+          children: [
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: NeonMeshBackground(height: 520, opacity: 0.72),
+            ),
+            RefreshIndicator(
+              onRefresh: _load,
+              color: c.acidText,
+              backgroundColor: c.surfaceHi,
+              child: SafeArea(
+                bottom: false,
+                child: ListView(
+                  padding: EdgeInsets.only(bottom: Np.navInset),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    const SizedBox(height: Np.s4),
                     Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: Np.gutter),
-                      child: _PostRow(
-                        post: p,
+                      padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                      child: _Greeting(
+                        greeting: _greeting,
+                        name: _firstName,
+                        rs: _me.loaded ? _me.reputationScore : null,
+                        showBell: !widget.isGuest,
+                        isPremium: WalletStore.instance.isPremium,
+                        avatar: _me.raw['avatar'],
+                        onTapMascot: widget.onOpenProfile,
+                      ),
+                    ),
+
+                    if (nudge != null) ...[
+                      const SizedBox(height: Np.s5),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                        child: _NudgeBar(nudge: nudge),
+                      ),
+                    ],
+
+                    // Nhiệm vụ đứng TRƯỚC gợi ý cơ hội: nó là việc làm xong được
+                    // ngay hôm nay và có thưởng, còn gợi ý là việc cân nhắc lâu hơn.
+                    if (!widget.isGuest &&
+                        GamificationStore.instance.daily.isNotEmpty) ...[
+                      const SizedBox(height: Np.s8),
+                      // "Nhiệm vụ" trơn, KHÔNG phải "Nhiệm vụ hôm nay": danh sách
+                      // trộn cả nhiệm vụ ngày lẫn tuần, nên chữ "hôm nay" nói sai
+                      // với hai phần ba số dòng. Phạm vi ghi trên từng dòng.
+                      const _Head(title: 'Nhiệm vụ'),
+                      const SizedBox(height: Np.s4),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                        child: QuestBoard(store: GamificationStore.instance),
+                      ),
+                    ],
+
+                    const SizedBox(height: Np.s8),
+                    const _Head(title: 'Nên xem hôm nay'),
+                    const SizedBox(height: Np.s4),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                      child: top == null
+                          ? _EmptyToday(
+                              loading: _loading,
+                              error: _loadError,
+                              onRetry: _load,
+                            )
+                          : _TodayCard(
+                              item: top,
+                              reason: _reason(top),
+                              onTap: () => _open(top),
+                            ),
+                    ),
+
+                    if (rest.isNotEmpty) ...[
+                      const SizedBox(height: Np.s8),
+                      _Head(
+                        // "Hợp với bạn" chỉ được dùng khi THẬT SỰ có tin khớp kỹ
+                        // năng. Có hồ sơ mà không tin nào khớp thì đây chỉ là danh
+                        // sách cơ hội khác, và gọi nó là "hợp với bạn" là nói dối
+                        // người dùng ngay ở dòng tiêu đề.
+                        title: rest.any((o) => _matchCount(o) > 0)
+                            ? 'Hợp với bạn'
+                            : 'Cơ hội khác đang mở',
+                        action: 'Tất cả',
+                        onTap: widget.onSeeAll,
+                      ),
+                      const SizedBox(height: Np.s4),
+                      for (final o in rest) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                          child: _CompactRow(
+                            item: o,
+                            match: _matchCount(o),
+                            onTap: () => _open(o),
+                          ),
+                        ),
+                        const SizedBox(height: Np.s2),
+                      ],
+                    ],
+
+                    if (_posts.isNotEmpty || _topics.isNotEmpty) ...[
+                      const SizedBox(height: Np.s8),
+                      _Head(
+                        title: 'Sinh viên đang bàn',
+                        action: 'Vào thảo luận',
                         onTap: widget.onOpenDiscussions,
                       ),
-                    ),
-                    const SizedBox(height: Np.s2),
-                  ]
-                else
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
-                    child: _StartDiscussion(
-                      topics: _topics,
-                      onTap: widget.onOpenDiscussions,
-                    ),
-                  ),
-              ],
-            ],
-          ),
+                      const SizedBox(height: Np.s4),
+                      if (_posts.isNotEmpty)
+                        for (final p in _posts) ...[
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: Np.gutter),
+                            child: _PostRow(
+                              post: p,
+                              onTap: widget.onOpenDiscussions,
+                            ),
+                          ),
+                          const SizedBox(height: Np.s2),
+                        ]
+                      else
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: Np.gutter),
+                          child: _StartDiscussion(
+                            topics: _topics,
+                            onTap: widget.onOpenDiscussions,
+                          ),
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

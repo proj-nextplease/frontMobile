@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'design.dart';
 
 export 'design.dart';
+export 'neon_mesh.dart';
 export 'np_icons.dart';
 export 'widgets.dart';
 

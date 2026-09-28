@@ -62,21 +62,21 @@ class NpColors extends ThemeExtension<NpColors> {
   /// Chữ đặt trên dải đó.
   final Color onBand;
 
-  /// Chế độ tối. Xám TRUNG TÍNH, không ngả xanh — nền ngả xanh là mặc định của
-  /// mọi bộ giao diện tối và nó làm màu nhấn ấm bị xỉn.
+  /// Chế độ tối — Chuẩn theo ngôn ngữ thiết kế Neon Dark của webapp (nextplease.online).
+  /// Nền tối sâu #070A0F, bề mặt #0F1318 và màu nhấn neon lime/emerald #B9FF00 rực rỡ.
   static const dark = NpColors(
-    bg: Color(0xFF0B0B0D),
-    surface: Color(0xFF151518),
-    surfaceHi: Color(0xFF1E1E23),
-    ink: Color(0xFFFAFAFA),
-    muted: Color(0xFF86868E),
-    faint: Color(0xFF5A5A62),
-    line: Color(0x14FFFFFF),
-    acid: Color(0xFF2EE87F),
-    acidText: Color(0xFF3CEE8A),
-    onAcid: Color(0xFF07160D),
-    danger: Color(0xFFFF6B6B),
-    band: Color(0xFF1C1C22),
+    bg: Color(0xFF070A0F),
+    surface: Color(0xFF0F1318),
+    surfaceHi: Color(0xFF161D24),
+    ink: Color(0xFFFFFFFF),
+    muted: Color(0xA6E9F7F2),
+    faint: Color(0x61FFFFFF),
+    line: Color(0x18FFFFFF),
+    acid: Color(0xFFB9FF00),
+    acidText: Color(0xFFB9FF00),
+    onAcid: Color(0xFF070A0F),
+    danger: Color(0xFFFF5C5C),
+    band: Color(0xFF0F1318),
     onBand: Color(0xFFFAFAFA),
   );
 
