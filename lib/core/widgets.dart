@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'design.dart';
 import 'np_icons.dart';
 
+export 'neon_mesh.dart';
+
 /// Nút chính: nền acid phẳng, chữ mực.
 ///
 /// Phẳng chứ không gradient. Một màu bão hoà cao đặt đúng chỗ luôn tự tin hơn

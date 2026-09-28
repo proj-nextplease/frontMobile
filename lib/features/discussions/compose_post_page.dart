@@ -127,6 +127,8 @@ class _ComposePostPageState extends State<ComposePostPage> {
               ),
             ),
           ),
+        ],
+      ),
       body: Stack(
         fit: StackFit.expand,
         children: [

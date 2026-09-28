@@ -238,11 +238,12 @@ class _SubmitCredentialPageState extends State<SubmitCredentialPage> {
               child: Text(missing,
                   style: NpType.meta.copyWith(fontSize: 12.5, color: c.muted)),
             ),
-            ],
-          ),
+          ],
         ],
       ),
-    );
+    ],
+  ),
+);
   }
 }
 

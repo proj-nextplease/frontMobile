@@ -272,11 +272,12 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
               style: NpType.meta.copyWith(fontSize: 12, color: c.muted),
               textAlign: TextAlign.center,
             ),
-            ],
-          ),
+          ],
         ],
       ),
-    );
+    ],
+  ),
+);
   }
 
   /// Nói TRẠNG THÁI HIỆN TẠI NGHĨA LÀ GÌ, không chỉ lặp lại cái nhãn.

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+export 'neon_mesh.dart';
+
 /// Bảng màu, có hai biến thể sáng/tối.
 ///
 /// Dựng bằng ThemeExtension thay vì hằng số tĩnh: hằng số tĩnh không đổi được
