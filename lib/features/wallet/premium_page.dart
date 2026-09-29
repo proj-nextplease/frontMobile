@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/design.dart';
 import '../../core/np_icons.dart';
 import '../../core/widgets.dart';
+import '../credentials/credentials_page.dart';
+import '../profile/applications_page.dart';
 import 'wallet_page.dart' show fmtDate;
 import 'wallet_store.dart';
 
@@ -19,6 +21,9 @@ class PremiumPage extends StatefulWidget {
 }
 
 class _PremiumPageState extends State<PremiumPage> {
+  void _go(Widget page) =>
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+
   final _store = WalletStore.instance;
   String? _busy;
 
@@ -143,11 +148,13 @@ class _PremiumPageState extends State<PremiumPage> {
             note: 'trong ${_hours(p['boostDurationHours'])}',
             price: p['boostPriceNp'],
             where: 'Mở trong màn chi tiết đơn đã nộp',
+            onTap: () => _go(const ApplicationsPage()),
           ),
           _PriceLine(
             label: 'Mở Insight một tin',
             note: 'xem số người đã nộp và thứ hạng của bạn',
             price: p['insightPriceNp'],
+            onTap: () => _go(const ApplicationsPage()),
             // Insight chỉ mở được cho tin mình ĐÃ nộp đơn — backend chặn phần
             // còn lại — nên chỉ đường tới màn đơn, không phải màn tin.
             where: 'Mở trong màn chi tiết đơn đã nộp',
@@ -156,6 +163,7 @@ class _PremiumPageState extends State<PremiumPage> {
             label: 'Xác thực minh chứng nhanh',
             note: 'được duyệt trước hàng chờ',
             price: p['expressPriceNp'],
+            onTap: () => _go(const CredentialsPage()),
             where: 'Mở trong màn minh chứng, ở minh chứng đang chờ duyệt',
           ),
             ],
@@ -256,48 +264,68 @@ class _Card extends StatelessWidget {
   }
 }
 
+/// Một dòng dịch vụ mua lẻ.
+///
+/// Bấm được và dẫn thẳng tới màn thực hiện. Ba thứ này không mua được ngay
+/// tại đây vì mỗi thứ cần chọn một đối tượng cụ thể — đẩy đơn NÀO, xem
+/// Insight của tin NÀO, duyệt nhanh minh chứng NÀO — và màn này không biết.
+/// Nhưng bắt người dùng tự đi tìm màn đó thì cũng vô lý, nên ít nhất đưa họ
+/// tới đúng chỗ.
 class _PriceLine extends StatelessWidget {
   const _PriceLine({
     required this.label,
     required this.note,
     required this.price,
     required this.where,
+    required this.onTap,
   });
 
   final String label;
   final String note;
   final int? price;
   final String where;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: Np.s2),
-      padding: const EdgeInsets.symmetric(
-          horizontal: Np.s4, vertical: Np.s3),
-      decoration: Np.card(c, radius: Np.rMd),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: Np.s2),
+        padding: const EdgeInsets.symmetric(
+            horizontal: Np.s4, vertical: Np.s3),
+        decoration: Np.card(c, radius: Np.rMd),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: NpType.body.copyWith(
+                          color: c.ink, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 2),
+                  Text('$note · $where',
+                      style: NpType.meta.copyWith(color: c.muted)),
+                ],
+              ),
+            ),
+            const SizedBox(width: Np.s3),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(label,
+                Text(price == null ? '—' : '$price NP',
                     style: NpType.body.copyWith(
-                        color: c.ink, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 2),
-                Text('$note · $where',
-                    style: NpType.meta.copyWith(color: c.muted)),
+                        color: c.ink, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 4),
+                NpIco(NpIcon.arrow, size: 14, color: c.acidText),
               ],
             ),
-          ),
-          const SizedBox(width: Np.s3),
-          Text(price == null ? '—' : '$price NP',
-              style: NpType.body.copyWith(
-                  color: c.ink, fontWeight: FontWeight.w700)),
-        ],
+          ],
+        ),
       ),
     );
   }
