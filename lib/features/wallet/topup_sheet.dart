@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/api_client.dart';
 import '../../core/design.dart';
 import '../../core/widgets.dart';
+import 'payment_sheet.dart';
+import 'topup_success_sheet.dart';
 import 'wallet_store.dart';
 
-/// Màn nạp NP.
+/// Màn chọn số tiền nạp NP.
 ///
-/// ⚠️ ĐÂY LÀ LUỒNG GIẢ LẬP. Backend ghi payment_requests với provider 'MOCK',
-/// status 'PAID' ngay lập tức rồi cộng thẳng vào ví — không có cổng thanh
-/// toán, không thu một đồng nào.
+/// Tiền thật, qua PayOS. Bấm nút là tạo đơn rồi mở [PaymentSheet] để chuyển
+/// khoản; NP chỉ vào ví khi PayOS báo về backend đã nhận được tiền.
 ///
-/// Vì vậy dòng cảnh báo đặt NGAY TRÊN nút bấm, không phải cuối trang. Một
-/// luồng nạp tiền trông như thật mà không thu tiền là thứ nguy hiểm nhất có
-/// thể dựng trong một app; nếu đã dựng thì nhãn phải nằm ở chỗ người dùng
-/// buộc phải đọc trước khi bấm, chứ không phải chỗ họ cuộn qua.
+/// Trước đây đây là luồng giả lập cộng thẳng NP vào ví, và cả màn hình có một
+/// nhãn cảnh báo to đặt ngay trên nút. Nhãn đó đã bỏ cùng lúc với luồng giả
+/// lập — để lại thì thành nói dối theo chiều ngược lại.
 class TopUpSheet extends StatefulWidget {
   const TopUpSheet({super.key});
 
@@ -54,16 +55,34 @@ class _TopUpSheetState extends State<TopUpSheet> {
       _error = null;
     });
 
-    final err = await _store.topUp(_amount);
-
-    if (!mounted) return;
-    if (err != null) {
+    final TopUpRequest request;
+    try {
+      request = await _store.createTopUp(_amount);
+    } on ApiException catch (e) {
+      if (!mounted) return;
       setState(() {
         _busy = false;
-        _error = err;
+        _error = e.message;
       });
       return;
     }
+
+    if (!mounted) return;
+    setState(() => _busy = false);
+
+    // Màn chuyển khoản trả về số NP đã nạp, hoặc null nếu huỷ/hết hạn.
+    final paid = await PaymentSheet.show(context, request);
+    if (!mounted) return;
+
+    if (paid == null) {
+      // Huỷ hoặc hết hạn: ở lại màn chọn số tiền để nạp lại ngay được.
+      // Đóng hẳn ở đây thì người dùng phải mở lại từ đầu chỉ vì đổi ý một lần.
+      setState(() => _error = null);
+      return;
+    }
+
+    await TopUpSuccessSheet.show(context, amountNp: paid, balance: _store.balance);
+    if (!mounted) return;
     Navigator.of(context).pop(true);
   }
 
@@ -160,31 +179,11 @@ class _TopUpSheetState extends State<TopUpSheet> {
                 Text(_error!, style: NpType.meta.copyWith(color: c.danger)),
               ],
 
-              // ── Nhãn cảnh báo, ngay trên nút ─────────────────────────
-              const SizedBox(height: Np.s5),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(Np.s4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF59E0B).withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(Np.rMd),
-                  border: Border.all(
-                      color: const Color(0xFFF59E0B).withValues(alpha: 0.4)),
-                ),
-                child: Text(
-                  'Bản demo — KHÔNG thu tiền thật.\n'
-                  'Chưa có cổng thanh toán nào được nối. Bấm nút bên dưới là '
-                  'NP được cộng thẳng vào ví, không có giao dịch nào diễn ra.',
-                  style: NpType.meta
-                      .copyWith(color: const Color(0xFF78350F), height: 1.5),
-                ),
-              ),
-
               const SizedBox(height: Np.s4),
               AcidButton(
                 label: _busy
-                    ? 'Đang xử lý…'
-                    : 'Cộng ${WalletStore.money(_amount)} NP (demo)',
+                    ? 'Đang tạo đơn…'
+                    : 'Nạp ${WalletStore.money(_amount)} NP',
                 busy: _busy,
                 enabled: !_busy && _amount >= _store.minTopupVnd,
                 onTap: _submit,

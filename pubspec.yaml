@@ -57,6 +57,7 @@ dependencies:
   # nhưng dùng nhờ gói của người khác thì một bản nâng cấp của flutter_svg có
   # thể làm mất nó mà không báo gì — nên khai báo thẳng.
   path_parsing: ^1.1.0
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:

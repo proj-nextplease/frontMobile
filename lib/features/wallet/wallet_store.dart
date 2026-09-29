@@ -90,24 +90,47 @@ class WalletStore extends ChangeNotifier {
   Future<String?> subscribeMatchAlert() =>
       _spend('/premium/match-alert/subscribe');
 
-  /// Nạp NP.
+  /// Tạo một yêu cầu nạp qua PayOS.
   ///
-  /// ⚠️ Backend hiện là GIẢ LẬP: POST /wallet/topup ghi payment_requests với
-  /// provider 'MOCK', status 'PAID' ngay lập tức rồi cộng thẳng vào ví. Không
-  /// có cổng thanh toán nào, không thu một đồng nào. Mọi màn hình gọi hàm này
-  /// PHẢI nói rõ điều đó ra — một luồng nạp tiền trông như thật mà không thu
-  /// tiền là thứ nguy hiểm nhất có thể dựng trong app.
+  /// CHƯA cộng NP. Trả về thông tin chuyển khoản để màn thanh toán hiện lên;
+  /// tiền chỉ vào ví khi PayOS gọi webhook về backend. App không bao giờ tự
+  /// cộng tiền dựa trên bất cứ thứ gì nó tự quan sát được.
   ///
-  /// Trả null khi xong, chuỗi lỗi khi hỏng.
-  Future<String?> topUp(int amountVnd) async {
+  /// Ném [ApiException] khi hỏng, để màn gọi tự quyết hiển thị ra sao.
+  Future<TopUpRequest> createTopUp(int amountVnd) async {
     if (amountVnd < minTopupVnd) {
-      return 'Số tiền nạp tối thiểu là ${_money(minTopupVnd)} VND.';
+      throw ApiException('Số tiền nạp tối thiểu là ${_money(minTopupVnd)} VND.');
     }
     if (amountVnd > 10000000) {
-      return 'Số tiền nạp tối đa là ${_money(10000000)} VND.';
+      throw ApiException('Số tiền nạp tối đa là ${_money(10000000)} VND.');
     }
-    return _spend('/wallet/topup', body: {'amountVnd': amountVnd});
+    final res = await _api.post('/payments/payos/create',
+        body: {'amountVnd': amountVnd});
+    return TopUpRequest.fromJson(Map<String, dynamic>.from(res as Map));
   }
+
+  /// Hỏi trạng thái một yêu cầu nạp: PENDING / PAID / CANCELLED / EXPIRED...
+  ///
+  /// Đây là nguồn sự thật duy nhất cho câu hỏi "tiền vào chưa". Việc chuyển
+  /// khoản diễn ra trong app ngân hàng — app này không hề hay biết, nên cách
+  /// duy nhất để biết là hỏi máy chủ.
+  Future<String> topUpStatus(int orderCode) async {
+    final res = await _api.get('/payments/payos/status',
+        query: {'orderCode': '$orderCode'});
+    final map = Map<String, dynamic>.from(res as Map);
+    return (map['status'] ?? 'PENDING').toString();
+  }
+
+  /// Huỷ một yêu cầu nạp đang chờ.
+  ///
+  /// Backend chỉ huỷ khi đơn còn PENDING, nên gọi nhầm lúc tiền vừa vào cũng
+  /// không làm mất khoản đã trả.
+  Future<void> cancelTopUp(int orderCode) async {
+    await _api.post('/payments/payos/cancel', body: {'orderCode': orderCode});
+  }
+
+  /// Nạp lại số dư sau khi thanh toán xong.
+  Future<void> refreshAfterTopUp() => hydrate();
 
   /// Mua Premium Pass.
   Future<String?> buyPremium() => _spend('/wallet/subscribe');
@@ -155,6 +178,49 @@ class WalletStore extends ChangeNotifier {
   static String money(int v) => _money(v);
   static DateTime? _date(Object? v) =>
       v == null ? null : DateTime.tryParse('$v')?.toLocal();
+}
+
+/// Thông tin một yêu cầu nạp đang chờ trả tiền.
+class TopUpRequest {
+  const TopUpRequest({
+    required this.orderCode,
+    required this.amountVnd,
+    required this.accountNumber,
+    required this.accountName,
+    required this.bin,
+    required this.description,
+    required this.qrCode,
+    required this.checkoutUrl,
+  });
+
+  /// Mã đơn dạng số. PayOS dùng chính nó để báo về, và app dùng nó để hỏi
+  /// trạng thái.
+  final int orderCode;
+
+  final int amountVnd;
+  final String accountNumber;
+  final String accountName;
+  final String bin;
+
+  /// Nội dung chuyển khoản. Đổi nội dung là khoản tiền mất đường về đúng đơn.
+  final String description;
+
+  /// Chuỗi VietQR thô — app tự vẽ thành mã, không phải ảnh tải về.
+  final String qrCode;
+
+  /// Trang thanh toán của PayOS, giữ làm đường lùi.
+  final String checkoutUrl;
+
+  factory TopUpRequest.fromJson(Map<String, dynamic> m) => TopUpRequest(
+        orderCode: WalletStore._int(m['orderCode']),
+        amountVnd: WalletStore._int(m['amountVnd']),
+        accountNumber: '${m['accountNumber'] ?? ''}',
+        accountName: '${m['accountName'] ?? ''}',
+        bin: '${m['bin'] ?? ''}',
+        description: '${m['description'] ?? ''}',
+        qrCode: '${m['qrCode'] ?? ''}',
+        checkoutUrl: '${m['checkoutUrl'] ?? ''}',
+      );
 }
 
 class WalletTx {
