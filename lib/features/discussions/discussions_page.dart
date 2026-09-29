@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/theme.dart';
 import '../profile/notification_bell.dart';
+import '../wallet/wallet_chip.dart';
 import 'compose_post_page.dart';
 import 'discussion_models.dart';
 import 'discussion_widgets.dart';
@@ -192,7 +193,10 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                       ),
                       // Chuông đứng TRƯỚC nút Viết bài: nút hành động chính
                       // nên nằm ngoài cùng bên phải, chỗ ngón cái tới dễ nhất.
-                      if (!widget.isGuest) const NotificationBell(size: 20),
+                      if (!widget.isGuest) ...[
+                        const WalletChip(size: 20),
+                        const NotificationBell(size: 20),
+                      ],
                       const SizedBox(width: Np.s1),
                       _ComposeButton(onTap: _compose),
                     ],

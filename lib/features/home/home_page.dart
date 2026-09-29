@@ -15,6 +15,7 @@ import '../profile/edit_profile_page.dart';
 import '../profile/gamification_store.dart';
 import '../profile/me_store.dart';
 import '../profile/notification_bell.dart';
+import '../wallet/wallet_chip.dart';
 import '../profile/quest_board.dart';
 import '../profile/notifications_store.dart';
 
@@ -612,7 +613,7 @@ class _Greeting extends StatelessWidget {
           ),
         ],
         if (showBell) ...[
-          const SizedBox(width: Np.s1),
+          const WalletChip(),
           const NotificationBell(),
         ],
       ],

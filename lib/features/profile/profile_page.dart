@@ -20,6 +20,7 @@ import 'edit_profile_page.dart';
 import 'gamification_store.dart';
 import 'me_store.dart';
 import 'notification_bell.dart';
+import '../wallet/wallet_chip.dart';
 import 'notifications_store.dart';
 import 'portfolio_page.dart';
 import 'quest_board.dart';
@@ -462,6 +463,7 @@ class _Identity extends StatelessWidget {
                 ],
               ),
             ),
+            const WalletChip(),
             const NotificationBell(),
           ],
         ),
