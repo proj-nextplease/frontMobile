@@ -44,7 +44,7 @@ class _WalletPageState extends State<WalletPage> {
       backgroundColor: c.surfaceHi,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Np.rSm)),
-      content: Text('Đã cộng NP (bản demo, không thu tiền thật).',
+      content: Text('Đã cộng NP vào ví.',
           style: NpType.body.copyWith(fontSize: 14, color: c.ink)),
     ));
   }
@@ -164,12 +164,6 @@ class _BalanceCard extends StatelessWidget {
                   Text('Nạp NP',
                       style: NpType.button
                           .copyWith(fontSize: 14, color: c.onBand)),
-                  const SizedBox(width: Np.s2),
-                  // Nói ngay trên nút, không đợi mở màn nạp mới biết.
-                  Text('· demo',
-                      style: NpType.meta.copyWith(
-                          fontSize: 12,
-                          color: c.onBand.withValues(alpha: 0.65))),
                 ],
               ),
             ),

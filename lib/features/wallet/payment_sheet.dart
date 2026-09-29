@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:gal/gal.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -74,6 +76,7 @@ class _PaymentSheetState extends State<PaymentSheet> with WidgetsBindingObserver
 
   Duration _left = _expiry;
   bool _closing = false;
+  bool _saving = false;
   String? _error;
 
   @override
@@ -154,11 +157,54 @@ class _PaymentSheetState extends State<PaymentSheet> with WidgetsBindingObserver
     _store.cancelTopUp(orderCode).catchError((_) {});
   }
 
+  /// Lưu ảnh mã QR vào thư viện ảnh.
+  ///
+  /// Đây là đường thoát cho chuyện điện thoại không quét được màn hình của
+  /// chính nó: app ngân hàng nào cũng cho chọn ảnh QR từ thư viện, và quét từ
+  /// ảnh thì điền đủ cả số tiền lẫn nội dung — không phải gõ gì.
+  ///
+  /// Vẽ lại mã ở kích thước lớn hơn nhiều so với trên màn hình. Ảnh 150px chụp
+  /// theo màn hình thì app ngân hàng hay đọc trượt; vẽ riêng ở 900px thì không.
+  Future<void> _saveQr() async {
+    if (_saving) return;
+    setState(() => _saving = true);
+    try {
+      final painter = QrPainter(
+        data: widget.request.qrCode,
+        version: QrVersions.auto,
+        // Đen trên trắng, không theo màu nền app — tô màu là mã không đọc được.
+        eyeStyle: const QrEyeStyle(
+            eyeShape: QrEyeShape.square, color: Color(0xFF000000)),
+        dataModuleStyle: const QrDataModuleStyle(
+            dataModuleShape: QrDataModuleShape.square, color: Color(0xFF000000)),
+      );
+      final data = await painter.toImageData(900, format: ui.ImageByteFormat.png);
+      if (data == null) throw Exception('không dựng được ảnh');
+      await Gal.putImageBytes(
+        Uint8List.view(data.buffer),
+        name: 'nextplease-qr-${widget.request.orderCode}',
+      );
+      if (!mounted) return;
+      _toast('Đã lưu ảnh QR. Mở app ngân hàng và chọn quét QR từ thư viện ảnh.');
+    } catch (_) {
+      if (!mounted) return;
+      /* Hay gặp nhất là người dùng từ chối quyền truy cập ảnh. Không chặn
+         đường nào cả — chuyển khoản thủ công vẫn dùng được bình thường. */
+      _toast('Không lưu được ảnh. Bạn vẫn có thể chuyển khoản thủ công ở trên.');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  void _toast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 4)),
+    );
+  }
+
   void _copy(String label, String value) {
     Clipboard.setData(ClipboardData(text: value));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Đã sao chép $label'), duration: const Duration(seconds: 2)),
-    );
+    _toast('Đã sao chép $label');
   }
 
   @override
@@ -305,9 +351,38 @@ class _PaymentSheetState extends State<PaymentSheet> with WidgetsBindingObserver
                           backgroundColor: Colors.white,
                         ),
                       ),
+                      const SizedBox(height: Np.s3),
+                      GestureDetector(
+                        onTap: _saving ? null : _saveQr,
+                        behavior: HitTestBehavior.opaque,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: Np.s5, vertical: Np.s3),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(Np.rPill),
+                            border: Border.all(color: c.acid),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.download_rounded,
+                                  size: 16, color: c.acidText),
+                              const SizedBox(width: Np.s2),
+                              Text(_saving ? 'Đang lưu…' : 'Lưu ảnh QR',
+                                  style: NpType.body.copyWith(
+                                      color: c.acidText,
+                                      fontWeight: FontWeight.w700)),
+                            ],
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: Np.s2),
-                      Text('Hoặc quét mã này bằng máy khác',
-                          style: NpType.meta.copyWith(color: c.muted)),
+                      Text(
+                        'Lưu ảnh rồi mở app ngân hàng, chọn quét QR từ thư '
+                        'viện ảnh — thông tin sẽ tự điền.',
+                        textAlign: TextAlign.center,
+                        style: NpType.meta.copyWith(color: c.muted, height: 1.45),
+                      ),
                     ],
                   ),
                 ),

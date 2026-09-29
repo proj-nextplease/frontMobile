@@ -13,6 +13,8 @@
 	<string>Dùng camera để chụp ảnh minh chứng cho hoạt động bạn đã tham gia.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Chọn ảnh từ thư viện để làm minh chứng cho hoạt động bạn đã tham gia.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Lưu ảnh mã QR thanh toán vào thư viện để bạn quét bằng app ngân hàng.</string>
 	<key>CFBundleDisplayName</key>
 	<string>nextplease</string>
 	<key>CFBundleExecutable</key>
