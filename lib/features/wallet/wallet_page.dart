@@ -275,7 +275,7 @@ class _TxRow extends StatelessWidget {
                 Text(
                   tx.createdAt == null
                       ? 'Số dư sau: ${tx.balanceAfter} NP'
-                      : '${fmtDate(tx.createdAt!)} · còn ${tx.balanceAfter} NP',
+                      : '${fmtDateTime(tx.createdAt!)} · còn ${tx.balanceAfter} NP',
                   style: NpType.meta.copyWith(color: c.muted),
                 ),
               ],
@@ -312,6 +312,18 @@ class _Placeholder extends StatelessWidget {
 
 String fmtDate(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+/// Ngày KÈM giờ, dùng cho lịch sử giao dịch.
+///
+/// Tách khỏi [fmtDate] chứ không sửa thẳng hàm đó: fmtDate còn dùng cho hạn
+/// Premium và hạn Job Match Alert, mà "Đến 29/10/2026 14:05" thì con số giờ ở
+/// đó vô nghĩa.
+///
+/// Giờ quan trọng ở lịch sử vì trong cùng một ngày có thể có nhiều giao dịch —
+/// nạp tiền, mua gói, rồi hoàn tiền — và không có giờ thì không xếp được thứ
+/// tự, cũng không đối chiếu được với biên lai ngân hàng.
+String fmtDateTime(DateTime d) =>
+    '${fmtDate(d)} ${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
 
 /// Nhãn tiếng Việt cho mã giao dịch. Chỉ dùng khi backend không kèm `reason`.
 String txLabel(String type) => switch (type) {
