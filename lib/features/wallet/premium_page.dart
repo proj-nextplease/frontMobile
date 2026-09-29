@@ -146,15 +146,17 @@ class _PremiumPageState extends State<PremiumPage> {
           ),
           _PriceLine(
             label: 'Mở Insight một tin',
-            note: 'xem số người đã nộp và mức độ cạnh tranh',
+            note: 'xem số người đã nộp và thứ hạng của bạn',
             price: p['insightPriceNp'],
-            where: 'Mở trong màn chi tiết tin',
+            // Insight chỉ mở được cho tin mình ĐÃ nộp đơn — backend chặn phần
+            // còn lại — nên chỉ đường tới màn đơn, không phải màn tin.
+            where: 'Mở trong màn chi tiết đơn đã nộp',
           ),
           _PriceLine(
             label: 'Xác thực minh chứng nhanh',
             note: 'được duyệt trước hàng chờ',
             price: p['expressPriceNp'],
-            where: 'Mở trong màn minh chứng',
+            where: 'Mở trong màn minh chứng, ở minh chứng đang chờ duyệt',
           ),
             ],
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
 import '../jobs/opportunity_labels.dart';
+import '../wallet/wallet_store.dart';
 import 'credential.dart';
 import 'credentials_store.dart';
 import 'submit_credential_page.dart';
@@ -15,6 +16,74 @@ class CredentialsPage extends StatefulWidget {
 }
 
 class _CredentialsPageState extends State<CredentialsPage> {
+  /// Id minh chứng đang xử lý duyệt nhanh. Null là không có cái nào.
+  String? _expressBusyId;
+
+  Future<void> _express(Credential item) async {
+    final w = WalletStore.instance;
+    final price = w.prices['expressPriceNp'] ?? 0;
+
+    if (w.balance < price) {
+      _toast('Bạn còn thiếu ${price - w.balance} NP để duyệt nhanh.', ok: false);
+      return;
+    }
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final c = Np.of(ctx);
+        return AlertDialog(
+          backgroundColor: c.surface,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(Np.rLg)),
+          title: Text('Duyệt nhanh minh chứng này?',
+              style: NpType.title.copyWith(color: c.ink)),
+          content: Text(
+              '"${item.projectName}" sẽ được xếp lên trước hàng chờ thẩm định. '
+              'Trừ $price NP.\n\n'
+              'Nếu minh chứng bị từ chối, phí này được hoàn lại vào ví.',
+              style: NpType.body.copyWith(color: c.muted)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text('Huỷ', style: NpType.button.copyWith(color: c.muted)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text('Duyệt nhanh',
+                  style: NpType.button.copyWith(color: c.acidText)),
+            ),
+          ],
+        );
+      },
+    );
+    if (ok != true || !mounted) return;
+
+    setState(() => _expressBusyId = item.id);
+    final err = await WalletStore.instance.expressVerification(item.id);
+    if (!mounted) return;
+
+    /* Nạp lại danh sách để cờ `express` về từ máy chủ, thay vì tự sửa trong
+       bộ nhớ. Tự sửa thì màn hình nói đã mua trong khi thực tế còn phụ thuộc
+       vào việc backend ghi được hay không. */
+    if (err == null) await CredentialsStore.instance.hydrate();
+    if (!mounted) return;
+    setState(() => _expressBusyId = null);
+    _toast(err ?? 'Đã đăng ký duyệt nhanh.', ok: err == null);
+  }
+
+  void _toast(String msg, {required bool ok}) {
+    final c = Np.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor: ok ? c.surfaceHi : c.danger,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Np.rSm)),
+      content: Text(msg,
+          style: NpType.body.copyWith(
+              fontSize: 14, color: ok ? c.ink : Colors.white)),
+    ));
+  }
+
   final _store = CredentialsStore.instance;
 
   @override
@@ -138,7 +207,11 @@ class _CredentialsPageState extends State<CredentialsPage> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 itemCount: items.length,
                 separatorBuilder: (_, _) => const SizedBox(height: Np.s3),
-                itemBuilder: (_, i) => _Card(item: items[i]),
+                itemBuilder: (_, i) => _Card(
+                  item: items[i],
+                  busy: _expressBusyId == items[i].id,
+                  onExpress: () => _express(items[i]),
+                ),
               ),
         ),
       ],
@@ -148,8 +221,10 @@ class _CredentialsPageState extends State<CredentialsPage> {
 }
 
 class _Card extends StatelessWidget {
-  const _Card({required this.item});
+  const _Card({required this.item, required this.onExpress, this.busy = false});
   final Credential item;
+  final VoidCallback onExpress;
+  final bool busy;
 
   /// Ba mức màu, không phải bốn: "Cần bổ sung" và "Bị từ chối" đều là việc
   /// người dùng phải làm gì đó, nên cùng một màu cảnh báo. Tô mỗi trạng thái
@@ -164,6 +239,7 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Np.of(context);
     final tint = _tint(c);
+    final expressPrice = WalletStore.instance.prices['expressPriceNp'];
 
     return Container(
       padding: const EdgeInsets.all(Np.s4),
@@ -236,6 +312,48 @@ class _Card extends StatelessWidget {
               child: Text(item.rejectReason!,
                   style: NpType.meta.copyWith(fontSize: 12.5, color: c.ink)),
             ),
+          ],
+
+          /* Duyệt nhanh chỉ có nghĩa với minh chứng ĐANG CHỜ. Đã duyệt thì
+             không còn gì để đẩy nhanh, bị từ chối thì trả tiền cũng vô ích —
+             backend cũng từ chối đúng như vậy, nên hiện nút ở đó chỉ dẫn
+             người dùng tới một thông báo lỗi. */
+          if (item.status == 'PENDING') ...[
+            const SizedBox(height: Np.s3),
+            if (item.express)
+              Row(
+                children: [
+                  NpIco(NpIcon.bolt, size: 14, color: c.acidText),
+                  const SizedBox(width: Np.s2),
+                  Text('Đang được duyệt nhanh',
+                      style: NpType.meta.copyWith(
+                          fontSize: 12,
+                          color: c.acidText,
+                          fontWeight: FontWeight.w600)),
+                ],
+              )
+            else
+              GestureDetector(
+                onTap: busy ? null : onExpress,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: Np.s3),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(Np.rPill),
+                    border: Border.all(color: c.acid),
+                  ),
+                  child: Text(
+                    busy
+                        ? '…'
+                        : 'Duyệt nhanh 24h'
+                            '${expressPrice == null ? '' : ' · $expressPrice NP'}',
+                    style: NpType.button.copyWith(
+                        fontSize: 13.5, color: c.acidText),
+                  ),
+                ),
+              ),
           ],
 
           if (item.createdAt != null) ...[

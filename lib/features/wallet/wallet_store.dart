@@ -140,6 +140,34 @@ class WalletStore extends ChangeNotifier {
       _spend('/premium/boost?applicationId=$applicationId'
           '&applicationType=${isQuest ? 'QUEST' : 'JOB'}');
 
+  /// Mở Insight cho một tin đã ứng tuyển. Trừ NP.
+  ///
+  /// `targetId` là id của TIN (job/quest), không phải id đơn ứng tuyển —
+  /// thống kê nói về cuộc cạnh tranh ở tin đó, và nhiều người cùng xem chung
+  /// một con số.
+  Future<String?> unlockInsight(String targetId, {required bool isQuest}) =>
+      _spend('/premium/insight/unlock?targetId=$targetId'
+          '&applicationType=${isQuest ? 'QUEST' : 'JOB'}');
+
+  /// Đọc số liệu Insight của một tin.
+  ///
+  /// Gọi được cả khi CHƯA mở khoá: backend trả `unlocked: false` kèm tổng số
+  /// ứng viên, còn thứ hạng và phân vị thì về 0. Nhờ vậy màn hình khoe được
+  /// một con số thật trước khi mời trả tiền, thay vì một ô trống.
+  Future<InsightData?> insight(String targetId, {required bool isQuest}) async {
+    try {
+      final res = await _api.get('/premium/insight/$targetId',
+          query: {'applicationType': isQuest ? 'QUEST' : 'JOB'});
+      return InsightData.fromJson(Map<String, dynamic>.from(res as Map));
+    } on ApiException {
+      return null;
+    }
+  }
+
+  /// Đăng ký duyệt nhanh cho một minh chứng đang chờ. Trừ NP.
+  Future<String?> expressVerification(String experienceId) =>
+      _spend('/premium/express?experienceId=$experienceId');
+
   Future<String?> _spend(String path, {Object? body}) async {
     try {
       await _api.post(path, body: body);
@@ -178,6 +206,35 @@ class WalletStore extends ChangeNotifier {
   static String money(int v) => _money(v);
   static DateTime? _date(Object? v) =>
       v == null ? null : DateTime.tryParse('$v')?.toLocal();
+}
+
+/// Số liệu cạnh tranh của một tin tuyển dụng.
+class InsightData {
+  const InsightData({
+    required this.unlocked,
+    required this.totalApplicants,
+    required this.averageRs,
+    required this.myRank,
+    required this.percentile,
+  });
+
+  /// Chưa mở khoá thì chỉ `totalApplicants` có nghĩa; các số còn lại về 0.
+  final bool unlocked;
+
+  final int totalApplicants;
+  final int averageRs;
+  final int myRank;
+
+  /// Phần trăm ứng viên mà mình xếp trên. Càng cao càng tốt.
+  final int percentile;
+
+  factory InsightData.fromJson(Map<String, dynamic> m) => InsightData(
+        unlocked: m['unlocked'] == true,
+        totalApplicants: WalletStore._int(m['totalApplicants']),
+        averageRs: WalletStore._int(m['averageRs']),
+        myRank: WalletStore._int(m['myRank']),
+        percentile: WalletStore._int(m['percentile']),
+      );
 }
 
 /// Thông tin một yêu cầu nạp đang chờ trả tiền.

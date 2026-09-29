@@ -31,10 +31,93 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
   late ApplicationItem _item = widget.item;
   bool _busy = false;
 
-  /// Chỉ là trạng thái TRONG PHIÊN. /me/applications không trả về cờ đã-boost
-  /// nên mở lại màn này sau đó, nút sẽ hiện lại. Sửa đúng phải làm ở backend;
-  /// tới lúc đó thì ít nhất không mời người dùng trả tiền hai lần liên tiếp.
-  bool _boosted = false;
+  /// Đã đẩy hay chưa.
+  ///
+  /// Khởi tạo từ `boostedUntil` do máy chủ trả về — ghi chú cũ ở đây nói
+  /// /me/applications không trả cờ này, nhưng nó có trả (`boosted_until`),
+  /// chỉ là chưa ai đọc. Nhờ vậy mở lại màn này không còn mời trả tiền lần
+  /// nữa cho đơn đang được đẩy.
+  late bool _boosted = _item.boostedUntil != null &&
+      _item.boostedUntil!.isAfter(DateTime.now());
+
+  InsightData? _insight;
+  bool _insightLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInsight();
+  }
+
+  Future<void> _loadInsight() async {
+    final targetId = _item.targetId;
+    if (targetId == null) {
+      if (mounted) setState(() => _insightLoading = false);
+      return;
+    }
+    final data = await WalletStore.instance
+        .insight(targetId, isQuest: _item.isQuest);
+    if (!mounted) return;
+    setState(() {
+      _insight = data;
+      _insightLoading = false;
+    });
+  }
+
+  Future<void> _unlockInsight() async {
+    final w = WalletStore.instance;
+    final targetId = _item.targetId;
+    if (targetId == null) return;
+    final price = w.prices['insightPriceNp'] ?? 0;
+
+    if (w.balance < price) {
+      _toast('Bạn còn thiếu ${price - w.balance} NP để mở Insight.', ok: false);
+      return;
+    }
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final c = Np.of(ctx);
+        return AlertDialog(
+          backgroundColor: c.surface,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(Np.rLg)),
+          title: Text('Mở Insight tin này?',
+              style: NpType.title.copyWith(color: c.ink)),
+          content: Text(
+              'Bạn sẽ thấy thứ hạng của mình, điểm uy tín trung bình của các '
+              'ứng viên và phần trăm bạn xếp trên. Trừ $price NP.',
+              style: NpType.body.copyWith(color: c.muted)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text('Huỷ', style: NpType.button.copyWith(color: c.muted)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text('Mở Insight',
+                  style: NpType.button.copyWith(color: c.acidText)),
+            ),
+          ],
+        );
+      },
+    );
+    if (ok != true || !mounted) return;
+
+    setState(() => _busy = true);
+    final err = await w.unlockInsight(targetId, isQuest: _item.isQuest);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (err != null) {
+      _toast(err, ok: false);
+      return;
+    }
+    /* Mở khoá xong phải đọc lại: lệnh mở khoá chỉ trừ tiền, số liệu thật nằm
+       ở lần đọc sau đó. */
+    await _loadInsight();
+    if (mounted) _toast('Đã mở Insight cho tin này.', ok: true);
+  }
 
   Future<void> _withdraw() async {
     final ok = await showDialog<bool>(
@@ -249,6 +332,17 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
               onBoost: _boost,
             ),
           ],
+
+          /* Insight hiện cả khi đơn đã đóng: biết mình đứng thứ mấy vẫn có
+             nghĩa sau khi có kết quả, thậm chí còn có nghĩa hơn. */
+          if (!_insightLoading && _insight != null) ...[
+            const SizedBox(height: Np.s4),
+            _InsightCard(
+              data: _insight!,
+              busy: _busy,
+              onUnlock: _unlockInsight,
+            ),
+          ],
           if (_item.canWithdraw) ...[
             const SizedBox(height: Np.s8),
             GestureDetector(
@@ -453,6 +547,129 @@ class _BoostCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Số liệu cạnh tranh của tin đã ứng tuyển.
+///
+/// Khi chưa mở khoá vẫn hiện TỔNG SỐ ỨNG VIÊN — con số đó backend trả về
+/// miễn phí. Khoe một con số thật rồi mới mời trả tiền thì người dùng biết
+/// mình đang mua gì; che hết rồi bảo "trả tiền đi" thì chỉ là một ô trống có
+/// giá.
+class _InsightCard extends StatelessWidget {
+  const _InsightCard({
+    required this.data,
+    required this.busy,
+    required this.onUnlock,
+  });
+
+  final InsightData data;
+  final bool busy;
+  final VoidCallback onUnlock;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final price = WalletStore.instance.prices['insightPriceNp'];
+
+    return Container(
+      padding: const EdgeInsets.all(Np.s4),
+      decoration: Np.card(c, hi: true),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              NpIco(NpIcon.star, size: 20, color: c.ink),
+              const SizedBox(width: Np.s3),
+              Expanded(
+                child: Text('Mức độ cạnh tranh',
+                    style: NpType.body
+                        .copyWith(color: c.ink, fontWeight: FontWeight.w600)),
+              ),
+              Text('${data.totalApplicants} ứng viên',
+                  style: NpType.meta.copyWith(color: c.muted)),
+            ],
+          ),
+
+          if (data.unlocked) ...[
+            const SizedBox(height: Np.s4),
+            Row(
+              children: [
+                Expanded(
+                  child: _Stat(
+                    value: data.myRank > 0 ? '#${data.myRank}' : '—',
+                    label: 'Thứ hạng của bạn',
+                    accent: true,
+                  ),
+                ),
+                Expanded(
+                  child: _Stat(
+                    value: '${data.percentile}%',
+                    label: 'Bạn xếp trên',
+                  ),
+                ),
+                Expanded(
+                  child: _Stat(
+                    value: '${data.averageRs}',
+                    label: 'Uy tín trung bình',
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            const SizedBox(height: Np.s2),
+            Text(
+              'Mở khoá để xem bạn đứng thứ mấy và điểm uy tín trung bình của '
+              'những người cùng nộp.',
+              style: NpType.meta.copyWith(color: c.muted, height: 1.45),
+            ),
+            const SizedBox(height: Np.s4),
+            GestureDetector(
+              onTap: busy ? null : onUnlock,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: Np.s3),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: c.acid,
+                  borderRadius: BorderRadius.circular(Np.rPill),
+                ),
+                child: Text(
+                  busy ? '…' : (price == null ? 'Mở Insight' : 'Mở Insight · $price NP'),
+                  style: NpType.button.copyWith(fontSize: 14, color: c.onAcid),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.value, required this.label, this.accent = false});
+
+  final String value;
+  final String label;
+  final bool accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value,
+            style: NpType.title.copyWith(
+                color: accent ? c.acidText : c.ink,
+                fontWeight: FontWeight.w800)),
+        const SizedBox(height: 2),
+        Text(label, style: NpType.meta.copyWith(color: c.muted)),
+      ],
     );
   }
 }
