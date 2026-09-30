@@ -51,7 +51,7 @@ class NpMascot {
     ...candidateMascots,
     NpMascot(
       id: 'frog',
-      label: 'NextPlease Frog',
+      label: 'Fonlio Frog',
       gender: 'neutral',
       description: 'Linh vật biểu tượng vui nhộn của hệ sinh thái.',
     ),

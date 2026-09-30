@@ -142,13 +142,13 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: Np.s6),
 
-              ClipRRect(
-                borderRadius: BorderRadius.circular(14),
+              Align(
+                alignment: Alignment.centerLeft,
                 child: Image.asset(
-                  'assets/images/logo.png',
-                  width: 52,
-                  height: 52,
-                  fit: BoxFit.cover,
+                  'assets/images/logoland4.png',
+                  height: 32,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.medium,
                 ),
               ),
               const SizedBox(height: Np.s4),

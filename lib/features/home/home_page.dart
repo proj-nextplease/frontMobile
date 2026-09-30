@@ -573,8 +573,12 @@ class _Greeting extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Text('nextplease',
-                      style: NpType.label.copyWith(color: c.muted)),
+                  Image.asset(
+                    'assets/images/logoland4.png',
+                    height: 16,
+                    fit: BoxFit.contain,
+                    filterQuality: FilterQuality.medium,
+                  ),
                   if (isPremium) ...[
                     const SizedBox(width: Np.s2),
                     const PremiumTag(),

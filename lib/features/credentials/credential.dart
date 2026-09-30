@@ -98,7 +98,7 @@ const kCredentialCategories = <String, String>{
   'COMPANY_PROJECT': 'Dự án doanh nghiệp',
   'SHORT_INTERNSHIP': 'Thực tập ngắn hạn',
   'FREELANCE_GIG': 'Việc tự do',
-  'QUEST': 'Quest trên nextplease',
+  'QUEST': 'Quest trên fonlio',
 };
 
 /// Cấp bậc vai trò (ck_experiences_role_level).

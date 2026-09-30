@@ -16,7 +16,7 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Lưu ảnh mã QR thanh toán vào thư viện để bạn quét bằng app ngân hàng.</string>
 	<key>CFBundleDisplayName</key>
-	<string>nextplease</string>
+	<string>fonlio</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -24,7 +24,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>nextplease</string>
+	<string>fonlio</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

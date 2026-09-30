@@ -182,7 +182,7 @@ class _PaymentSheetState extends State<PaymentSheet> with WidgetsBindingObserver
       if (data == null) throw Exception('không dựng được ảnh');
       await Gal.putImageBytes(
         Uint8List.view(data.buffer),
-        name: 'nextplease-qr-${widget.request.orderCode}',
+        name: 'fonlio-qr-${widget.request.orderCode}',
       );
       if (!mounted) return;
       _toast('Đã lưu ảnh QR. Mở app ngân hàng và chọn quét QR từ thư viện ảnh.');

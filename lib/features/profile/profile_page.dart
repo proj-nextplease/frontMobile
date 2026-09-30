@@ -400,15 +400,18 @@ class _Identity extends StatelessWidget {
                       // Huy hiệu Premium. Người mua cần THẤY thứ mình đã trả
                       // tiền ngay trên màn hình của họ — trước đây mua xong
                       // không có gì đổi ngoài số dư ví.
-                      //
-                      // Đọc từ WalletStore chứ không từ vai trò trong token:
-                      // vai trò `candidate_premium` không tự mất khi gói hết
-                      // hạn, còn /wallet trả isPremium tính từ premium_until.
                       if (WalletStore.instance.isPremium) ...[
                         const SizedBox(width: Np.s2),
                         const PremiumTag(),
                       ],
-                      const SizedBox(width: Np.s2),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Wrap(
+                    spacing: Np.s1 + 2,
+                    runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: Np.s2, vertical: 1.5),
@@ -426,8 +429,7 @@ class _Identity extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (me.openToWork) ...[
-                        const SizedBox(width: Np.s1 + 2),
+                      if (me.openToWork)
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: Np.s2, vertical: 1.5),
@@ -442,7 +444,6 @@ class _Identity extends StatelessWidget {
                                 fontWeight: FontWeight.w700,
                               )),
                         ),
-                      ],
                     ],
                   ),
                   if (me.headline != null) ...[
@@ -519,7 +520,11 @@ class _Stats extends StatelessWidget {
               _Stat(value: '${g.level > 0 ? g.level : me.currentLevel}',
                   label: 'Cấp'),
               _Divider(),
-              _Stat(value: '${g.streak}', label: 'Ngày liên tiếp'),
+              _Stat(
+                value: '${g.streak}',
+                label: 'Ngày liên tiếp',
+                isStreak: true,
+              ),
               _Divider(),
               _Stat(value: '${me.npBalance}', label: 'NP'),
             ],
@@ -556,23 +561,58 @@ class _Stats extends StatelessWidget {
 }
 
 class _Stat extends StatelessWidget {
-  const _Stat({required this.value, required this.label});
+  const _Stat({
+    required this.value,
+    required this.label,
+    this.isStreak = false,
+  });
   final String value;
   final String label;
+  final bool isStreak;
 
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
+    final hasActiveStreak = isStreak && value != '0';
     return Expanded(
       child: Column(
         children: [
-          Text(value, style: NpType.h1.copyWith(fontSize: 20, color: c.ink)),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                value,
+                style: NpType.h1.copyWith(
+                  fontSize: 20,
+                  color: hasActiveStreak ? const Color(0xFFFF7A00) : c.ink,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              if (hasActiveStreak) ...[
+                const SizedBox(width: 3),
+                const NpIco(
+                  NpIcon.flame,
+                  size: 16,
+                  color: Color(0xFFFF7A00),
+                ),
+              ],
+            ],
+          ),
           const SizedBox(height: 2),
-          Text(label,
-              style: NpType.meta.copyWith(fontSize: 11, color: c.muted),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis),
+          Text(
+            label,
+            style: NpType.meta.copyWith(
+              fontSize: 11,
+              color: hasActiveStreak
+                  ? const Color(0xFFFF9E00).withValues(alpha: 0.9)
+                  : c.muted,
+              fontWeight: hasActiveStreak ? FontWeight.w600 : FontWeight.normal,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );

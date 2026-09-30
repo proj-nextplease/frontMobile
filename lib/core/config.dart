@@ -33,10 +33,10 @@ class AppConfig {
   /// sơ công khai (`/p/<slug>`) và hai văn bản pháp lý (/terms, /privacy) —
   /// những trang app không tự dựng lại mà mở thẳng ra trình duyệt.
   ///
-  /// Ghi đè: --dart-define=WEB_BASE_URL=https://nextplease.vn
+  /// Ghi đè: --dart-define=WEB_BASE_URL=https://fonlio.vn
   static String get webBaseUrl {
     const override = String.fromEnvironment('WEB_BASE_URL');
-    return override.isNotEmpty ? override : 'https://nextplease.vercel.app';
+    return override.isNotEmpty ? override : 'https://fonlio.vn';
   }
 
   /// Backend đang chạy trên máy dev là HTTP thuần. Cả iOS lẫn Android đều CHẶN

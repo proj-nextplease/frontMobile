@@ -164,7 +164,7 @@ class _Sheet extends StatelessWidget {
                       style: NpType.display.copyWith(color: c.ink)),
                   const SizedBox(height: Np.s4),
                   Text(
-                    'nextplease ghi nhận năng lực của bạn bằng minh chứng, nên '
+                    'fonlio ghi nhận năng lực của bạn bằng minh chứng, nên '
                     'có vài điều cần thống nhất trước.',
                     style: NpType.body.copyWith(color: c.muted),
                   ),

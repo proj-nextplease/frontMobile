@@ -92,6 +92,10 @@ class _QuestBoardState extends State<QuestBoard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (s.streak > 0) ...[
+          _StreakCard(store: s),
+          const SizedBox(height: Np.s4),
+        ],
         for (final q in shown) ...[
           _QuestRow(
             quest: q,
@@ -101,21 +105,224 @@ class _QuestBoardState extends State<QuestBoard> {
           ),
           const SizedBox(height: Np.s2),
         ],
-        if (s.streak > 0) ...[
-          const SizedBox(height: Np.s1),
+      ],
+    );
+  }
+}
+
+class _StreakCard extends StatelessWidget {
+  const _StreakCard({required this.store});
+  final GamificationStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final s = store;
+    final isNewRecord = s.streak >= s.longestStreak && s.streak > 1;
+    final now = DateTime.now();
+    final todayWeekday = now.weekday; // 1 = Mon, 7 = Sun
+    const weekLabels = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+
+    return Container(
+      padding: const EdgeInsets.all(Np.s4),
+      decoration: BoxDecoration(
+        color: c.surfaceHi,
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFFF6A00).withValues(alpha: 0.18),
+            const Color(0xFFFF9500).withValues(alpha: 0.05),
+            c.surface,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(Np.rLg),
+        border: Border.all(
+          color: const Color(0xFFFF7A00).withValues(alpha: 0.4),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFF5722).withValues(alpha: 0.14),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              NpIco(NpIcon.flame, size: 15, color: c.acidText),
-              const SizedBox(width: Np.s2),
-              Text(
-                'Chuỗi ${s.streak} ngày'
-                '${s.longestStreak > s.streak ? ' · dài nhất ${s.longestStreak}' : ''}',
-                style: NpType.meta.copyWith(fontSize: 12.5, color: c.muted),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFB300), Color(0xFFFF3D00)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF5722).withValues(alpha: 0.5),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: NpIco(NpIcon.flame, size: 24, color: Colors.white),
+                ),
+              ),
+              const SizedBox(width: Np.s3),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'CHUỖI ${s.streak} NGÀY',
+                          style: NpType.title.copyWith(
+                            fontSize: 15.5,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.3,
+                            color: const Color(0xFFFF9E00),
+                          ),
+                        ),
+                        if (isNewRecord) ...[
+                          const SizedBox(width: Np.s2),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF3D00).withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(Np.rPill),
+                              border: Border.all(
+                                color: const Color(0xFFFF3D00).withValues(alpha: 0.6),
+                              ),
+                            ),
+                            child: Text(
+                              'KỶ LỤC 🔥',
+                              style: NpType.meta.copyWith(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFFFF5722),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      s.longestStreak > s.streak
+                          ? 'Kỷ lục: ${s.longestStreak} ngày liên tiếp'
+                          : 'Đang duy trì chuỗi tốt nhất của bạn!',
+                      style: NpType.meta.copyWith(
+                        fontSize: 12,
+                        color: c.muted,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF7A00).withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(Np.rPill),
+                  border: Border.all(
+                    color: const Color(0xFFFF7A00).withValues(alpha: 0.45),
+                  ),
+                ),
+                child: const Text(
+                  'RỰC LỬA',
+                  style: TextStyle(
+                    color: Color(0xFFFF9E00),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ),
             ],
           ),
+          const SizedBox(height: Np.s3 + 2),
+          Container(height: 1, color: c.line),
+          const SizedBox(height: Np.s3),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(7, (index) {
+              final dayNum = index + 1; // 1 to 7
+              final isToday = (dayNum == todayWeekday);
+              final isPastOrToday = (dayNum <= todayWeekday);
+              final isActive = isPastOrToday && ((todayWeekday - dayNum) < s.streak);
+              final label = weekLabels[index];
+
+              return Expanded(
+                child: Column(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? const Color(0xFFFF7A00).withValues(alpha: 0.22)
+                            : isToday
+                                ? c.surface
+                                : Colors.transparent,
+                        borderRadius: BorderRadius.circular(Np.rSm),
+                        border: Border.all(
+                          color: isToday
+                              ? const Color(0xFFFF9E00)
+                              : isActive
+                                  ? const Color(0xFFFF7A00).withValues(alpha: 0.5)
+                                  : c.line,
+                          width: isToday ? 1.5 : 1.0,
+                        ),
+                      ),
+                      child: Center(
+                        child: isActive
+                            ? const NpIco(NpIcon.flame, size: 15, color: Color(0xFFFF9E00))
+                            : isToday
+                                ? const NpIco(NpIcon.flame, size: 15, color: Color(0xFFFF5722))
+                                : Text(
+                                    '•',
+                                    style: TextStyle(
+                                      color: c.faint,
+                                      fontSize: 14,
+                                      height: 1,
+                                    ),
+                                  ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      label,
+                      style: NpType.meta.copyWith(
+                        fontSize: 10.5,
+                        fontWeight: isToday ? FontWeight.w800 : FontWeight.w500,
+                        color: isToday
+                            ? const Color(0xFFFF9E00)
+                            : isActive
+                                ? c.ink
+                                : c.faint,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
         ],
-      ],
+      ),
     );
   }
 }

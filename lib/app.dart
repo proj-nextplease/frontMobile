@@ -157,7 +157,7 @@ class _NextPleaseAppState extends State<NextPleaseApp>
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'nextplease',
+      title: 'fonlio',
 
       // App chỉ có tiếng Việt, nên ĐẶT CỨNG locale thay vì theo máy: người
       // dùng để máy tiếng Anh vẫn phải thấy hộp chọn ngày bằng tiếng Việt,
