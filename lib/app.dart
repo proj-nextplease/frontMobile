@@ -12,6 +12,7 @@ import 'features/jobs/applied_store.dart';
 import 'features/jobs/saved_store.dart';
 import 'features/profile/gamification_store.dart';
 import 'features/legal/consent_gate.dart';
+import 'features/onboarding/onboarding_gate.dart';
 import 'features/profile/me_store.dart';
 import 'features/profile/notification_banner.dart';
 import 'features/wallet/wallet_store.dart';
@@ -185,7 +186,10 @@ class _NextPleaseAppState extends State<NextPleaseApp>
         child: ConsentGate(
           enabled: _stage == _Stage.home && _auth.signedIn,
           onDecline: _auth.signOut,
-          child: child ?? const SizedBox.shrink(),
+          child: OnboardingGate(
+            enabled: _stage == _Stage.home && _auth.signedIn,
+            child: child ?? const SizedBox.shrink(),
+          ),
         ),
       ),
       // Màu chủ đạo Neon Dark tương tự webapp (nextplease.online)
