@@ -70,11 +70,20 @@ class AuthService {
     );
   }
 
+  GoTrueClient? get _safeAuth {
+    try {
+      return Supabase.instance.client.auth;
+    } catch (_) {
+      return null;
+    }
+  }
+
   GoTrueClient get _auth => Supabase.instance.client.auth;
 
-  Session? get session => Env.hasSupabase ? _auth.currentSession : null;
+  Session? get session => Env.hasSupabase ? _safeAuth?.currentSession : null;
   bool get signedIn => session != null;
-  Stream<AuthState> get changes => _auth.onAuthStateChange;
+  Stream<AuthState> get changes =>
+      Env.hasSupabase ? (_safeAuth?.onAuthStateChange ?? const Stream.empty()) : const Stream.empty();
 
   String? get accessToken => session?.accessToken;
 

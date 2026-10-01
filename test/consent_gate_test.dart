@@ -29,7 +29,7 @@ Widget _host({required bool enabled}) => MaterialApp(
 /// Giả lập /profiles/me đã trả về.
 void _profile({String? version}) {
   MeStore.instance.raw = {
-    if (version != null) 'legalConsentVersion': version,
+    'legalConsentVersion': ?version,
   };
   MeStore.instance.loaded = true;
 }
@@ -97,4 +97,35 @@ void main() {
 
     expect(find.text('Trước khi bắt đầu'), findsOneWidget);
   });
+
+  testWidgets('Bấm Điều khoản hoặc Quyền riêng tư thì mở modal xem trực tiếp',
+      (tester) async {
+    _profile();
+    await tester.pumpWidget(_host(enabled: true));
+    await tester.pumpAndSettle();
+
+    final termsFinder = find.text('Điều khoản dịch vụ');
+    await tester.scrollUntilVisible(termsFinder, 100.0, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
+
+    // Bấm xem Điều khoản dịch vụ
+    await tester.tap(termsFinder);
+    await tester.pumpAndSettle();
+
+    // Modal đã mở và có đầy đủ tab + nút Đã hiểu
+    expect(find.text('Đã đọc và hiểu'), findsOneWidget);
+    expect(find.text('1. Chấp nhận điều khoản'), findsOneWidget);
+
+    // Chuyển sang tab Quyền riêng tư trong modal
+    final privacyTabFinder = find.text('Quyền riêng tư').last;
+    await tester.tap(privacyTabFinder);
+    await tester.pumpAndSettle();
+    expect(find.text('1. Dữ liệu chúng tôi thu thập'), findsOneWidget);
+
+    // Bấm đóng modal
+    await tester.tap(find.text('Đã đọc và hiểu'));
+    await tester.pumpAndSettle();
+    expect(find.text('Đã đọc và hiểu'), findsNothing);
+  });
 }
+

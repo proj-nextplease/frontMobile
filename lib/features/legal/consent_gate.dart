@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api_client.dart';
-import '../../core/config.dart';
 import '../../core/design.dart';
 import '../../core/widgets.dart';
 import '../profile/me_store.dart';
@@ -99,10 +97,10 @@ class _ConsentGateState extends State<ConsentGate> {
     if (mounted) setState(() => _saving = false);
   }
 
-  Future<void> _openDoc(String path) async {
-    final uri = Uri.tryParse('${AppConfig.webBaseUrl}$path');
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  bool? _viewingDocTerms;
+
+  void _openDoc(bool isTerms) {
+    setState(() => _viewingDocTerms = isTerms);
   }
 
   @override
@@ -110,17 +108,33 @@ class _ConsentGateState extends State<ConsentGate> {
     return Stack(
       children: [
         widget.child,
-        if (_blocking)
+        if (_blocking) ...[
           Positioned.fill(
             child: _Sheet(
               saving: _saving,
               error: _error,
               onAccept: _accept,
               onDecline: widget.onDecline,
-              onOpenTerms: () => _openDoc('/terms'),
-              onOpenPrivacy: () => _openDoc('/privacy'),
+              onOpenTerms: () => _openDoc(true),
+              onOpenPrivacy: () => _openDoc(false),
             ),
           ),
+          if (_viewingDocTerms != null)
+            Positioned.fill(
+              child: ColoredBox(
+                color: Colors.black.withValues(alpha: 0.6),
+                child: SafeArea(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: _LegalDocumentModal(
+                      initialIsTerms: _viewingDocTerms!,
+                      onClose: () => setState(() => _viewingDocTerms = null),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ],
     );
   }
@@ -277,10 +291,240 @@ class _DocLink extends StatelessWidget {
           borderRadius: BorderRadius.circular(Np.rPill),
           border: Border.all(color: c.line),
         ),
-        child: Text(label,
-            style: NpType.meta.copyWith(
-                color: c.acidText, fontWeight: FontWeight.w600)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label,
+                style: NpType.meta.copyWith(
+                    color: c.acidText, fontWeight: FontWeight.w600)),
+            const SizedBox(width: 4),
+            Icon(Icons.visibility_outlined, size: 14, color: c.acidText),
+          ],
+        ),
       ),
     );
   }
 }
+
+class _LegalDocumentModal extends StatefulWidget {
+  const _LegalDocumentModal({
+    required this.initialIsTerms,
+    required this.onClose,
+  });
+  final bool initialIsTerms;
+  final VoidCallback onClose;
+
+  @override
+  State<_LegalDocumentModal> createState() => _LegalDocumentModalState();
+}
+
+class _LegalDocumentModalState extends State<_LegalDocumentModal> {
+  late bool _isTerms = widget.initialIsTerms;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final doc = _isTerms ? kTermsDoc : kPrivacyDoc;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.88,
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(Np.rLg)),
+        border: Border.all(color: c.line),
+      ),
+      child: Column(
+        children: [
+          // Drag handle & Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(Np.gutter, Np.s3, Np.gutter, Np.s2),
+            child: Column(
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: c.muted.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: Np.s3),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(doc.title,
+                              style: NpType.h1.copyWith(color: c.ink)),
+                          const SizedBox(height: 2),
+                          Text('Cập nhật: ${doc.updated}',
+                              style: NpType.meta.copyWith(color: c.muted)),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: c.ink),
+                      onPressed: widget.onClose,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: Np.s3),
+                // Tab switcher
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: c.bg,
+                    borderRadius: BorderRadius.circular(Np.rPill),
+                    border: Border.all(color: c.line),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _TabButton(
+                          label: 'Điều khoản dịch vụ',
+                          selected: _isTerms,
+                          onTap: () => setState(() => _isTerms = true),
+                        ),
+                      ),
+                      Expanded(
+                        child: _TabButton(
+                          label: 'Quyền riêng tư',
+                          selected: !_isTerms,
+                          onTap: () => setState(() => _isTerms = false),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+
+          // Scrollable document content
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(Np.gutter, Np.s4, Np.gutter, Np.s6),
+              children: [
+                // Intro box
+                Container(
+                  padding: const EdgeInsets.all(Np.s3),
+                  decoration: BoxDecoration(
+                    color: c.bg,
+                    borderRadius: BorderRadius.circular(Np.rMd),
+                    border: Border.all(color: c.line),
+                  ),
+                  child: Text(
+                    doc.intro,
+                    style: NpType.body.copyWith(color: c.muted, fontStyle: FontStyle.italic),
+                  ),
+                ),
+                const SizedBox(height: Np.s4),
+
+                // Sections
+                for (final section in doc.sections) ...[
+                  Text(
+                    section.heading,
+                    style: NpType.body.copyWith(
+                      color: c.ink,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: Np.s2),
+                  for (final p in section.paragraphs) ...[
+                    Text(
+                      p,
+                      style: NpType.body.copyWith(color: c.muted, height: 1.5),
+                    ),
+                    const SizedBox(height: Np.s2),
+                  ],
+                  if (section.bulletPoints != null) ...[
+                    for (final bullet in section.bulletPoints!) ...[
+                      Padding(
+                        padding: const EdgeInsets.only(left: Np.s3, bottom: Np.s2),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('• ',
+                                style: NpType.body.copyWith(
+                                    color: c.acidText, fontWeight: FontWeight.bold)),
+                            Expanded(
+                              child: Text(
+                                bullet,
+                                style: NpType.body.copyWith(color: c.muted, height: 1.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                  const SizedBox(height: Np.s4),
+                ],
+              ],
+            ),
+          ),
+
+          // Bottom Action
+          Padding(
+            padding: const EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter, Np.s4),
+            child: AcidButton(
+              label: 'Đã đọc và hiểu',
+              onTap: widget.onClose,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TabButton extends StatelessWidget {
+  const _TabButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(vertical: Np.s2),
+        decoration: BoxDecoration(
+          color: selected ? c.surface : Colors.transparent,
+          borderRadius: BorderRadius.circular(Np.rPill),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: NpType.meta.copyWith(
+            color: selected ? c.ink : c.muted,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+}
+

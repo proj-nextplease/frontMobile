@@ -68,7 +68,6 @@ class _QuestBoardState extends State<QuestBoard> {
 
   @override
   Widget build(BuildContext context) {
-    final c = Np.of(context);
     final s = widget.store;
 
     // Chỉ hiện nhiệm vụ CHƯA nhận thưởng. Giữ lại những cái đã nhận thì danh

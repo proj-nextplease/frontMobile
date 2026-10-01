@@ -205,7 +205,7 @@ class _InteractiveMascotState extends State<InteractiveMascot>
     with SingleTickerProviderStateMixin {
   bool _showReaction = false;
   int _reactionFrame = 0;
-  int _directionFrame = 4; // Nhìn thẳng
+  final int _directionFrame = 4; // Nhìn thẳng
   Timer? _reactionTimer;
   late AnimationController _bounceController;
 

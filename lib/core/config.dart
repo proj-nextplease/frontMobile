@@ -1,6 +1,3 @@
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
-
 /// Cấu hình môi trường.
 class AppConfig {
   /// Địa chỉ gốc của API.
