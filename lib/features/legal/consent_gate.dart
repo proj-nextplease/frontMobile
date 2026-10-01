@@ -326,14 +326,17 @@ class _LegalDocumentModalState extends State<_LegalDocumentModal> {
     final c = Np.of(context);
     final doc = _isTerms ? kTermsDoc : kPrivacyDoc;
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.88,
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(Np.rLg)),
-        border: Border.all(color: c.line),
-      ),
-      child: Column(
+    return Material(
+      color: c.surface,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(Np.rLg)),
+      clipBehavior: Clip.antiAlias,
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.88,
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(Np.rLg)),
+          border: Border.all(color: c.line),
+        ),
+        child: Column(
         children: [
           // Drag handle & Header
           Padding(
@@ -478,8 +481,9 @@ class _LegalDocumentModalState extends State<_LegalDocumentModal> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _TabButton extends StatelessWidget {
