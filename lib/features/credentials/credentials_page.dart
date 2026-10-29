@@ -264,10 +264,19 @@ class _Card extends StatelessWidget {
                   color: tint.withValues(alpha: 0.13),
                   borderRadius: BorderRadius.circular(Np.rPill),
                 ),
-                child: Text(credentialStatusLabel(item.status),
+                child: Text(
+                    item.isAiVerified
+                        ? 'Xác thực bởi AI ✓'
+                        : item.isAiProcessing
+                            ? 'AI đang quét...'
+                            : credentialStatusLabel(item.status),
                     style: NpType.meta.copyWith(
                       fontSize: 11.5,
-                      color: tint,
+                      color: item.isAiVerified
+                          ? c.acidText
+                          : item.isAiProcessing
+                              ? Colors.purple
+                              : tint,
                       fontWeight: FontWeight.w700,
                     )),
               ),

@@ -21,6 +21,11 @@ class Credential {
     this.createdAt,
     this.proofImages = const [],
     this.express = false,
+    this.aiStatus,
+    this.aiVerdict,
+    this.aiScore,
+    this.aiFeedback,
+    this.verifiedByType,
   });
 
   final String id;
@@ -41,6 +46,14 @@ class Credential {
   final DateTime? createdAt;
   final List<String> proofImages;
   final bool express;
+  final String? aiStatus;
+  final String? aiVerdict;
+  final int? aiScore;
+  final String? aiFeedback;
+  final String? verifiedByType;
+
+  bool get isAiVerified => verifiedByType == 'AI';
+  bool get isAiProcessing => status == 'PENDING' && (aiStatus == 'PENDING' || aiStatus == 'PROCESSING');
 
   factory Credential.fromJson(Map<String, dynamic> m) => Credential(
         id: '${m['id']}',
@@ -59,6 +72,13 @@ class Credential {
             : DateTime.tryParse('${m['created_at']}')?.toLocal(),
         proofImages: _images(m['proof_images']),
         express: m['expressVerification'] == true,
+        aiStatus: _str(m['aiStatus'] ?? m['ai_status']),
+        aiVerdict: _str(m['aiVerdict'] ?? m['ai_verdict']),
+        aiScore: (m['aiConfidenceScore'] ?? m['ai_confidence_score']) is num
+            ? ((m['aiConfidenceScore'] ?? m['ai_confidence_score']) as num).toInt()
+            : null,
+        aiFeedback: _str(m['aiFeedback'] ?? m['ai_feedback']),
+        verifiedByType: _str(m['verifiedByType'] ?? m['verified_by_type']),
       );
 
   /// `proof_images` về dưới dạng CHUỖI JSON, không phải mảng — truy vấn ép
