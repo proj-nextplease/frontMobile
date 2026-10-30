@@ -265,17 +265,17 @@ class _Card extends StatelessWidget {
                   borderRadius: BorderRadius.circular(Np.rPill),
                 ),
                 child: Text(
-                    item.isAiVerified
-                        ? 'Xác thực bởi AI ✓'
+                    item.status == 'APPROVED'
+                        ? 'Đã duyệt'
                         : item.isAiProcessing
-                            ? 'AI đang quét...'
+                            ? 'Đang kiểm tra...'
                             : credentialStatusLabel(item.status),
                     style: NpType.meta.copyWith(
                       fontSize: 11.5,
-                      color: item.isAiVerified
+                      color: item.status == 'APPROVED'
                           ? c.acidText
                           : item.isAiProcessing
-                              ? Colors.purple
+                              ? c.muted
                               : tint,
                       fontWeight: FontWeight.w700,
                     )),
@@ -307,8 +307,6 @@ class _Card extends StatelessWidget {
           ],
 
           // Lý do từ chối là thứ người dùng THẬT SỰ cần đọc khi thấy nhãn đỏ.
-          // Giấu nó đi và chỉ hiện chữ "Bị từ chối" là chắc chắn làm họ bực
-          // mà không biết phải sửa gì.
           if (item.rejectReason != null && item.rejectReason!.isNotEmpty) ...[
             const SizedBox(height: Np.s3),
             Container(
@@ -318,21 +316,14 @@ class _Card extends StatelessWidget {
                 color: c.danger.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(Np.rSm),
               ),
-              child: Text(item.rejectReason!,
-                  style: NpType.meta.copyWith(fontSize: 12.5, color: c.ink)),
-            ),
-          ] else if (item.status == 'PENDING' && item.aiFeedback != null && item.aiFeedback!.isNotEmpty) ...[
-            const SizedBox(height: Np.s3),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(Np.s3),
-              decoration: BoxDecoration(
-                color: Colors.purple.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(Np.rSm),
-                border: Border.all(color: Colors.purple.withValues(alpha: 0.2)),
+              child: Text(
+                item.rejectReason!
+                    .replaceFirst(RegExp(r'^AI từ chối do bằng chứng không hợp lệ:\s*', caseSensitive: false), '')
+                    .replaceFirst(RegExp(r'^AI từ chối:\s*', caseSensitive: false), '')
+                    .replaceFirst(RegExp(r'^AI:\s*', caseSensitive: false), '')
+                    .trim(),
+                style: NpType.meta.copyWith(fontSize: 12.5, color: c.ink),
               ),
-              child: Text('AI: ${item.aiFeedback!}',
-                  style: NpType.meta.copyWith(fontSize: 12.0, color: c.ink)),
             ),
           ],
 
