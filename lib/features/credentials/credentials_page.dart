@@ -321,6 +321,19 @@ class _Card extends StatelessWidget {
               child: Text(item.rejectReason!,
                   style: NpType.meta.copyWith(fontSize: 12.5, color: c.ink)),
             ),
+          ] else if (item.status == 'PENDING' && item.aiFeedback != null && item.aiFeedback!.isNotEmpty) ...[
+            const SizedBox(height: Np.s3),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(Np.s3),
+              decoration: BoxDecoration(
+                color: Colors.purple.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(Np.rSm),
+                border: Border.all(color: Colors.purple.withValues(alpha: 0.2)),
+              ),
+              child: Text('AI: ${item.aiFeedback!}',
+                  style: NpType.meta.copyWith(fontSize: 12.0, color: c.ink)),
+            ),
           ],
 
           /* Duyệt nhanh chỉ có nghĩa với minh chứng ĐANG CHỜ. Đã duyệt thì

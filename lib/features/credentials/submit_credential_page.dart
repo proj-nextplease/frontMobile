@@ -130,8 +130,9 @@ class _SubmitCredentialPageState extends State<SubmitCredentialPage> {
                 Np.s10 + MediaQuery.viewInsetsOf(context).bottom),
         children: [
           Text(
-            'Nộp một hoạt động bạn đã làm kèm bằng chứng. Sau khi được duyệt, '
-            'nó được cộng EXP, điểm uy tín và gắn dấu đã xác thực trên hồ sơ.',
+            'Nộp một hoạt động bạn đã tham gia kèm bằng chứng (chứng chỉ, giấy khen, ảnh chụp). '
+            'Hệ thống AI sẽ tự động đọc văn bản và duyệt ngay lập tức nếu thông tin trùng khớp, '
+            'cộng EXP và điểm uy tín vào hồ sơ của bạn.',
             style: NpType.meta.copyWith(color: c.muted, height: 1.45),
           ),
           const SizedBox(height: Np.s6),
@@ -214,7 +215,7 @@ class _SubmitCredentialPageState extends State<SubmitCredentialPage> {
           _Field(
             label: 'Hoặc link minh chứng',
             controller: _link,
-            hint: 'Bài đăng, album ảnh, giấy chứng nhận online…',
+            hint: 'Link Google Drive (công khai), fanpage sự kiện…',
             onChanged: (_) => setState(() {}),
           ),
 
