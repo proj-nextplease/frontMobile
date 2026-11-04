@@ -20,7 +20,6 @@ class ApplicationItem {
     required this.status,
     required this.isQuest,
     this.targetId,
-    this.boostedUntil,
     this.appliedAt,
     this.rejectReason,
     this.coverNote,
@@ -50,12 +49,9 @@ class ApplicationItem {
   final String status;
   final bool isQuest;
 
-  /// Id của TIN (job/quest), không phải của đơn. Insight nói về cuộc cạnh
-  /// tranh ở tin đó nên phải dùng id này.
+  /// Id của TIN (job/quest), không phải của đơn.
   final String? targetId;
 
-  /// Đơn đang được đẩy tới lúc nào. Null là chưa từng đẩy.
-  final DateTime? boostedUntil;
   final DateTime? appliedAt;
   final String? rejectReason;
   final String? coverNote;
@@ -92,7 +88,6 @@ class ApplicationItem {
         status: '${m['status'] ?? ''}'.toUpperCase(),
         isQuest: false,
         targetId: _str(m['job_id']),
-        boostedUntil: _date(m['boostedUntil']),
         appliedAt: _date(m['applied_at']),
         rejectReason: _str(m['reject_reason']),
         coverNote: _str(m['cover_note']),
@@ -112,7 +107,6 @@ class ApplicationItem {
         status: '${m['status'] ?? ''}'.toUpperCase(),
         isQuest: true,
         targetId: _str(m['questId']),
-        boostedUntil: _date(m['boostedUntil']),
         appliedAt: _date(m['appliedAt']),
         rejectReason: _str(m['rejectReason']),
         coverNote: _str(m['cover_note'] ?? m['coverNote']),
@@ -130,7 +124,6 @@ class ApplicationItem {
         status: next,
         isQuest: isQuest,
         targetId: targetId,
-        boostedUntil: boostedUntil,
         appliedAt: appliedAt,
         rejectReason: rejectReason,
         coverNote: coverNote,

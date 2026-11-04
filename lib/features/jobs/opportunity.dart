@@ -36,7 +36,6 @@ class Opportunity {
     this.startsAt,
     this.endsAt,
     this.skills = const [],
-    this.requiresPremium = false,
     this.applyUrl,
     this.externalSalary,
   });
@@ -72,7 +71,6 @@ class Opportunity {
   final DateTime? startsAt;    // quest
   final DateTime? endsAt;      // quest
   final List<String> skills;
-  final bool requiresPremium;
 
   /// Chỉ có với [OpportunityKind.external]: link tới tin gốc.
   final String? applyUrl;
@@ -117,7 +115,6 @@ class Opportunity {
         startsAt: startsAt,
         endsAt: endsAt,
         skills: _parseSkills(d['skills']) ?? skills,
-        requiresPremium: d['requiresPremium'] == true || requiresPremium,
       );
 
   factory Opportunity.fromJob(Map<String, dynamic> j) => Opportunity(
@@ -142,7 +139,6 @@ class Opportunity {
         minReqRs: (j['minReqRs'] as num?)?.toInt() ?? 0,
         deadlineAt: _parseDate(j['deadlineAt']),
         skills: _parseSkills(j['skills']) ?? const [],
-        requiresPremium: j['requiresPremium'] == true,
       );
 
   /// Tin nguồn ngoài, đưa về cùng hình dạng để nằm chung một danh sách với
@@ -206,9 +202,6 @@ class Opportunity {
         createdAt: _parseDate(q['createdAt']),
         capacity: (q['capacity'] as num?)?.toInt(),
         minReqRs: (q['minReqRs'] as num?)?.toInt() ?? 0,
-        // Quest cũng có chế độ Premium từ V54. Thiếu dòng này thì Quest
-        // Premium mất nhãn trên app dù tin đang bật.
-        requiresPremium: q['requiresPremium'] == true,
         startsAt: _parseDate(q['startsAt']),
         endsAt: _parseDate(q['endsAt']),
       );

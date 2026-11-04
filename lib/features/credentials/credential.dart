@@ -20,7 +20,6 @@ class Credential {
     this.endedAt,
     this.createdAt,
     this.proofImages = const [],
-    this.express = false,
     this.aiStatus,
     this.aiVerdict,
     this.aiScore,
@@ -45,7 +44,6 @@ class Credential {
   final String? endedAt;
   final DateTime? createdAt;
   final List<String> proofImages;
-  final bool express;
   final String? aiStatus;
   final String? aiVerdict;
   final int? aiScore;
@@ -71,7 +69,6 @@ class Credential {
             ? null
             : DateTime.tryParse('${m['created_at']}')?.toLocal(),
         proofImages: _images(m['proof_images']),
-        express: m['expressVerification'] == true,
         aiStatus: _str(m['aiStatus'] ?? m['ai_status']),
         aiVerdict: _str(m['aiVerdict'] ?? m['ai_verdict']),
         aiScore: (m['aiConfidenceScore'] ?? m['ai_confidence_score']) is num

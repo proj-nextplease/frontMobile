@@ -86,8 +86,7 @@ class _HomePageState extends State<HomePage> {
     GamificationStore.instance.addListener(_onMe);
     NotificationsStore.instance.addListener(_onMe);
     SavedStore.instance.addListener(_onMe);
-    // Không lắng nghe thì huy hiệu Premium chỉ hiện nhờ ăn ké một lần
-    // setState của store khác — lúc có lúc không, tuỳ thứ tự nạp.
+    // Lắng nghe ví để số dư và phí nhận việc luôn là số mới nhất.
     WalletStore.instance.addListener(_onMe);
     _load();
   }
@@ -382,7 +381,6 @@ class _HomePageState extends State<HomePage> {
                         name: _firstName,
                         rs: _me.loaded ? _me.reputationScore : null,
                         showBell: !widget.isGuest,
-                        isPremium: WalletStore.instance.isPremium,
                         avatar: _me.raw['avatar'],
                         onTapMascot: widget.onOpenProfile,
                       ),
@@ -529,7 +527,6 @@ class _Greeting extends StatelessWidget {
     required this.greeting,
     required this.name,
     required this.rs,
-    required this.isPremium,
     required this.showBell,
     this.avatar,
     this.onTapMascot,
@@ -537,7 +534,6 @@ class _Greeting extends StatelessWidget {
   final String greeting;
   final String? name;
   final int? rs;
-  final bool isPremium;
   final bool showBell;
   final dynamic avatar;
   final VoidCallback? onTapMascot;
@@ -561,19 +557,7 @@ class _Greeting extends StatelessWidget {
             decoration: BoxDecoration(
               color: c.surfaceHi,
               shape: BoxShape.circle,
-              border: Border.all(
-                color: isPremium ? const Color(0xFFF7C948) : c.acid,
-                width: isPremium ? 2.0 : 1.5,
-              ),
-              boxShadow: isPremium
-                  ? const [
-                      BoxShadow(
-                        color: Color(0x33E0A109),
-                        blurRadius: 8,
-                        offset: Offset(0, 2),
-                      ),
-                    ]
-                  : null,
+              border: Border.all(color: c.acid, width: 1.5),
             ),
             child: MascotSprite(
               assetPath: NpMascot.directionsAsset(mascotId),
@@ -594,10 +578,6 @@ class _Greeting extends StatelessWidget {
                     fit: BoxFit.contain,
                     filterQuality: FilterQuality.medium,
                   ),
-                  if (isPremium) ...[
-                    const SizedBox(width: Np.s2),
-                    const PremiumTag(),
-                  ],
                 ],
               ),
               const SizedBox(height: Np.s1),
@@ -782,7 +762,6 @@ class _TodayCard extends StatelessWidget {
               spacing: Np.s2,
               runSpacing: Np.s2,
               children: [
-                if (item.requiresPremium) const PremiumTag(prominent: true),
                 if (pay.isNotEmpty) MetaChip(label: pay),
                 if (item.location != null && item.location!.isNotEmpty)
                   MetaChip(label: item.location!),
@@ -854,10 +833,6 @@ class _CompactRow extends StatelessWidget {
                 ],
               ),
             ),
-            if (item.requiresPremium) ...[
-              const SizedBox(width: Np.s2),
-              const PremiumTag(),
-            ],
             if (match > 0) ...[
               const SizedBox(width: Np.s3),
               Container(

@@ -2,11 +2,11 @@ import 'package:flutter/foundation.dart';
 
 import '../../core/api_client.dart';
 
-/// Ví NP và trạng thái các gói trả phí.
+/// Ví NP.
 ///
-/// NP là đơn vị trong app: dùng để boost đơn ứng tuyển, mở Insight, đăng ký
-/// Job Match Alert. Tab Hồ sơ vẫn hiện số dư từ /profiles/me, nhưng con số
-/// đó không đi kèm lịch sử nào nên bấm vào chẳng có gì.
+/// Theo mô hình điểm hiện tại (giống tab Cửa hàng trên web) NP chỉ dùng cho
+/// HAI việc: phí nhận việc có thù lao và phí cập nhật website portfolio.
+/// Premium, Job Match Alert, đẩy đơn, Insight, duyệt nhanh đã bỏ.
 class WalletStore extends ChangeNotifier {
   WalletStore._();
   static final instance = WalletStore._();
@@ -18,13 +18,6 @@ class WalletStore extends ChangeNotifier {
   /// NP đang bị giữ cho một giao dịch chưa xong. Hiện riêng chứ không trừ vào
   /// số dư: trừ ngầm thì người dùng thấy số tụt mà không hiểu vì sao.
   int locked = 0;
-
-  bool isPremium = false;
-  bool hasMatchAlert = false;
-  DateTime? premiumUntil;
-  DateTime? matchAlertUntil;
-
-  int premiumPriceNp = 0;
 
   /// Phí xác nhận nhận một việc CÓ thù lao. Mặc định 19.000 giống web khi
   /// /wallet chưa trả khoá này.
@@ -44,27 +37,14 @@ class WalletStore extends ChangeNotifier {
   int minTopupVnd = 10000;
   List<WalletTx> transactions = const [];
 
-  /// Giá từng dịch vụ, lấy từ /premium/config.
-  Map<String, int> prices = const {};
-
   bool loaded = false;
 
   Future<void> hydrate() async {
     try {
-      final results = await Future.wait([
-        _try('/wallet'),
-        _try('/premium/config'),
-      ]);
-
-      final w = results[0];
+      final w = await _try('/wallet');
       if (w is Map) {
         balance = _int(w['npBalance']);
         locked = _int(w['lockedNpBalance']);
-        isPremium = w['isPremium'] == true;
-        hasMatchAlert = w['hasJobMatchAlert'] == true;
-        premiumUntil = _date(w['premiumUntil']);
-        matchAlertUntil = _date(w['jobMatchAlertUntil']);
-        premiumPriceNp = _int(w['premiumPriceNp']);
         final fee = _int(w['paidJobAcceptanceFeeNp']);
         if (fee > 0) jobAcceptanceFeeNp = fee;
         final exportFee = _int(w['portfolioExportFeeNp']);
@@ -85,14 +65,6 @@ class WalletStore extends ChangeNotifier {
             const [];
       }
 
-      final c = results[1];
-      if (c is Map) {
-        prices = {
-          for (final e in c.entries)
-            if (e.value is num) '${e.key}': (e.value as num).toInt(),
-        };
-      }
-
       loaded = true;
       notifyListeners();
     } on ApiException {
@@ -108,10 +80,6 @@ class WalletStore extends ChangeNotifier {
       return null;
     }
   }
-
-  /// Mua Job Match Alert. Trả null khi xong, chuỗi lỗi khi hỏng.
-  Future<String?> subscribeMatchAlert() =>
-      _spend('/premium/match-alert/subscribe');
 
   /// Tạo một yêu cầu nạp qua PayOS.
   ///
@@ -155,60 +123,10 @@ class WalletStore extends ChangeNotifier {
   /// Nạp lại số dư sau khi thanh toán xong.
   Future<void> refreshAfterTopUp() => hydrate();
 
-  /// Mua Premium Pass.
-  Future<String?> buyPremium() => _spend('/wallet/subscribe');
-
-  /// Đẩy một đơn ứng tuyển lên đầu danh sách của nhà tuyển dụng.
-  Future<String?> boost(String applicationId, {required bool isQuest}) =>
-      _spend('/premium/boost?applicationId=$applicationId'
-          '&applicationType=${isQuest ? 'QUEST' : 'JOB'}');
-
-  /// Mở Insight cho một tin đã ứng tuyển. Trừ NP.
-  ///
-  /// `targetId` là id của TIN (job/quest), không phải id đơn ứng tuyển —
-  /// thống kê nói về cuộc cạnh tranh ở tin đó, và nhiều người cùng xem chung
-  /// một con số.
-  Future<String?> unlockInsight(String targetId, {required bool isQuest}) =>
-      _spend('/premium/insight/unlock?targetId=$targetId'
-          '&applicationType=${isQuest ? 'QUEST' : 'JOB'}');
-
-  /// Đọc số liệu Insight của một tin.
-  ///
-  /// Gọi được cả khi CHƯA mở khoá: backend trả `unlocked: false` kèm tổng số
-  /// ứng viên, còn thứ hạng và phân vị thì về 0. Nhờ vậy màn hình khoe được
-  /// một con số thật trước khi mời trả tiền, thay vì một ô trống.
-  Future<InsightData?> insight(String targetId, {required bool isQuest}) async {
-    try {
-      final res = await _api.get('/premium/insight/$targetId',
-          query: {'applicationType': isQuest ? 'QUEST' : 'JOB'});
-      return InsightData.fromJson(Map<String, dynamic>.from(res as Map));
-    } on ApiException {
-      return null;
-    }
-  }
-
-  /// Đăng ký duyệt nhanh cho một minh chứng đang chờ. Trừ NP.
-  Future<String?> expressVerification(String experienceId) =>
-      _spend('/premium/express?experienceId=$experienceId');
-
-  Future<String?> _spend(String path, {Object? body}) async {
-    try {
-      await _api.post(path, body: body);
-      // Nạp lại ngay: số dư vừa đổi, và nếu không nạp thì màn ví hiện số cũ
-      // đúng lúc người dùng đang nhìn xem tiền đã trừ chưa.
-      await hydrate();
-      return null;
-    } on ApiException catch (e) {
-      return e.message;
-    }
-  }
-
   void clear() {
-    balance = locked = premiumPriceNp = 0;
-    isPremium = hasMatchAlert = loaded = false;
-    premiumUntil = matchAlertUntil = null;
+    balance = locked = 0;
+    loaded = false;
     transactions = const [];
-    prices = const {};
     notifyListeners();
   }
 
@@ -232,35 +150,6 @@ class WalletStore extends ChangeNotifier {
 }
 
 /// Số liệu cạnh tranh của một tin tuyển dụng.
-class InsightData {
-  const InsightData({
-    required this.unlocked,
-    required this.totalApplicants,
-    required this.averageRs,
-    required this.myRank,
-    required this.percentile,
-  });
-
-  /// Chưa mở khoá thì chỉ `totalApplicants` có nghĩa; các số còn lại về 0.
-  final bool unlocked;
-
-  final int totalApplicants;
-  final int averageRs;
-  final int myRank;
-
-  /// Phần trăm ứng viên mà mình xếp trên. Càng cao càng tốt.
-  final int percentile;
-
-  factory InsightData.fromJson(Map<String, dynamic> m) => InsightData(
-        unlocked: m['unlocked'] == true,
-        totalApplicants: WalletStore._int(m['totalApplicants']),
-        averageRs: WalletStore._int(m['averageRs']),
-        myRank: WalletStore._int(m['myRank']),
-        percentile: WalletStore._int(m['percentile']),
-      );
-}
-
-/// Thông tin một yêu cầu nạp đang chờ trả tiền.
 class TopUpRequest {
   const TopUpRequest({
     required this.orderCode,

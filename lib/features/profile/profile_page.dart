@@ -266,9 +266,7 @@ class _ProfilePageState extends State<ProfilePage> {
               // Ưu tiên số của ví vì nó vừa được nạp lại sau mỗi lần chi;
               // /profiles/me chỉ nạp khi mở tab nên có thể đã cũ.
               value: '${WalletStore.instance.loaded ? WalletStore.instance.balance : _me.npBalance}',
-              hint: WalletStore.instance.isPremium
-                  ? 'Premium đang bật'
-                  : 'Xem lịch sử giao dịch và các gói trả phí',
+              hint: 'Xem lịch sử giao dịch và biểu phí',
               onTap: () => _push(const WalletPage()),
             ),
 
@@ -397,13 +395,6 @@ class _Identity extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis),
                       ),
-                      // Huy hiệu Premium. Người mua cần THẤY thứ mình đã trả
-                      // tiền ngay trên màn hình của họ — trước đây mua xong
-                      // không có gì đổi ngoài số dư ví.
-                      if (WalletStore.instance.isPremium) ...[
-                        const SizedBox(width: Np.s2),
-                        const PremiumTag(),
-                      ],
                     ],
                   ),
                   const SizedBox(height: 4),

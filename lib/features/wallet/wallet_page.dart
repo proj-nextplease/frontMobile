@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../core/design.dart';
 import '../../core/np_icons.dart';
 import '../../core/widgets.dart';
-import 'premium_page.dart';
 import 'topup_sheet.dart';
 import 'wallet_store.dart';
 
@@ -79,7 +78,9 @@ class _WalletPageState extends State<WalletPage> {
               children: [
                 _BalanceCard(store: _store, onTopUp: _topUp),
                 const SizedBox(height: Np.s5),
-                _PremiumRow(store: _store),
+                const SectionLabel('Biểu phí'),
+                const SizedBox(height: Np.s3),
+                _FeeCard(store: _store),
                 const SizedBox(height: Np.s6),
                 const SectionLabel('Lịch sử giao dịch'),
                 const SizedBox(height: Np.s3),
@@ -183,67 +184,64 @@ class _BalanceCard extends StatelessWidget {
   }
 }
 
-class _PremiumRow extends StatelessWidget {
-  const _PremiumRow({required this.store});
+/// Biểu phí — cùng nội dung với tab Cửa hàng trên web: chỉ HAI thứ tính
+/// điểm, còn lại miễn phí. Gói Premium, đẩy đơn, Insight, duyệt nhanh đã bỏ.
+class _FeeCard extends StatelessWidget {
+  const _FeeCard({required this.store});
   final WalletStore store;
 
   @override
   Widget build(BuildContext context) {
     final c = Np.of(context);
-    final on = store.isPremium;
+    Widget row(String title, String note, String price, {bool free = false}) =>
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: Np.s2),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: NpType.body.copyWith(
+                            color: c.ink, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text(note,
+                        style: NpType.meta.copyWith(fontSize: 12.5, color: c.muted)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: Np.s3),
+              Text(price,
+                  style: NpType.meta.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: free ? c.muted : c.acidText,
+                  )),
+            ],
+          ),
+        );
 
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: () => Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => const PremiumPage())),
-      child: Container(
-        padding: const EdgeInsets.all(Np.s4),
-        decoration: Np.card(c),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: on ? c.acid : c.surfaceHi,
-                borderRadius: BorderRadius.circular(Np.rSm),
-              ),
-              child: Center(
-                child: NpIco(NpIcon.crown,
-                    size: 20, color: on ? c.onAcid : c.muted),
-              ),
-            ),
-            const SizedBox(width: Np.s3),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(on ? 'Premium đang bật' : 'Premium',
-                      style: NpType.title.copyWith(color: c.ink)),
-                  const SizedBox(height: 2),
-                  Text(
-                    on
-                        ? _until(store.premiumUntil)
-                        // Lời cũ sai: Boost và Insight mua LẺ từng lần, ai
-                        // cũng mua được, Premium không mở khoá chúng. Và
-                        // "nhận gợi ý sớm" chưa có dòng code nào thực hiện.
-                        : 'Tin chỉ nhận Premium · huy hiệu trên hồ sơ',
-                    style: NpType.meta.copyWith(color: c.muted),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            NpIco(NpIcon.arrow, size: 18, color: c.faint),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(Np.s4, Np.s2, Np.s4, Np.s2),
+      decoration: Np.card(c),
+      child: Column(
+        children: [
+          row('Nhận việc có thù lao',
+              'Chỉ trừ khi bạn đồng ý lời mời nhận việc',
+              '${WalletStore.money(store.jobAcceptanceFeeNp)} NP'),
+          Divider(color: c.line, height: 1),
+          row('Cập nhật website portfolio',
+              'Lần xuất bản đầu tiên miễn phí',
+              '${WalletStore.money(store.portfolioExportFeeNp)} NP'),
+          Divider(color: c.line, height: 1),
+          row('Ứng tuyển, sửa hồ sơ, nộp minh chứng',
+              'Không giới hạn', 'Miễn phí',
+              free: true),
+        ],
       ),
     );
   }
-
-  static String _until(DateTime? d) =>
-      d == null ? 'Đang hoạt động' : 'Đến ${fmtDate(d)}';
 }
 
 class _TxRow extends StatelessWidget {

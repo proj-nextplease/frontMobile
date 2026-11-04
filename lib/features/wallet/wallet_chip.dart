@@ -8,11 +8,11 @@ import 'topup_sheet.dart';
 ///
 /// Trước đây muốn nạp NP phải đi Hồ sơ → Ví NP → Nạp: ba bước, và chỉ nghĩ ra
 /// được nếu đã biết ví nằm ở đó. Nhưng lúc người dùng THẬT SỰ cần nạp thường
-/// là lúc họ đang đứng chỗ khác — vừa thấy một tin Premium ở tab Cơ hội, hoặc
-/// vừa định đẩy một đơn lên đầu.
+/// là lúc họ đang đứng chỗ khác — vừa nhận lời mời nhận việc có thù lao, hoặc
+/// vừa định cập nhật website portfolio.
 ///
 /// Chỉ là biểu tượng, KHÔNG kèm số dư. Bản đầu tôi có hiện số, nhưng header
-/// trang chủ vốn đã chật (avatar, nhãn Premium, lời chào, điểm uy tín, chuông)
+/// trang chủ vốn đã chật (avatar, lời chào, điểm uy tín, chuông)
 /// và thêm một con số nữa là tràn mất 66px. Số dư đã hiện ở tab Hồ sơ và màn
 /// Ví; chỗ này chỉ cần là một lối đi.
 ///
