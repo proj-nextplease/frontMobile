@@ -5,6 +5,7 @@ import '../../core/theme.dart';
 import '../jobs/opportunity_labels.dart';
 import 'application_detail_page.dart';
 import 'application_item.dart';
+import 'pending_invites.dart';
 import 'rating_view.dart';
 
 /// Danh sách đơn đã nộp.
@@ -31,8 +32,11 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
     _load();
   }
 
+  int _loadCount = 0;
+
   Future<void> _load() async {
     setState(() {
+      _loadCount++;
       _loading = true;
       _error = null;
     });
@@ -112,14 +116,42 @@ class _ApplicationsPageState extends State<ApplicationsPage> {
                 : _error != null
                     ? _Note(text: _error!)
                     : _items.isEmpty
-                        ? _Note(
-                            text: 'Bạn chưa nộp đơn nào.\n'
-                                'Mở một cơ hội và bấm Ứng tuyển để bắt đầu.')
+                        // Chưa nộp đơn nào vẫn có thể có lời mời gia nhập
+                        // tổ chức — thông báo mời trỏ về đây nên khối lời
+                        // mời phải hiện cả khi danh sách đơn rỗng.
+                        ? ListView(
+                            padding: const EdgeInsets.fromLTRB(
+                                Np.gutter, Np.s2, Np.gutter, Np.s10),
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: [
+                              PendingInvitesSection(
+                                refreshToken: _loadCount,
+                                onChanged: _load,
+                                padding: EdgeInsets.zero,
+                                topGap: 0,
+                              ),
+                              const SizedBox(height: Np.s10),
+                              Text(
+                                'Bạn chưa nộp đơn nào.\n'
+                                'Mở một cơ hội và bấm Ứng tuyển để bắt đầu.',
+                                textAlign: TextAlign.center,
+                                style: NpType.body.copyWith(color: c.muted),
+                              ),
+                            ],
+                          )
                         : ListView(
                             padding: const EdgeInsets.fromLTRB(
                                 Np.gutter, Np.s2, Np.gutter, Np.s10),
                             physics: const AlwaysScrollableScrollPhysics(),
                             children: [
+                              // Lời mời nhận việc ghim lên đầu, giống web:
+                              // đó là đơn duy nhất đang chờ CHÍNH bạn.
+                              PendingInvitesSection(
+                                refreshToken: _loadCount,
+                                onChanged: _load,
+                                padding: EdgeInsets.zero,
+                                topGap: 0,
+                              ),
                               if (open > 0) ...[
                                 Text('$open đơn đang chờ phản hồi',
                                     style: NpType.meta.copyWith(color: c.muted)),

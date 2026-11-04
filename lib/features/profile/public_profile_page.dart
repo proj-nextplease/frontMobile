@@ -7,6 +7,8 @@ import '../../core/config.dart';
 import '../../core/design.dart';
 import '../../core/np_icons.dart';
 import '../../core/widgets.dart';
+import '../wallet/topup_sheet.dart';
+import '../wallet/wallet_store.dart';
 import 'me_store.dart';
 
 /// Hồ sơ công khai: đường dẫn chia sẻ, công tắc bật/tắt, và đổi đường dẫn.
@@ -113,6 +115,84 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
     }
   }
 
+  // ── Xuất website ──────────────────────────────────────────────────────
+  //
+  // Cùng luật với web và ProfileService.exportPortfolioWebsite: lần xuất
+  // ĐẦU TIÊN miễn phí, từ lần thứ hai mỗi lần cập nhật snapshot trừ
+  // portfolio_export_fee_np (mặc định 1.000 NP).
+
+  bool _exporting = false;
+
+  int get _exportCount {
+    final v = _me.raw['exportCount'];
+    return v is num ? v.toInt() : 0;
+  }
+
+  int get _exportFee =>
+      _exportCount == 0 ? 0 : WalletStore.instance.portfolioExportFeeNp;
+
+  Future<void> _export() async {
+    final w = WalletStore.instance;
+    final fee = _exportFee;
+    if (fee > 0 && w.loaded && w.balance < fee) {
+      _toast(
+          'Số dư ${WalletStore.money(w.balance)} NP không đủ trả phí cập nhật '
+          'website ${WalletStore.money(fee)} NP.',
+          ok: false);
+      await TopUpSheet.show(context);
+      return;
+    }
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final c = Np.of(ctx);
+        return AlertDialog(
+          backgroundColor: c.surfaceHi,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(Np.rLg)),
+          title: Text(fee == 0 ? 'Xuất bản website?' : 'Cập nhật website?',
+              style: NpType.h1.copyWith(color: c.ink)),
+          content: Text(
+              fee == 0
+                  ? 'Lần xuất đầu tiên miễn phí. Website sẽ chụp lại hồ sơ '
+                      'hiện tại của bạn.'
+                  : 'Website sẽ được cập nhật theo hồ sơ hiện tại. '
+                      'Trừ ${WalletStore.money(fee)} NP.',
+              style: NpType.meta.copyWith(color: c.muted)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text('Huỷ', style: NpType.button.copyWith(color: c.muted)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(fee == 0 ? 'Xuất bản' : 'Cập nhật',
+                  style: NpType.button.copyWith(color: c.acidText)),
+            ),
+          ],
+        );
+      },
+    );
+    if (ok != true || !mounted) return;
+
+    setState(() => _exporting = true);
+    String? msg;
+    String? err;
+    try {
+      final res = await _api.post('/profiles/me/export-website');
+      if (res is Map) msg = res['message']?.toString();
+    } on ApiException catch (e) {
+      err = e.message;
+    }
+    if (err == null) {
+      await Future.wait([_me.hydrate(), w.hydrate()]);
+    }
+    if (!mounted) return;
+    setState(() => _exporting = false);
+    _toast(err ?? msg ?? 'Đã xuất bản website.', ok: err == null);
+  }
+
   void _toast(String msg, {required bool ok}) {
     final c = Np.of(context);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -198,6 +278,16 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           ],
 
           const SizedBox(height: Np.s6),
+          const SectionLabel('Website portfolio'),
+          const SizedBox(height: Np.s3),
+          _ExportCard(
+            exportCount: _exportCount,
+            fee: _exportFee,
+            busy: _exporting,
+            onExport: _export,
+          ),
+
+          const SizedBox(height: Np.s6),
           const SectionLabel('Ai xem được'),
           const SizedBox(height: Np.s3),
 
@@ -250,6 +340,56 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
         true => 'Bất kỳ ai có link đều mở được.',
         _ => 'Chỉ bạn và nơi bạn đã ứng tuyển xem được.',
       };
+}
+
+class _ExportCard extends StatelessWidget {
+  const _ExportCard({
+    required this.exportCount,
+    required this.fee,
+    required this.busy,
+    required this.onExport,
+  });
+
+  final int exportCount;
+  final int fee;
+  final bool busy;
+  final VoidCallback onExport;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final first = exportCount == 0;
+    return Container(
+      padding: const EdgeInsets.all(Np.s4),
+      decoration: Np.card(c),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            first ? 'Chưa xuất bản' : 'Đã xuất bản $exportCount lần',
+            style: NpType.body.copyWith(color: c.ink, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            first
+                ? 'Lần xuất đầu tiên miễn phí. Sau đó mỗi lần cập nhật '
+                    'tốn ${WalletStore.money(WalletStore.instance.portfolioExportFeeNp)} NP.'
+                : 'Sửa hồ sơ xong, bấm cập nhật để website hiện bản mới. '
+                    'Phí ${WalletStore.money(fee)} NP mỗi lần.',
+            style: NpType.meta.copyWith(color: c.muted),
+          ),
+          const SizedBox(height: Np.s4),
+          AcidButton(
+            label: first
+                ? 'Xuất bản website · Miễn phí'
+                : 'Cập nhật website · ${WalletStore.money(fee)} NP',
+            busy: busy,
+            onTap: onExport,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Action extends StatelessWidget {

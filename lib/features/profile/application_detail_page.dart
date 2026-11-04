@@ -6,6 +6,7 @@ import '../jobs/applied_store.dart';
 import '../jobs/opportunity_labels.dart';
 import '../wallet/wallet_store.dart';
 import 'application_item.dart';
+import 'pending_invites.dart';
 import 'rating_view.dart';
 
 /// Chi tiết một đơn đã nộp.
@@ -162,6 +163,18 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
     );
   }
 
+  Future<void> _offer({required bool accept}) async {
+    setState(() => _busy = true);
+    final ok = accept
+        ? await OfferActions.accept(context, _item)
+        : await OfferActions.decline(context, _item);
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      if (ok) _item = _item.withStatus(accept ? 'ACCEPTED' : 'OFFER_DECLINED');
+    });
+  }
+
   Future<void> _boost() async {
     final w = WalletStore.instance;
     final price = w.prices['boostPriceNp'] ?? 0;
@@ -279,6 +292,16 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
             ),
           ),
 
+          if (_item.isOffer) ...[
+            const SizedBox(height: Np.s5),
+            OfferCard(
+              item: _item,
+              busy: _busy,
+              onAccept: () => _offer(accept: true),
+              onDecline: () => _offer(accept: false),
+            ),
+          ],
+
           // Đánh giá đặt NGAY dưới trạng thái, trên cả dòng thời gian: đây
           // là thứ người dùng mở đơn để xem sau khi làm xong việc, không
           // phải một chi tiết phụ ở cuối trang.
@@ -382,6 +405,8 @@ class _ApplicationDetailPageState extends State<ApplicationDetailPage> {
         'SUBMITTED' => 'Đơn đã gửi, nhà tuyển dụng chưa mở.',
         'VIEWED' => 'Nhà tuyển dụng đã mở đơn của bạn.',
         'SHORTLISTED' => 'Bạn đã vào vòng trong. Chờ liên hệ tiếp theo.',
+        'OFFERED' => 'Nhà tuyển dụng mời bạn nhận việc. Hãy trả lời bên dưới.',
+        'OFFER_DECLINED' => 'Bạn đã từ chối lời mời nhận việc này.',
         'ACCEPTED' => 'Bạn được nhận. Chúc mừng!',
         'REJECTED' => 'Đơn không được chọn lần này.',
         'WITHDRAWN' => 'Bạn đã rút đơn này.',

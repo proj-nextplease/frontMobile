@@ -26,6 +26,18 @@ class WalletStore extends ChangeNotifier {
 
   int premiumPriceNp = 0;
 
+  /// Phí xác nhận nhận một việc CÓ thù lao. Mặc định 19.000 giống web khi
+  /// /wallet chưa trả khoá này.
+  int jobAcceptanceFeeNp = 19000;
+
+  /// Phí cập nhật website portfolio từ lần xuất thứ hai (lần đầu miễn phí).
+  int portfolioExportFeeNp = 1000;
+
+  /// Các gói nạp gợi ý — CÙNG bộ số với web (39K/69K/99K/199K) và lấy từ
+  /// /wallet để admin đổi một chỗ là cả hai bên đổi theo.
+  List<int> topupSuggestions = const [39000, 69000, 99000, 199000];
+  int defaultTopupNp = 39000;
+
   /// Số tiền nạp tối thiểu, lấy từ máy chủ (khoá min_topup_vnd, admin sửa
   /// được). Ghi cứng 10.000 ở đây thì đổi cấu hình xong app vẫn chặn theo
   /// mức cũ.
@@ -53,6 +65,17 @@ class WalletStore extends ChangeNotifier {
         premiumUntil = _date(w['premiumUntil']);
         matchAlertUntil = _date(w['jobMatchAlertUntil']);
         premiumPriceNp = _int(w['premiumPriceNp']);
+        final fee = _int(w['paidJobAcceptanceFeeNp']);
+        if (fee > 0) jobAcceptanceFeeNp = fee;
+        final exportFee = _int(w['portfolioExportFeeNp']);
+        if (exportFee > 0) portfolioExportFeeNp = exportFee;
+        final defPkg = _int(w['defaultTopupPackageNp']);
+        if (defPkg > 0) defaultTopupNp = defPkg;
+        final sug = (w['topupSuggestions'] as List?)
+            ?.whereType<num>()
+            .map((e) => e.toInt())
+            .toList();
+        if (sug != null && sug.isNotEmpty) topupSuggestions = sug;
         final minTopup = _int(w['minTopupVnd']);
         if (minTopup > 0) minTopupVnd = minTopup;
         transactions = (w['recentTransactions'] as List?)

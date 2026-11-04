@@ -33,13 +33,38 @@ class TopUpSheet extends StatefulWidget {
 
 class _TopUpSheetState extends State<TopUpSheet> {
   final _store = WalletStore.instance;
-  final _ctrl = TextEditingController(text: '50000');
+  late final _ctrl =
+      TextEditingController(text: '${_store.defaultTopupNp}');
 
   bool _busy = false;
   String? _error;
 
-  /// Các mức nhanh, đủ để demo mà không phải gõ.
-  static const _quick = [50000, 100000, 200000, 500000];
+  /// Các gói nạp gợi ý — trùng web (39K/69K/99K/199K), lấy từ /wallet.
+  List<int> get _quick => _store.topupSuggestions;
+
+  /// Tên gói, giống tab Cửa hàng trên web.
+  static const _tierNames = {
+    39000: 'Khởi đầu',
+    69000: 'Năng động',
+    99000: 'Bứt phá',
+    199000: 'Dài hạn',
+  };
+
+  /// Số tiền này dùng được vào việc gì — cùng cách tính với web: đủ nhận bao
+  /// nhiêu việc có thù lao, phần dư đủ cập nhật website bao nhiêu lần.
+  String? get _perk {
+    final a = _amount;
+    final job = _store.jobAcceptanceFeeNp;
+    final exp = _store.portfolioExportFeeNp;
+    if (a <= 0 || job <= 0 || exp <= 0) return null;
+    final jobs = a ~/ job;
+    final exports = (a % job) ~/ exp;
+    final parts = [
+      if (jobs > 0) 'Đủ nhận $jobs việc có thù lao',
+      if (exports > 0) '${jobs > 0 ? 'dư' : 'Đủ'} $exports lần cập nhật website',
+    ];
+    return parts.isEmpty ? null : parts.join(', ');
+  }
 
   @override
   void dispose() {
@@ -134,7 +159,7 @@ class _TopUpSheetState extends State<TopUpSheet> {
                 style: NpType.h1.copyWith(color: c.ink),
                 decoration: InputDecoration(
                   isDense: true,
-                  hintText: '50000',
+                  hintText: '39000',
                   hintStyle: NpType.h1.copyWith(color: c.faint),
                   enabledBorder:
                       UnderlineInputBorder(borderSide: BorderSide(color: c.line)),
@@ -166,13 +191,24 @@ class _TopUpSheetState extends State<TopUpSheet> {
                               ? c.acid.withValues(alpha: 0.12)
                               : Colors.transparent,
                         ),
-                        child: Text(WalletStore.money(v),
+                        child: Text(
+                            [
+                              '${v ~/ 1000}K',
+                              if (_tierNames[v] != null) _tierNames[v]!,
+                            ].join(' · '),
                             style: NpType.meta.copyWith(
                                 fontWeight: FontWeight.w600, color: c.ink)),
                       ),
                     ),
                 ],
               ),
+
+              if (_perk != null) ...[
+                const SizedBox(height: Np.s3),
+                Text('→ $_perk.',
+                    style: NpType.meta.copyWith(
+                        color: c.acidText, fontWeight: FontWeight.w600)),
+              ],
 
               if (_error != null) ...[
                 const SizedBox(height: Np.s4),

@@ -28,7 +28,21 @@ class ApplicationItem {
     this.ratingScore,
     this.ratingComment,
     this.history = const [],
+    this.compensation,
   });
+
+  /// Thù lao của tin (VND). Quyết định phí nhận việc: có thù lao thì nhận
+  /// offer bị trừ phí, không có thì miễn phí — đúng logic
+  /// ApplicationService.acceptOffer. Quest không có trường này.
+  final int? compensation;
+
+  /// Nhà tuyển dụng đã gửi lời mời nhận việc, đang chờ ứng viên trả lời.
+  bool get isOffer => status == 'OFFERED';
+
+  bool get isPaid => (compensation ?? 0) > 0;
+
+  String get acceptOfferPath => '/me/applications/$id/accept-offer';
+  String get declineOfferPath => '/me/applications/$id/decline-offer';
 
   final String id;
   final String title;
@@ -86,6 +100,9 @@ class ApplicationItem {
         ratingScore: _int(m['rating_score']),
         ratingComment: _str(m['rating_comment']),
         history: _history(m['statusHistory']),
+        compensation: (m['compensation'] is num)
+            ? (m['compensation'] as num).toInt()
+            : int.tryParse('${m['compensation'] ?? ''}'.split('.').first),
       );
 
   factory ApplicationItem.fromQuest(Map<String, dynamic> m) => ApplicationItem(
@@ -121,6 +138,7 @@ class ApplicationItem {
         ratingScore: ratingScore,
         ratingComment: ratingComment,
         history: [...history, StatusStep(status: next, at: DateTime.now())],
+        compensation: compensation,
       );
 
   /// Điểm sao. Chấp nhận cả số lẫn chuỗi vì hai endpoint không nhất quán, và
@@ -175,6 +193,9 @@ class StatusStep {
 ///
 /// Giá trị lấy từ ràng buộc ck_applications_status (migration V19):
 /// SUBMITTED, VIEWED, SHORTLISTED, ACCEPTED, REJECTED, WITHDRAWN, COMPLETED.
+/// Sau này backend thêm OFFERED (chờ ứng viên trả lời offer) và
+/// OFFER_DECLINED. OFFERED không nằm ở đây: lúc đó bóng đã ở phía ứng viên,
+/// không còn là "chờ nhà tuyển dụng".
 /// KHÔNG có 'PENDING' — mọi chỗ lọc theo chuỗi đó sẽ luôn đếm ra 0.
 const kOpenStatuses = {'SUBMITTED', 'VIEWED', 'SHORTLISTED'};
 
@@ -182,6 +203,8 @@ String applicationStatusLabel(String s) => switch (s) {
       'SUBMITTED' => 'Đã nộp',
       'VIEWED' => 'Đã xem',
       'SHORTLISTED' => 'Vào vòng trong',
+      'OFFERED' => 'Được mời nhận việc',
+      'OFFER_DECLINED' => 'Đã từ chối lời mời',
       'ACCEPTED' => 'Được nhận',
       'REJECTED' => 'Từ chối',
       'WITHDRAWN' => 'Đã rút',
@@ -194,7 +217,7 @@ String applicationStatusLabel(String s) => switch (s) {
 /// Chỉ ba mức: tốt (xanh), xấu (đỏ), còn lại trung tính. Tô mỗi trạng thái
 /// một màu riêng sẽ biến danh sách thành bảng cầu vồng và không mức nào nổi.
 Color applicationStatusColor(String s, NpColors c) => switch (s) {
-      'ACCEPTED' || 'COMPLETED' => c.acidText,
+      'ACCEPTED' || 'COMPLETED' || 'OFFERED' => c.acidText,
       'REJECTED' => c.danger,
       _ => c.muted,
     };

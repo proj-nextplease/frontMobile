@@ -6,6 +6,7 @@ import '../discussions/discussions_repository.dart';
 import '../discussions/post_detail_page.dart';
 import '../jobs/opportunities_repository.dart';
 import '../jobs/opportunity_detail_page.dart';
+import 'applications_page.dart';
 import 'notifications_store.dart';
 import 'portfolio_page.dart';
 
@@ -50,6 +51,17 @@ class NotificationRouter {
           return await _openOpportunity(context, parts[1], isQuest: false);
         case 'quests' when parts.length >= 2:
           return await _openOpportunity(context, parts[1], isQuest: true);
+        // Thông báo về đơn (được mời nhận việc, được nhận, bị từ chối…) trỏ
+        // tới "/candidates/dashboard/applications" của web; lời mời gia nhập
+        // tổ chức trỏ tới "/business/accept-invite?token=…". Cả hai đều mở
+        // màn Đơn đã nộp — nơi có khối lời mời với nút trả lời ngay.
+        case 'candidates' || 'candidate':
+        case 'business' when parts.length >= 2 && parts[1] == 'accept-invite':
+          if (!context.mounted) return false;
+          await Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ApplicationsPage()),
+          );
+          return true;
         case 'portfolio':
           if (!context.mounted) return false;
           await Navigator.of(context).push(
@@ -129,7 +141,8 @@ extension NotificationTarget on NotificationItem {
     if (parts.isEmpty) return false;
     return switch (parts.first) {
       'discussions' || 'jobs' || 'quests' => parts.length >= 2,
-      'portfolio' => true,
+      'portfolio' || 'candidates' || 'candidate' => true,
+      'business' => parts.length >= 2 && parts[1] == 'accept-invite',
       _ => false,
     };
   }
