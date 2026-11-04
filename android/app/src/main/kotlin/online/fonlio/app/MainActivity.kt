@@ -1,4 +1,4 @@
-package vn.nextplease.mobile
+package online.fonlio.app
 
 import io.flutter.embedding.android.FlutterActivity
 

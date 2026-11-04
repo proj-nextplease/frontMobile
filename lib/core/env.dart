@@ -23,6 +23,11 @@ abstract final class Env {
   /// mục Redirect URLs trong Supabase Dashboard, và trùng với URL scheme khai
   /// báo ở Info.plist (iOS) và AndroidManifest.xml (Android). Lệch một chỗ là
   /// trình duyệt mở xong không quay về app được.
+  ///
+  /// Scheme này CỐ Ý giữ tên cũ dù tên gói Android đã đổi sang
+  /// `online.fonlio.app`: scheme không cần trùng tên gói, còn đổi nó thì phải
+  /// sửa cả danh sách Redirect URLs trên Supabase, sót là hỏng đăng nhập
+  /// Google/Facebook/GitHub.
   static const oauthCallback = 'vn.nextplease.mobile://login-callback';
 
   /// Nơi email đặt lại mật khẩu trỏ về.
