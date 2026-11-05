@@ -4,7 +4,7 @@ import '../../core/api_client.dart';
 import '../../core/design.dart';
 import '../../core/widgets.dart';
 
-/// Cài đặt tài khoản: thông báo, đăng xuất mọi thiết bị, vô hiệu hoá.
+/// Cài đặt tài khoản: thông báo, đăng xuất mọi thiết bị, vô hiệu hoá, xoá.
 ///
 /// Ba endpoint này đã có ở backend từ lâu và web đã dùng; app thì chưa dùng
 /// cái nào. Hệ quả là người chỉ dùng app KHÔNG tắt được email thông báo, và
@@ -128,6 +128,31 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
     try {
       await _api.post('/account/deactivate', body: {'password': password});
+    } on ApiException catch (e) {
+      if (mounted) _toast(e.message, ok: false);
+      return;
+    }
+    await widget.onSignedOut();
+  }
+
+  /// Xoá hẳn tài khoản — Google Play bắt buộc phải làm được ngay trong app.
+  ///
+  /// Xác nhận bằng cách gõ lại email chứ không bằng mật khẩu: người đăng nhập
+  /// qua Google/GitHub/Facebook không có mật khẩu nào để gõ.
+  Future<void> _deleteAccount() async {
+    final email = _email;
+    if (email == null) {
+      _toast('Chưa tải được email tài khoản. Thử lại sau.', ok: false);
+      return;
+    }
+    final typed = await showDialog<String>(
+      context: context,
+      builder: (_) => _DeleteDialog(email: email),
+    );
+    if (typed == null) return;
+
+    try {
+      await _api.post('/account/delete', body: {'confirmEmail': typed});
     } on ApiException catch (e) {
       if (mounted) _toast(e.message, ok: false);
       return;
@@ -266,6 +291,14 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
                       'không bị xoá — liên hệ hỗ trợ nếu muốn mở lại.',
                   danger: true,
                   onTap: _deactivate,
+                ),
+                const SizedBox(height: Np.s2),
+                _ActionRow(
+                  title: 'Xoá tài khoản',
+                  hint: 'Xoá vĩnh viễn hồ sơ, kinh nghiệm, minh chứng và số dư '
+                      'NP. Không hoàn tác được.',
+                  danger: true,
+                  onTap: _deleteAccount,
                 ),
                   ],
                 ),
@@ -481,6 +514,91 @@ class _PasswordDialogState extends State<_PasswordDialog> {
         TextButton(
           onPressed: ok ? () => Navigator.of(context).pop(_ctrl.text) : null,
           child: Text('Vô hiệu hoá',
+              style: NpType.button
+                  .copyWith(color: ok ? c.danger : c.faint)),
+        ),
+      ],
+    );
+  }
+}
+
+/// Gõ lại email đăng nhập để xác nhận xoá tài khoản.
+///
+/// Nút Xoá chỉ sáng khi gõ đúng email (không phân biệt hoa thường) — chặn
+/// việc lỡ tay bấm qua hộp thoại cho một thao tác không quay lại được.
+class _DeleteDialog extends StatefulWidget {
+  const _DeleteDialog({required this.email});
+  final String email;
+
+  @override
+  State<_DeleteDialog> createState() => _DeleteDialogState();
+}
+
+class _DeleteDialogState extends State<_DeleteDialog> {
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  bool get _match =>
+      _ctrl.text.trim().toLowerCase() == widget.email.trim().toLowerCase();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final ok = _match;
+
+    return AlertDialog(
+      backgroundColor: c.surface,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Np.rLg)),
+      title: Text('Xoá vĩnh viễn tài khoản?',
+          style: NpType.title.copyWith(color: c.ink)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Hồ sơ, kinh nghiệm, minh chứng, điểm và số dư NP sẽ bị xoá và '
+            'không khôi phục được. Gõ lại email đăng nhập để xác nhận:',
+            style: NpType.body.copyWith(color: c.muted),
+          ),
+          const SizedBox(height: Np.s2),
+          Text(widget.email,
+              style: NpType.body
+                  .copyWith(color: c.ink, fontWeight: FontWeight.w600)),
+          const SizedBox(height: Np.s3),
+          TextField(
+            controller: _ctrl,
+            autofocus: true,
+            keyboardType: TextInputType.emailAddress,
+            autocorrect: false,
+            onChanged: (_) => setState(() {}),
+            style: NpType.body.copyWith(color: c.ink),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: 'Email đăng nhập',
+              hintStyle: NpType.body.copyWith(color: c.faint),
+              enabledBorder:
+                  UnderlineInputBorder(borderSide: BorderSide(color: c.line)),
+              focusedBorder:
+                  UnderlineInputBorder(borderSide: BorderSide(color: c.danger)),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text('Huỷ', style: NpType.button.copyWith(color: c.muted)),
+        ),
+        TextButton(
+          onPressed:
+              ok ? () => Navigator.of(context).pop(_ctrl.text.trim()) : null,
+          child: Text('Xoá vĩnh viễn',
               style: NpType.button
                   .copyWith(color: ok ? c.danger : c.faint)),
         ),

@@ -40,7 +40,7 @@ abstract final class Env {
   /// Đổi được lúc build: --dart-define=RESET_PASSWORD_URL=...
   static const resetPasswordUrl = String.fromEnvironment(
     'RESET_PASSWORD_URL',
-    defaultValue: 'https://fonlio.vn/reset-password?role=candidate',
+    defaultValue: 'https://www.fonlio.online/reset-password?role=candidate',
   );
 
   static bool get hasSupabase =>
