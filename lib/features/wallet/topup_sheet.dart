@@ -5,6 +5,8 @@ import '../../core/api_client.dart';
 import '../../core/design.dart';
 import '../../core/widgets.dart';
 import 'payment_sheet.dart';
+import 'play_billing.dart';
+import 'play_topup_sheet.dart';
 import 'topup_success_sheet.dart';
 import 'wallet_store.dart';
 
@@ -20,11 +22,16 @@ class TopUpSheet extends StatefulWidget {
   const TopUpSheet({super.key});
 
   /// Mở dạng tấm trượt từ đáy. Trả true nếu nạp thành công.
+  ///
+  /// Android dùng Google Play Billing ([PlayTopUpSheet]) — chính sách Google
+  /// Play cấm thanh toán hàng số trong app bằng cổng ngoài như PayOS.
   static Future<bool?> show(BuildContext context) => showModalBottomSheet<bool>(
         context: context,
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
-        builder: (_) => const TopUpSheet(),
+        builder: (_) => PlayBilling.supported
+            ? const PlayTopUpSheet()
+            : const TopUpSheet(),
       );
 
   @override

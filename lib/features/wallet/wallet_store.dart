@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../core/api_client.dart';
+import 'play_billing.dart';
 
 /// Ví NP.
 ///
@@ -35,6 +38,10 @@ class WalletStore extends ChangeNotifier {
   /// được). Ghi cứng 10.000 ở đây thì đổi cấu hình xong app vẫn chặn theo
   /// mức cũ.
   int minTopupVnd = 10000;
+
+  /// Mã ẩn danh của tài khoản, gắn vào giao dịch Google Play để backend kiểm
+  /// giao dịch đúng là của người này.
+  String playAccountTag = '';
   List<WalletTx> transactions = const [];
 
   bool loaded = false;
@@ -58,6 +65,7 @@ class WalletStore extends ChangeNotifier {
         if (sug != null && sug.isNotEmpty) topupSuggestions = sug;
         final minTopup = _int(w['minTopupVnd']);
         if (minTopup > 0) minTopupVnd = minTopup;
+        playAccountTag = '${w['playAccountTag'] ?? ''}';
         transactions = (w['recentTransactions'] as List?)
                 ?.whereType<Map<String, dynamic>>()
                 .map(WalletTx.fromJson)
@@ -67,6 +75,10 @@ class WalletStore extends ChangeNotifier {
 
       loaded = true;
       notifyListeners();
+
+      // Đã đăng nhập: bắt đầu nghe giao dịch Google Play, và gửi lại những
+      // giao dịch đã trả tiền mà lần trước chưa kịp cộng NP.
+      unawaited(PlayBilling.instance.start());
     } on ApiException {
       // Khách hoặc endpoint hỏng: màn ví hiện trạng thái rỗng, không phải lỗi
       // đỏ giữa màn hình.
@@ -124,6 +136,8 @@ class WalletStore extends ChangeNotifier {
   Future<void> refreshAfterTopUp() => hydrate();
 
   void clear() {
+    unawaited(PlayBilling.instance.stop());
+    playAccountTag = '';
     balance = locked = 0;
     loaded = false;
     transactions = const [];

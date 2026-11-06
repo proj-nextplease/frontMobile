@@ -125,9 +125,31 @@ class MetaChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Một địa chỉ dài ("174/3 Lý Thường Kiệt, xã Hóc Môn, Thành phố Hồ Chí
+    // Minh") vượt bề ngang thẻ và tràn ra ngoài. Khi chip nằm trong Wrap/cột
+    // (bề ngang có giới hạn) thì cho chữ co lại và cắt "…". Khi chip nằm
+    // thẳng trong một Row (bề ngang vô hạn) thì KHÔNG được dùng Flexible —
+    // Flutter sẽ ném lỗi — nên giữ chữ nguyên cỡ như cũ.
+    return LayoutBuilder(
+      builder: (context, constraints) =>
+          _build(context, constraints.hasBoundedWidth),
+    );
+  }
+
+  Widget _build(BuildContext context, bool bounded) {
     final c = Np.of(context);
     final fg = accent ? c.acidText : c.muted;
-    return Container(
+    final text = Text(
+      label,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: NpType.meta.copyWith(
+        fontSize: 12.5,
+        fontWeight: FontWeight.w500,
+        color: fg,
+      ),
+    );
+    final chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: Np.s3, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(Np.rPill),
@@ -142,17 +164,11 @@ class MetaChip extends StatelessWidget {
             Icon(icon, size: 13, color: fg),
             const SizedBox(width: 5),
           ],
-          Text(
-            label,
-            style: NpType.meta.copyWith(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w500,
-              color: fg,
-            ),
-          ),
+          if (bounded) Flexible(child: text) else text,
         ],
       ),
     );
+    return chip;
   }
 }
 
