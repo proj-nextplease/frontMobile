@@ -26,8 +26,12 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "online.fonlio.app"
+        // Tên gói trên Google Play. Play Console đã đăng ký app với
+        // "online.fonlio.ap" (thiếu chữ p) và tên gói thì không đổi được nữa,
+        // nên applicationId phải khớp đúng như vậy. `namespace` và package
+        // Kotlin (online.fonlio.app) là chuyện nội bộ, không cần trùng.
+        // Backend dùng cùng tên này để xác minh giao dịch: GOOGLE_PLAY_PACKAGE_NAME.
+        applicationId = "online.fonlio.ap"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
