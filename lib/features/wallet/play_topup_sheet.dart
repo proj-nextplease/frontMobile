@@ -71,8 +71,8 @@ class _PlayTopUpSheetState extends State<PlayTopUpSheet> {
 
   /// Gói này dùng được vào việc gì — cùng cách tính với web.
   String? _perk(int a) {
-    final job = _store.jobAcceptanceFeeNp;
-    final exp = _store.portfolioExportFeeNp;
+    final job = _store.standardJobAcceptanceFeeNp;
+    final exp = _store.standardPortfolioExportFeeNp;
     if (a <= 0 || job <= 0 || exp <= 0) return null;
     final jobs = a ~/ job;
     final exports = (a % job) ~/ exp;

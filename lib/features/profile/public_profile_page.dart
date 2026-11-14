@@ -151,14 +151,17 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
           backgroundColor: c.surfaceHi,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(Np.rLg)),
-          title: Text(fee == 0 ? 'Xuất bản website?' : 'Cập nhật website?',
+          title: Text(_exportCount == 0 ? 'Xuất bản website?' : 'Cập nhật website?',
               style: NpType.h1.copyWith(color: c.ink)),
           content: Text(
-              fee == 0
+              _exportCount == 0
                   ? 'Lần xuất đầu tiên miễn phí. Website sẽ chụp lại hồ sơ '
                       'hiện tại của bạn.'
-                  : 'Website sẽ được cập nhật theo hồ sơ hiện tại. '
-                      'Trừ ${WalletStore.money(fee)} NP.',
+                  : fee == 0
+                      ? 'Website sẽ được cập nhật theo hồ sơ hiện tại. '
+                          'Miễn phí vì bạn là Đại sứ thương hiệu.'
+                      : 'Website sẽ được cập nhật theo hồ sơ hiện tại. '
+                          'Trừ ${WalletStore.money(fee)} NP.',
               style: NpType.meta.copyWith(color: c.muted)),
           actions: [
             TextButton(
@@ -167,7 +170,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(fee == 0 ? 'Xuất bản' : 'Cập nhật',
+              child: Text(_exportCount == 0 ? 'Xuất bản' : 'Cập nhật',
                   style: NpType.button.copyWith(color: c.acidText)),
             ),
           ],
@@ -373,16 +376,16 @@ class _ExportCard extends StatelessWidget {
           Text(
             first
                 ? 'Lần xuất đầu tiên miễn phí. Sau đó mỗi lần cập nhật '
-                    'tốn ${WalletStore.money(WalletStore.instance.portfolioExportFeeNp)} NP.'
+                    'tốn ${WalletStore.feeLabel(WalletStore.instance.portfolioExportFeeNp)}.'
                 : 'Sửa hồ sơ xong, bấm cập nhật để website hiện bản mới. '
-                    'Phí ${WalletStore.money(fee)} NP mỗi lần.',
+                    'Phí ${WalletStore.feeLabel(fee)} mỗi lần.',
             style: NpType.meta.copyWith(color: c.muted),
           ),
           const SizedBox(height: Np.s4),
           AcidButton(
             label: first
                 ? 'Xuất bản website · Miễn phí'
-                : 'Cập nhật website · ${WalletStore.money(fee)} NP',
+                : 'Cập nhật website · ${WalletStore.feeLabel(fee)}',
             busy: busy,
             onTap: onExport,
           ),

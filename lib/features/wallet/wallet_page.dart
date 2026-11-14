@@ -229,11 +229,11 @@ class _FeeCard extends StatelessWidget {
         children: [
           row('Nhận việc có thù lao',
               'Chỉ trừ khi bạn đồng ý lời mời nhận việc',
-              '${WalletStore.money(store.jobAcceptanceFeeNp)} NP'),
+              WalletStore.feeLabel(store.jobAcceptanceFeeNp)),
           Divider(color: c.line, height: 1),
           row('Cập nhật website portfolio',
               'Lần xuất bản đầu tiên miễn phí',
-              '${WalletStore.money(store.portfolioExportFeeNp)} NP'),
+              WalletStore.feeLabel(store.portfolioExportFeeNp)),
           Divider(color: c.line, height: 1),
           row('Ứng tuyển, sửa hồ sơ, nộp minh chứng',
               'Không giới hạn', 'Miễn phí',

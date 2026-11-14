@@ -61,8 +61,8 @@ class _TopUpSheetState extends State<TopUpSheet> {
   /// nhiêu việc có thù lao, phần dư đủ cập nhật website bao nhiêu lần.
   String? get _perk {
     final a = _amount;
-    final job = _store.jobAcceptanceFeeNp;
-    final exp = _store.portfolioExportFeeNp;
+    final job = _store.standardJobAcceptanceFeeNp;
+    final exp = _store.standardPortfolioExportFeeNp;
     if (a <= 0 || job <= 0 || exp <= 0) return null;
     final jobs = a ~/ job;
     final exports = (a % job) ~/ exp;

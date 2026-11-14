@@ -26,6 +26,16 @@ class WalletStore extends ChangeNotifier {
   /// /wallet chưa trả khoá này.
   int jobAcceptanceFeeNp = 19000;
 
+  /// Đại sứ thương hiệu: admin cấp quyền dùng fonlio miễn phí. Khi đó máy chủ
+  /// trả hai phí ở trên = 0 và không trừ NP; các màn dùng [feeLabel] để ghi
+  /// "Miễn phí – Đại sứ" thay vì "0 NP".
+  bool isAmbassador = false;
+
+  /// Phí gốc (không tính miễn phí đại sứ) — chỉ để tính "đủ nhận bao nhiêu
+  /// việc" trong màn nạp, nơi số 0 làm phép chia vô nghĩa.
+  int standardJobAcceptanceFeeNp = 19000;
+  int standardPortfolioExportFeeNp = 1000;
+
   /// Phí cập nhật website portfolio từ lần xuất thứ hai (lần đầu miễn phí).
   int portfolioExportFeeNp = 1000;
 
@@ -52,10 +62,21 @@ class WalletStore extends ChangeNotifier {
       if (w is Map) {
         balance = _int(w['npBalance']);
         locked = _int(w['lockedNpBalance']);
-        final fee = _int(w['paidJobAcceptanceFeeNp']);
-        if (fee > 0) jobAcceptanceFeeNp = fee;
-        final exportFee = _int(w['portfolioExportFeeNp']);
-        if (exportFee > 0) portfolioExportFeeNp = exportFee;
+        isAmbassador = w['isAmbassador'] == true;
+        // Nhận cả số 0: đại sứ được miễn phí. Bỏ qua 0 như trước đây là giữ
+        // nguyên 19.000 mặc định và app lại đòi đại sứ nạp NP.
+        if (w['paidJobAcceptanceFeeNp'] is num) {
+          jobAcceptanceFeeNp = _int(w['paidJobAcceptanceFeeNp']);
+        }
+        if (w['portfolioExportFeeNp'] is num) {
+          portfolioExportFeeNp = _int(w['portfolioExportFeeNp']);
+        }
+        final stdJob = _int(w['standardPaidJobAcceptanceFeeNp']);
+        standardJobAcceptanceFeeNp =
+            stdJob > 0 ? stdJob : (jobAcceptanceFeeNp > 0 ? jobAcceptanceFeeNp : 19000);
+        final stdExport = _int(w['standardPortfolioExportFeeNp']);
+        standardPortfolioExportFeeNp =
+            stdExport > 0 ? stdExport : (portfolioExportFeeNp > 0 ? portfolioExportFeeNp : 1000);
         final defPkg = _int(w['defaultTopupPackageNp']);
         if (defPkg > 0) defaultTopupNp = defPkg;
         final sug = (w['topupSuggestions'] as List?)
@@ -138,6 +159,11 @@ class WalletStore extends ChangeNotifier {
   void clear() {
     unawaited(PlayBilling.instance.stop());
     playAccountTag = '';
+    // Đăng xuất rồi đăng nhập tài khoản khác: không được mang theo trạng thái
+    // miễn phí của người trước.
+    isAmbassador = false;
+    jobAcceptanceFeeNp = standardJobAcceptanceFeeNp = 19000;
+    portfolioExportFeeNp = standardPortfolioExportFeeNp = 1000;
     balance = locked = 0;
     loaded = false;
     transactions = const [];
@@ -159,6 +185,11 @@ class WalletStore extends ChangeNotifier {
   }
 
   static String money(int v) => _money(v);
+
+  /// Nhãn giá cho một khoản phí: "19.000 NP", hoặc "Miễn phí – Đại sứ" khi
+  /// phí đã được miễn cho đại sứ thương hiệu.
+  static String feeLabel(int fee) =>
+      fee == 0 && instance.isAmbassador ? 'Miễn phí – Đại sứ' : '${_money(fee)} NP';
   static DateTime? _date(Object? v) =>
       v == null ? null : DateTime.tryParse('$v')?.toLocal();
 }

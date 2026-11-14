@@ -219,7 +219,7 @@ class OfferActions {
               'Trừ ${WalletStore.money(fee)} NP phí xác nhận — chỉ trừ khi '
               'xác nhận thành công.'
           : 'Bạn xác nhận nhận "${app.title}" tại ${app.companyName}. '
-              'Vị trí không thù lao nên miễn phí.',
+              '${app.isPaid && w.isAmbassador ? 'Bạn là Đại sứ thương hiệu nên miễn phí.' : 'Vị trí không thù lao nên miễn phí.'}',
       action: 'Đồng ý nhận việc',
       danger: false,
     );
@@ -363,8 +363,8 @@ class OfferCard extends StatelessWidget {
             Text(
               item.isPaid
                   ? 'Thù lao ${salaryLabel(compensation: item.compensation, isQuest: false)}'
-                      ' · Phí xác nhận ${WalletStore.money(fee)} NP'
-                      ' (chỉ trừ khi đồng ý thành công)'
+                      ' · Phí xác nhận ${WalletStore.feeLabel(fee)}'
+                      '${fee > 0 ? ' (chỉ trừ khi đồng ý thành công)' : ''}'
                   : 'Vị trí không thù lao · Miễn phí khi xác nhận nhận việc',
               style: NpType.meta.copyWith(fontSize: 13, color: c.muted),
             ),
@@ -374,7 +374,7 @@ class OfferCard extends StatelessWidget {
                 Expanded(
                   child: AcidButton(
                     label: item.isPaid
-                        ? 'Đồng ý · ${WalletStore.money(fee)} NP'
+                        ? 'Đồng ý · ${WalletStore.feeLabel(fee)}'
                         : 'Đồng ý nhận việc',
                     busy: busy,
                     onTap: onAccept,
