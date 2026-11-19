@@ -5,6 +5,7 @@ import '../../core/design.dart';
 import '../../core/np_icons.dart';
 import '../../core/widgets.dart';
 import 'me_store.dart';
+import '../../core/experience_dates.dart';
 
 /// Thêm / sửa / xoá mục Kinh nghiệm.
 ///
@@ -321,12 +322,22 @@ class _ExperienceFormState extends State<_ExperienceForm> {
     super.dispose();
   }
 
+  /// Lỗi ngày (dd/mm/yyyy). Ô còn giữ nguyên giá trị mm/yyyy của bản ghi cũ
+  /// thì vẫn cho qua — backend nhận lại y nguyên.
+  String? get _dateError => ExperienceDates.validate(
+        start: _from.text,
+        end: _to.text,
+        allowLegacyStart: _from.text.trim() == _s('startDate').trim(),
+        allowLegacyEnd: _to.text.trim() == _s('endDate').trim(),
+      );
+
   /// Ba trường backend đánh @NotBlank. Kiểm ở đây để nút Lưu không sáng rồi
   /// bấm mới nhận lỗi 400.
   bool get _valid =>
       _title.text.trim().isNotEmpty &&
       _org.text.trim().isNotEmpty &&
-      _detail.text.trim().isNotEmpty;
+      _detail.text.trim().isNotEmpty &&
+      _dateError == null;
 
   void _submit() {
     Navigator.of(context).pop(<String, dynamic>{
@@ -393,7 +404,8 @@ class _ExperienceFormState extends State<_ExperienceForm> {
                       child: _Field(
                         label: 'TỪ',
                         controller: _from,
-                        hint: '09/2025',
+                        hint: ExperienceDates.placeholder,
+                        date: true,
                         onChanged: () => setState(() {}),
                       ),
                     ),
@@ -402,12 +414,19 @@ class _ExperienceFormState extends State<_ExperienceForm> {
                       child: _Field(
                         label: 'ĐẾN',
                         controller: _to,
-                        hint: 'Hiện tại',
+                        hint: 'Trống = hiện tại',
+                        date: true,
                         onChanged: () => setState(() {}),
                       ),
                     ),
                   ],
                 ),
+                // Nút "Xong" xám vì ngày sai thì phải nói ra, đừng để người dùng đoán.
+                if (_dateError != null) ...[
+                  Text(_dateError!,
+                      style: NpType.meta.copyWith(color: c.danger)),
+                  const SizedBox(height: Np.s4),
+                ],
                 _Field(
                   label: 'MÔ TẢ *',
                   controller: _detail,
@@ -452,6 +471,7 @@ class _Field extends StatelessWidget {
     required this.hint,
     required this.onChanged,
     this.maxLines = 1,
+    this.date = false,
   });
 
   final String label;
@@ -459,6 +479,9 @@ class _Field extends StatelessWidget {
   final String hint;
   final VoidCallback onChanged;
   final int maxLines;
+
+  /// Ô ngày: bàn phím số và tự chèn "/" (dd/mm/yyyy).
+  final bool date;
 
   @override
   Widget build(BuildContext context) {
@@ -473,6 +496,8 @@ class _Field extends StatelessWidget {
           TextField(
             controller: controller,
             maxLines: maxLines,
+            keyboardType: date ? TextInputType.number : null,
+            inputFormatters: date ? [DateMaskFormatter()] : null,
             onChanged: (_) => onChanged(),
             style: NpType.body.copyWith(color: c.ink),
             decoration: InputDecoration(

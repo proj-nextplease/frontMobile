@@ -4,6 +4,7 @@ import '../../core/theme.dart';
 import 'credential.dart';
 import 'credentials_store.dart';
 import 'proof_picker.dart';
+import '../../core/experience_dates.dart';
 
 /// Nộp một minh chứng mới.
 ///
@@ -188,7 +189,7 @@ class _SubmitCredentialPageState extends State<SubmitCredentialPage> {
               Expanded(
                 child: _DateBox(
                   label: 'Bắt đầu',
-                  value: _fmt(_from),
+                  value: _from == null ? null : ExperienceDates.format(_from!),
                   onTap: () => _pickDate(start: true),
                 ),
               ),
@@ -196,7 +197,7 @@ class _SubmitCredentialPageState extends State<SubmitCredentialPage> {
               Expanded(
                 child: _DateBox(
                   label: 'Kết thúc',
-                  value: _fmt(_to),
+                  value: _to == null ? null : ExperienceDates.format(_to!),
                   onTap: () => _pickDate(start: false),
                 ),
               ),
