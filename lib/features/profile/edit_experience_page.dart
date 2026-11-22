@@ -24,7 +24,6 @@ class EditExperiencePage extends StatefulWidget {
 }
 
 class _EditExperiencePageState extends State<EditExperiencePage> {
-  final _api = ApiClient();
   final _me = MeStore.instance;
 
   late final List<Map<String, dynamic>> _items =
@@ -36,27 +35,11 @@ class _EditExperiencePageState extends State<EditExperiencePage> {
   Future<void> _save() async {
     setState(() => _saving = true);
 
-    // PUT /profiles/me GHI ĐÈ toàn bộ portfolio, nên phải gửi lại nguyên vẹn
-    // mọi thứ khác — lấy từ raw thay vì dựng payload mới.
-    final payload = Map<String, dynamic>.from(_me.raw)
-      ..['experiences'] = _items;
-
-    // Các trường chỉ-đọc: máy chủ bỏ qua, gửi kèm chỉ làm payload phình.
-    for (final k in const [
-      'reputationScore',
-      'totalExp',
-      'currentLevel',
-      'publicSlug',
-      'legalConsentVersion',
-      'onboardingCompleted',
-    ]) {
-      payload.remove(k);
-    }
-
+    // PUT /profiles/me GHI ĐÈ toàn bộ portfolio; saveWith dựng payload từ bản
+    // gốc nên mọi thứ khác được gửi lại nguyên vẹn.
     String? err;
     try {
-      await _api.put('/profiles/me', body: payload);
-      await _me.hydrate();
+      await _me.saveWith({'experiences': _items});
     } on ApiException catch (e) {
       err = e.message;
     }
@@ -314,6 +297,16 @@ class _ExperienceFormState extends State<_ExperienceForm> {
 
   String _s(String k) => '${widget.initial?[k] ?? ''}';
 
+  /// Loại hình & cấp bậc quyết định EXP/RS được cộng khi duyệt — cùng danh
+  /// sách với trang sửa portfolio trên web (constants/experience.js). Thiếu
+  /// chúng thì backend mặc định "Sự kiện CLB – Thành viên" và cộng sai điểm.
+  late String _category =
+      _kCategories.containsKey(_s('category')) ? _s('category') : 'CLUB_SMALL';
+  late String _roleLevel = _s('roleLevel') == 'LEADER' ? 'LEADER' : 'MEMBER';
+
+  /// Mục đã duyệt: backend không đổi loại hình/cấp bậc nữa (điểm đã cộng).
+  bool get _locked => widget.initial?['verified'] == true;
+
   @override
   void dispose() {
     for (final c in [_title, _org, _detail, _from, _to, _proof]) {
@@ -348,6 +341,8 @@ class _ExperienceFormState extends State<_ExperienceForm> {
       'startDate': _from.text.trim(),
       'endDate': _to.text.trim(),
       'proofLink': _proof.text.trim(),
+      'category': _category,
+      'roleLevel': _roleLevel,
     });
   }
 
@@ -427,6 +422,48 @@ class _ExperienceFormState extends State<_ExperienceForm> {
                       style: NpType.meta.copyWith(color: c.danger)),
                   const SizedBox(height: Np.s4),
                 ],
+                Text('LOẠI HÌNH HOẠT ĐỘNG',
+                    style: NpType.label.copyWith(color: c.muted)),
+                const SizedBox(height: Np.s2),
+                Wrap(
+                  spacing: Np.s2,
+                  runSpacing: Np.s2,
+                  children: [
+                    for (final e in _kCategories.entries)
+                      _Pick(
+                        label: e.value,
+                        on: _category == e.key,
+                        onTap: _locked
+                            ? null
+                            : () => setState(() => _category = e.key),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: Np.s4),
+                Text('CẤP BẬC VAI TRÒ',
+                    style: NpType.label.copyWith(color: c.muted)),
+                const SizedBox(height: Np.s2),
+                Wrap(
+                  spacing: Np.s2,
+                  runSpacing: Np.s2,
+                  children: [
+                    for (final e in _kRoleLevels.entries)
+                      _Pick(
+                        label: e.value,
+                        on: _roleLevel == e.key,
+                        onTap: _locked
+                            ? null
+                            : () => setState(() => _roleLevel = e.key),
+                      ),
+                  ],
+                ),
+                if (_locked) ...[
+                  const SizedBox(height: Np.s2),
+                  Text(
+                      'Mục đã được duyệt nên không đổi loại hình và cấp bậc được nữa.',
+                      style: NpType.meta.copyWith(fontSize: 12, color: c.muted)),
+                ],
+                const SizedBox(height: Np.s5),
                 _Field(
                   label: 'MÔ TẢ *',
                   controller: _detail,
@@ -443,8 +480,9 @@ class _ExperienceFormState extends State<_ExperienceForm> {
 
                 const SizedBox(height: Np.s2),
                 Text(
-                  'Mục tự khai chưa có dấu "Đã xác thực". Muốn được xác thực '
-                  'và cộng điểm uy tín thì nộp qua mục Minh chứng.',
+                  'Mục mới sẽ chờ duyệt và chỉ hiện trên portfolio công khai khi '
+                  'đã được duyệt. Có link minh chứng thì hệ thống tự thẩm định '
+                  'ngay sau khi lưu.',
                   style: NpType.meta
                       .copyWith(fontSize: 12, color: c.muted, height: 1.45),
                 ),
@@ -523,6 +561,55 @@ class _Field extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Loại hình hoạt động — đúng danh sách & nhãn của trang sửa portfolio web.
+const _kCategories = <String, String>{
+  'CLUB_SMALL': 'Sự kiện CLB / Khoa (+100 EXP)',
+  'SCHOOL_CAMPAIGN': 'Chiến dịch cấp Trường (+300 EXP)',
+  'COMPANY_PROJECT': 'Dự án Doanh nghiệp (+500 EXP)',
+  'SHORT_INTERNSHIP': 'Thực tập ngắn hạn (+500 EXP)',
+  'FREELANCE_GIG': 'Công việc tự do (+500 EXP)',
+};
+
+const _kRoleLevels = <String, String>{
+  'MEMBER': 'Thành viên (+5 RS khi duyệt)',
+  'LEADER': 'Trưởng nhóm / Ban (+10 RS khi duyệt)',
+};
+
+class _Pick extends StatelessWidget {
+  const _Pick({required this.label, required this.on, required this.onTap});
+  final String label;
+  final bool on;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return Opacity(
+      opacity: onTap == null && !on ? 0.5 : 1,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+              horizontal: Np.s4, vertical: Np.s2 + 2),
+          decoration: BoxDecoration(
+            color: on ? c.acid.withValues(alpha: 0.16) : c.surface,
+            borderRadius: BorderRadius.circular(Np.rPill),
+            border: Border.all(
+                color: on ? c.acid.withValues(alpha: 0.55) : c.line),
+          ),
+          child: Text(label,
+              style: NpType.meta.copyWith(
+                fontSize: 13.5,
+                color: on ? c.acidText : c.ink,
+                fontWeight: on ? FontWeight.w700 : FontWeight.w500,
+              )),
+        ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import '../../core/theme.dart';
 import 'edit_profile_page.dart';
 import 'edit_experience_page.dart';
 import 'me_store.dart';
+import 'edit_credentials_page.dart';
 
 /// Hồ sơ năng lực — CHỈ ĐỌC.
 ///
@@ -72,6 +73,13 @@ class _PortfolioPageState extends State<PortfolioPage> {
     );
     // MeStore đã tự nạp lại sau khi lưu và báo qua listener; setState ở đây chỉ
     // để chắc chắn khi người dùng thoát mà không lưu.
+    if (changed == true && mounted) setState(() {});
+  }
+
+  Future<void> _editCredentials() async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const EditCredentialsPage()),
+    );
     if (changed == true && mounted) setState(() {});
   }
 
@@ -204,7 +212,23 @@ class _PortfolioPageState extends State<PortfolioPage> {
               ],
             const SizedBox(height: Np.s6),
 
-            _Section(label: 'Chứng chỉ'),
+            Row(
+              children: [
+                Expanded(child: _Section(label: 'Chứng chỉ')),
+                GestureDetector(
+                  onTap: _editCredentials,
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: Np.s1),
+                    child: Text(
+                      _me.credentialList.isEmpty ? 'Thêm' : 'Sửa',
+                      style: NpType.button
+                          .copyWith(fontSize: 14, color: c.acidText),
+                    ),
+                  ),
+                ),
+              ],
+            ),
             if (_me.credentialList.isEmpty)
               _Hint(text: 'Chưa có chứng chỉ nào.')
             else
@@ -214,13 +238,6 @@ class _PortfolioPageState extends State<PortfolioPage> {
               ],
 
             const SizedBox(height: Np.s8),
-            // Câu cũ ghi "kinh nghiệm và chứng chỉ cần tải ảnh minh chứng"
-            // — sai với phần kinh nghiệm: ExperienceDto toàn là chữ, proofLink
-            // chỉ là một URL. App đang đổ lỗi cho một ràng buộc không tồn tại.
-            _Hint(
-              text: 'Chứng chỉ và ảnh bìa vẫn sửa trên website — chứng chỉ cần '
-                  'tải tệp bằng cấp lên.',
-            ),
           ],
         ),
       ),

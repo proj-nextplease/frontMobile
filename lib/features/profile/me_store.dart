@@ -15,7 +15,11 @@ class MeStore extends ChangeNotifier {
   MeStore._();
   static final instance = MeStore._();
 
-  final _api = ApiClient();
+  ApiClient _api = ApiClient();
+
+  /// Thay ApiClient trong test để bắt được đúng yêu cầu gửi lên máy chủ.
+  @visibleForTesting
+  set api(ApiClient client) => _api = client;
 
   String? name;
   String? headline;
@@ -142,6 +146,42 @@ class MeStore extends ChangeNotifier {
       error = e.message;
       notifyListeners();
     }
+  }
+
+  /// Giao diện portfolio đang chọn, đã quy về một trong ba mã còn dùng.
+  /// Mã cũ (DEFAULT, DARK_GOLD…) hiển thị như Cốm Neon — giống web.
+  String get selectedTheme {
+    final t = _str(raw['selectedTheme']);
+    return const {'FOMLIO', 'NHO_NEON', 'PURPLE_AURA'}.contains(t) ? t! : 'FOMLIO';
+  }
+
+  /// Lưu hồ sơ với vài trường thay đổi, giữ nguyên mọi thứ khác.
+  ///
+  /// `PUT /profiles/me` ghi đè TOÀN BỘ portfolio (xem [raw]), nên payload dựng
+  /// từ bản gốc rồi mới chèn `changes` lên. Các trường chỉ-đọc bị bỏ: máy chủ
+  /// không đọc chúng, gửi kèm chỉ làm payload phình (avatarUrl có thể là data
+  /// URL hàng trăm KB). Ném [ApiException] nếu máy chủ từ chối.
+  Future<void> saveWith(Map<String, dynamic> changes) async {
+    final payload = Map<String, dynamic>.from(raw)..addAll(changes);
+    for (final k in const [
+      'avatarUrl',
+      'publicSlug',
+      'onboardingCompleted',
+      'reputationScore',
+      'totalExp',
+      'currentLevel',
+      'npBalance',
+      'themeUnlocked',
+      'legalConsentVersion',
+      'isExported',
+      'exportCount',
+    ]) {
+      payload.remove(k);
+    }
+    // Không đổi giao diện thì đừng gửi: máy chủ giữ nguyên khi trường này trống.
+    if (!changes.containsKey('selectedTheme')) payload.remove('selectedTheme');
+    await _api.put('/profiles/me', body: payload);
+    await hydrate();
   }
 
   void clear() {

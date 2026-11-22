@@ -30,6 +30,7 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
   bool? _isPublic;
   bool _openToWork = false;
   bool _savingPrivacy = false;
+  String? _savingTheme;
 
   @override
   void initState() {
@@ -84,6 +85,31 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
       _toast(e.message, ok: false);
     }
     if (mounted) setState(() => _savingPrivacy = false);
+  }
+
+  /// Đổi giao diện website portfolio — cùng ba giao diện với trang sửa
+  /// portfolio trên web. Áp dụng ngay cho trang công khai.
+  Future<void> _selectTheme(String id) async {
+    if (_savingTheme != null || id == _me.selectedTheme) return;
+    setState(() => _savingTheme = id);
+    String? err;
+    try {
+      await _me.saveWith({'selectedTheme': id});
+    } on ApiException catch (e) {
+      err = e.message;
+    }
+    if (!mounted) return;
+    setState(() => _savingTheme = null);
+    final c = Np.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor: err == null ? c.surface : c.danger,
+      behavior: SnackBarBehavior.floating,
+      content: Text(
+        err ?? 'Đã đổi giao diện website.',
+        style: NpType.body.copyWith(
+            fontSize: 14, color: err == null ? c.ink : Colors.white),
+      ),
+    ));
   }
 
   Future<void> _copy() async {
@@ -289,6 +315,19 @@ class _PublicProfilePageState extends State<PublicProfilePage> {
             busy: _exporting,
             onExport: _export,
           ),
+
+          const SizedBox(height: Np.s6),
+          const SectionLabel('Giao diện website'),
+          const SizedBox(height: Np.s3),
+          for (final t in _kThemes) ...[
+            _ThemeOption(
+              theme: t,
+              selected: _me.selectedTheme == t.id,
+              busy: _savingTheme == t.id,
+              onTap: () => _selectTheme(t.id),
+            ),
+            const SizedBox(height: Np.s2),
+          ],
 
           const SizedBox(height: Np.s6),
           const SectionLabel('Ai xem được'),
@@ -529,6 +568,90 @@ class _SlugDialogState extends State<_SlugDialog> {
                   .copyWith(color: err != null ? c.faint : c.acidText)),
         ),
       ],
+    );
+  }
+}
+
+/// Ba giao diện portfolio — mã & màu khớp `constants/portfolioThemes.js` của
+/// web. Mã được ghi thẳng vào profiles.selected_theme nên KHÔNG được đổi chuỗi.
+class _Theme {
+  const _Theme(this.id, this.name, this.hint, this.colors);
+  final String id;
+  final String name;
+  final String hint;
+  final List<Color> colors;
+}
+
+const _kThemes = [
+  _Theme('FOMLIO', 'Cốm Neon', 'Nền đen, quầng cốm',
+      [Color(0xFFCBF748), Color(0xFF7B3AEC)]),
+  _Theme('NHO_NEON', 'Nho Neon', 'Xanh hoàng gia, cốm neon & trắng',
+      [Color(0xFF160AE6), Color(0xFFCBF748)]),
+  _Theme('PURPLE_AURA', 'Tím Aura Neon', 'Tím hoàng gia, quầng sáng aura',
+      [Color(0xFF9333EA), Color(0xFFCBF748)]),
+];
+
+class _ThemeOption extends StatelessWidget {
+  const _ThemeOption({
+    required this.theme,
+    required this.selected,
+    required this.busy,
+    required this.onTap,
+  });
+
+  final _Theme theme;
+  final bool selected;
+  final bool busy;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: Np.s4, vertical: Np.s3),
+        decoration: BoxDecoration(
+          color: selected ? c.acid.withValues(alpha: 0.12) : c.surface,
+          borderRadius: BorderRadius.circular(Np.rMd),
+          border: Border.all(color: selected ? c.acid : c.line),
+        ),
+        child: Row(
+          children: [
+            for (final col in theme.colors)
+              Container(
+                width: 18,
+                height: 18,
+                margin: const EdgeInsets.only(right: 4),
+                decoration: BoxDecoration(color: col, shape: BoxShape.circle),
+              ),
+            const SizedBox(width: Np.s2),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(theme.name,
+                      style: NpType.body
+                          .copyWith(color: c.ink, fontWeight: FontWeight.w700)),
+                  Text(theme.hint,
+                      style: NpType.meta.copyWith(color: c.muted)),
+                ],
+              ),
+            ),
+            if (busy)
+              SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2, color: c.faint),
+              )
+            else if (selected)
+              Text('Đang dùng',
+                  style: NpType.meta.copyWith(
+                      color: c.acidText, fontWeight: FontWeight.w700)),
+          ],
+        ),
+      ),
     );
   }
 }

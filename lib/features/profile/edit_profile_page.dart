@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/api_client.dart';
 import '../../core/mascot.dart';
@@ -33,6 +36,51 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _me = MeStore.instance;
 
   late String _mascot = NpMascot.resolveId(_me.raw['avatar']);
+
+  /// Ảnh chân dung cho trang portfolio — cùng trường `avatar.portraitUrl` với
+  /// trang sửa portfolio trên web. Có ảnh thì website dùng ảnh, linh vật chỉ
+  /// còn dùng ở các trang khác. Chuỗi rỗng = đã gỡ ảnh.
+  late String _portrait = () {
+    final a = _me.raw['avatar'];
+    final v = a is Map ? a['portraitUrl'] : null;
+    return v is String ? v : '';
+  }();
+  bool _pickingPortrait = false;
+
+  Future<void> _pickPortrait() async {
+    if (_pickingPortrait) return;
+    setState(() => _pickingPortrait = true);
+    try {
+      // 1600px đủ nét cho khung ảnh lớn nhất trên website (~520px, màn
+      // retina x2–3); nén JPEG 85 cho ra vài trăm KB thay vì vài MB.
+      final f = await ImagePicker()
+          .pickImage(source: ImageSource.gallery, maxWidth: 1600, imageQuality: 85);
+      if (f == null) return;
+      final bytes = await f.readAsBytes();
+      if (bytes.length > 10 * 1024 * 1024) {
+        _toast('Ảnh chân dung phải nhỏ hơn 10MB.');
+        return;
+      }
+      if (mounted) {
+        setState(() => _portrait = 'data:image/jpeg;base64,${base64Encode(bytes)}');
+      }
+    } catch (_) {
+      _toast('Không mở được thư viện ảnh.');
+    } finally {
+      if (mounted) setState(() => _pickingPortrait = false);
+    }
+  }
+
+  void _toast(String msg) {
+    if (!mounted) return;
+    final c = Np.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      backgroundColor: c.danger,
+      behavior: SnackBarBehavior.floating,
+      content: Text(msg,
+          style: NpType.body.copyWith(fontSize: 14, color: Colors.white)),
+    ));
+  }
   late final _name = TextEditingController(text: _me.name ?? '');
   late final _headline = TextEditingController(text: _me.headline ?? '');
   late final _school = TextEditingController(text: _me.school ?? '');
@@ -140,6 +188,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       ..['avatar'] = {
         ...?(_me.raw['avatar'] is Map ? Map<String, dynamic>.from(_me.raw['avatar']) : null),
         'mascot': _mascot,
+        'portraitUrl': _portrait,
       }
       // Bỏ hẳn khoá rỗng thay vì gửi chuỗi '': hồ sơ công khai sẽ hiện một
       // biểu tượng liên kết trỏ đi đâu không biết nếu giá trị là chuỗi rỗng.
@@ -239,6 +288,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
             padding: EdgeInsets.fromLTRB(Np.gutter, Np.s2, Np.gutter,
                 Np.s10 + MediaQuery.viewInsetsOf(context).bottom),
             children: [
+              _PortraitBox(
+                src: _portrait,
+                busy: _pickingPortrait,
+                onPick: _pickPortrait,
+                onRemove: () => setState(() => _portrait = ''),
+              ),
+              const SizedBox(height: Np.s5),
               MascotPicker(
                 selectedId: _mascot,
             onSelected: (id) => setState(() => _mascot = id),
@@ -576,6 +632,99 @@ class _OpenToWork extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Ô ảnh chân dung: xem trước + Tải / Đổi / Gỡ ảnh.
+class _PortraitBox extends StatelessWidget {
+  const _PortraitBox({
+    required this.src,
+    required this.busy,
+    required this.onPick,
+    required this.onRemove,
+  });
+
+  final String src;
+  final bool busy;
+  final VoidCallback onPick;
+  final VoidCallback onRemove;
+
+  Widget _preview(NpColors c) {
+    Widget fallback() => Icon(Icons.person_outline, size: 34, color: c.faint);
+    if (src.startsWith('data:image')) {
+      try {
+        return Image.memory(base64Decode(src.substring(src.indexOf(',') + 1)),
+            fit: BoxFit.cover, gaplessPlayback: true);
+      } catch (_) {
+        return fallback();
+      }
+    }
+    if (src.startsWith('http')) {
+      return Image.network(src,
+          fit: BoxFit.cover, errorBuilder: (_, _, _) => fallback());
+    }
+    return fallback();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = Np.of(context);
+    final has = src.isNotEmpty;
+    return Container(
+      padding: const EdgeInsets.all(Np.s4),
+      decoration: Np.card(c),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(Np.rMd),
+            child: Container(
+              width: 72,
+              height: 90,
+              color: c.surface,
+              alignment: Alignment.center,
+              child: _preview(c),
+            ),
+          ),
+          const SizedBox(width: Np.s4),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Ảnh chân dung',
+                    style: NpType.body
+                        .copyWith(color: c.ink, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                Text(
+                    has
+                        ? 'Hiện trên website portfolio thay cho linh vật.'
+                        : 'Ảnh dọc, dưới 10MB. Chưa có thì website dùng linh vật.',
+                    style: NpType.meta.copyWith(color: c.muted)),
+                const SizedBox(height: Np.s2),
+                Wrap(
+                  spacing: Np.s3,
+                  children: [
+                    GestureDetector(
+                      onTap: busy ? null : onPick,
+                      child: Text(
+                          busy ? 'Đang mở…' : (has ? 'Đổi ảnh' : 'Tải ảnh chân dung'),
+                          style: NpType.meta.copyWith(
+                              color: c.acidText, fontWeight: FontWeight.w700)),
+                    ),
+                    if (has)
+                      GestureDetector(
+                        onTap: onRemove,
+                        child: Text('Gỡ ảnh',
+                            style: NpType.meta.copyWith(
+                                color: c.danger, fontWeight: FontWeight.w700)),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

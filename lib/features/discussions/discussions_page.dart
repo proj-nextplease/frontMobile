@@ -87,6 +87,35 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
     }
   }
 
+  bool _followBusy = false;
+
+  DiscussionTopic? get _currentTopic =>
+      _topics.where((t) => t.slug == _topic).firstOrNull;
+
+  /// Theo dõi / bỏ theo dõi chủ đề đang xem — như nút trên trang Thảo luận web.
+  Future<void> _toggleFollow() async {
+    final t = _currentTopic;
+    if (t == null || _followBusy) return;
+    setState(() => _followBusy = true);
+    try {
+      final following = await _repo.toggleFollowTopic(t.id);
+      if (!mounted) return;
+      setState(() {
+        _topics = [
+          for (final x in _topics)
+            x.id == t.id ? x.copyWith(isFollowing: following) : x,
+        ];
+      });
+    } on ApiException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    } finally {
+      if (mounted) setState(() => _followBusy = false);
+    }
+  }
+
   Future<void> _pickTopic(String? slug) async {
     setState(() {
       _topic = slug;
@@ -232,6 +261,26 @@ class _DiscussionsPageState extends State<DiscussionsPage> {
                   ),
                 ),
               ),
+
+              if (!widget.isGuest && _currentTopic != null)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        Np.gutter, 0, Np.gutter, Np.s4),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: _TopicChip(
+                        label: _followBusy
+                            ? 'Đang cập nhật…'
+                            : _currentTopic!.isFollowing
+                                ? 'Đang theo dõi chủ đề'
+                                : 'Theo dõi chủ đề',
+                        on: !_currentTopic!.isFollowing,
+                        onTap: _toggleFollow,
+                      ),
+                    ),
+                  ),
+                ),
 
               if (_error != null)
                 SliverToBoxAdapter(child: _Message(text: _error!, danger: true))

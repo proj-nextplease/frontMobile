@@ -11,6 +11,12 @@ class DiscussionsRepository {
     return _list(d).map(DiscussionTopic.fromJson).toList();
   }
 
+  /// Bật/tắt theo dõi chủ đề. Trả về trạng thái sau khi đổi.
+  Future<bool> toggleFollowTopic(String topicId) async {
+    final d = await _api.post('/discussions/topics/$topicId/follow');
+    return d is Map && d['isFollowing'] == true;
+  }
+
   /// `topic` là SLUG, không phải tên hiển thị — backend lọc theo `t.slug`.
   Future<List<DiscussionPost>> posts({String? topic, String? sort}) async {
     final d = await _api.get('/discussions/posts', query: {

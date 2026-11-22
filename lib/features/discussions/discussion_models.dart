@@ -21,6 +21,7 @@ class DiscussionTopic {
     required this.name,
     this.postsCount = 0,
     this.official = false,
+    this.isFollowing = false,
   });
 
   final String id;
@@ -29,12 +30,25 @@ class DiscussionTopic {
   final int postsCount;
   final bool official;
 
+  /// Người dùng đang theo dõi chủ đề này (giống nút trên web).
+  final bool isFollowing;
+
+  DiscussionTopic copyWith({bool? isFollowing}) => DiscussionTopic(
+        id: id,
+        slug: slug,
+        name: name,
+        postsCount: postsCount,
+        official: official,
+        isFollowing: isFollowing ?? this.isFollowing,
+      );
+
   factory DiscussionTopic.fromJson(Map<String, dynamic> m) => DiscussionTopic(
         id: '${m['id']}',
         slug: '${m['slug'] ?? ''}',
         name: '${m['name'] ?? 'Chủ đề'}',
         postsCount: (m['postsCount'] as num?)?.toInt() ?? 0,
         official: m['official'] == true,
+        isFollowing: m['isFollowing'] == true,
       );
 }
 
