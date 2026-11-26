@@ -45,9 +45,8 @@ class WalletStore extends ChangeNotifier {
   int defaultTopupNp = 39000;
 
   /// Số tiền nạp tối thiểu, lấy từ máy chủ (khoá min_topup_vnd, admin sửa
-  /// được). Ghi cứng 10.000 ở đây thì đổi cấu hình xong app vẫn chặn theo
-  /// mức cũ.
-  int minTopupVnd = 10000;
+  /// được). 39.000 chỉ là giá trị dự phòng trước khi ví tải xong.
+  int minTopupVnd = 39000;
 
   /// Mã ẩn danh của tài khoản, gắn vào giao dịch Google Play để backend kiểm
   /// giao dịch đúng là của người này.
